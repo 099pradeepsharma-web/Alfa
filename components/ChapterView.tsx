@@ -43,6 +43,7 @@ const CategorizedProblemsComponent: React.FC<{ problems: CategorizedProblems }> 
     const tabs = [
         { id: 'conceptual', label: t('conceptual'), problems: problems.conceptual },
         { id: 'application', label: t('application'), problems: problems.application },
+        // FIX: Update translation key to match the fix in language context.
         { id: 'higherOrderThinking', label: t('higherOrderThinking'), problems: problems.higherOrderThinking },
     ];
 
@@ -93,7 +94,7 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, lang
 
   const [learningModule, setLearningModule] = useState<LearningModule | null>(null);
   const [quiz, setQuiz] = useState<QuizQuestion[] | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingModule, setIsLoadingModule] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
@@ -130,25 +131,67 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, lang
     if (isSpeaking) stop();
     setFullText('');
   }
+  
+  const fetchAllDiagrams = useCallback(async (module: LearningModule) => {
+    // Initialize all diagrams to a loading state so spinners appear immediately
+    const initialDiagramStates = module.keyConcepts.reduce((acc, concept) => {
+        acc[concept.conceptTitle] = { url: null, isLoading: true, error: null };
+        return acc;
+    }, {} as { [key: string]: DiagramState });
+    setDiagrams(initialDiagramStates);
 
-  const fetchContentAndDiagrams = useCallback(async () => {
+    // Create an array of promises to fetch/generate all diagrams in parallel
+    const diagramPromises = module.keyConcepts.map(async (concept) => {
+        const diagramDbKey = `diagram-${grade.level}-${subject.name}-${chapter.title}-${concept.conceptTitle}`;
+        try {
+            const cachedDiagram = await getDiagram(diagramDbKey);
+            if (cachedDiagram) {
+                return { conceptTitle: concept.conceptTitle, url: cachedDiagram, error: null };
+            }
+
+            if (!concept.diagramDescription || concept.diagramDescription.trim().length < 10) {
+                throw new Error("Diagram description not available.");
+            }
+
+            const generatedImageUrl = await generateDiagram(concept.diagramDescription, subject.name);
+            await saveDiagram(diagramDbKey, generatedImageUrl);
+            return { conceptTitle: concept.conceptTitle, url: generatedImageUrl, error: null };
+        } catch (err) {
+            console.error(`Failed to process diagram for "${concept.conceptTitle}":`, err);
+            return { conceptTitle: concept.conceptTitle, url: null, error: t('diagramFailedError') };
+        }
+    });
+
+    // Await all promises to settle and then update the state for each diagram
+    const results = await Promise.allSettled(diagramPromises);
+
+    results.forEach(result => {
+        if (result.status === 'fulfilled') {
+            const { conceptTitle, url, error } = result.value;
+            setDiagrams(prev => ({
+                ...prev,
+                [conceptTitle]: { url, isLoading: false, error }
+            }));
+        }
+        // You could also handle 'rejected' status for more robust error handling if needed
+    });
+  }, [grade.level, subject.name, chapter.title, t]);
+
+
+  const fetchContent = useCallback(async () => {
     resetStateForNewChapter();
     try {
-      setIsLoading(true);
+      setIsLoadingModule(true);
       setError(null);
       setIsFromDB(false);
 
-      // Fetch progress first
       const savedProgress = await getChapterProgress(progressDbKey, language);
-      if (savedProgress) {
-        setProgress(savedProgress);
-      }
+      if (savedProgress) setProgress(savedProgress);
 
       const dbKey = `module-${grade.level}-${subject.name}-${chapter.title}`;
       const cachedContent = await getLearningModule(dbKey, language);
 
       let content: LearningModule;
-
       if (cachedContent) {
         content = cachedContent;
         setIsFromDB(true);
@@ -157,7 +200,6 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, lang
         await saveLearningModule(dbKey, content, language);
       }
       
-      // Prepare content for TTS in the correct sequential order
       const textToSpeak = [
         content.introduction,
         ...content.keyConcepts.flatMap(c => [c.explanation, c.realWorldExample]),
@@ -165,57 +207,22 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, lang
       ].filter(Boolean).join(' ');
       
       setFullText(textToSpeak);
-      
       setLearningModule(content);
-      setIsLoading(false); 
+      setIsLoadingModule(false); // Render text content immediately
 
-      // Sequentially load or generate diagrams for each concept
-      for (const concept of content.keyConcepts) {
-        const diagramDbKey = `diagram-${grade.level}-${subject.name}-${chapter.title}-${concept.conceptTitle}`;
-        const cachedDiagram = await getDiagram(diagramDbKey);
+      // Start fetching diagrams in the background without blocking the UI
+      fetchAllDiagrams(content);
 
-        if (cachedDiagram) {
-             setDiagrams(prev => ({
-                ...prev,
-                [concept.conceptTitle]: { url: cachedDiagram, isLoading: false, error: null }
-            }));
-            continue;
-        }
-        
-        // If not cached, generate it
-        setDiagrams(prev => ({
-          ...prev,
-          [concept.conceptTitle]: { url: null, isLoading: true, error: null }
-        }));
-
-        try {
-          if (!concept.diagramDescription || concept.diagramDescription.trim().length < 10) {
-            throw new Error("Diagram description not available.");
-          }
-          const generatedImageUrl = await generateDiagram(concept.diagramDescription, subject.name);
-          await saveDiagram(diagramDbKey, generatedImageUrl);
-          setDiagrams(prev => ({
-            ...prev,
-            [concept.conceptTitle]: { url: generatedImageUrl, isLoading: false, error: null }
-          }));
-        } catch (err: any) {
-          console.error(`Failed to generate diagram for "${concept.conceptTitle}":`, err);
-          setDiagrams(prev => ({
-            ...prev,
-            [concept.conceptTitle]: { url: null, isLoading: false, error: t('diagramFailedError') }
-          }));
-        }
-      }
     } catch (err: any) {
       setError(err.message || t('unknownError'));
-      setIsLoading(false);
+      setIsLoadingModule(false);
     }
-  }, [grade.level, subject.name, chapter.title, progressDbKey, language, t]);
+  }, [grade.level, subject.name, chapter.title, progressDbKey, language, t, fetchAllDiagrams]);
 
 
   useEffect(() => {
-    fetchContentAndDiagrams();
-  }, [fetchContentAndDiagrams]);
+    fetchContent();
+  }, [fetchContent]);
   
   // Stop TTS on component unmount
   useEffect(() => {
@@ -364,7 +371,7 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, lang
       return <>{elements}</>;
   };
 
-  if (isLoading) {
+  if (isLoadingModule) {
     return <div className="flex flex-col items-center justify-center h-96">
         <LoadingSpinner />
         <p className="mt-4 text-slate-600 dark:text-slate-300 text-lg">{t('preparingLesson')}</p>
@@ -375,7 +382,7 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, lang
     return <div className="text-center p-8 bg-red-50 dark:bg-red-900/20 rounded-lg">
         <h3 className="text-xl font-bold text-red-700 dark:text-red-400">{t('oopsError')}</h3>
         <p className="text-red-600 dark:text-red-400 mt-2">{error}</p>
-        <button onClick={fetchContentAndDiagrams} className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">{t('tryAgain')}</button>
+        <button onClick={fetchContent} className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">{t('tryAgain')}</button>
     </div>;
   }
 
@@ -810,7 +817,6 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, lang
             {learningModule.problemSolvingTemplates && learningModule.problemSolvingTemplates.length > 0 && (
                 <>
                     <h2 className="text-3xl font-bold mt-12 mb-4 text-slate-700 dark:text-slate-200 border-l-4 border-primary pl-4 flex items-center" style={{borderColor: 'rgb(var(--c-primary))'}}>
-                        {/* Fix: Corrected icon name from ClipboardDocumentCheckIcon to ClipboardDocumentListIcon */}
                         <ClipboardDocumentListIcon className="h-7 w-7 mr-3" />
                         {t('problemSolvingGuides')}
                     </h2>

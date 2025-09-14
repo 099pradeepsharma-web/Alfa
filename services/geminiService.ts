@@ -1,5 +1,6 @@
 
 
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter } from '../types';
 
@@ -333,9 +334,10 @@ const adaptiveActionSchema = {
                 chapter: { type: Type.STRING, nullable: true },
                 concept: { type: Type.STRING, nullable: true },
                 skill: { type: Type.STRING, nullable: true },
-                reasoning: { type: Type.STRING }
+                reasoning: { type: Type.STRING },
+                confidence: { type: Type.NUMBER, description: 'A confidence score from 0.0 to 1.0 for the recommendation.' }
             },
-            required: ['reasoning']
+            required: ['reasoning', 'confidence']
         }
     },
     required: ['type', 'details']
@@ -364,73 +366,96 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
     const isSocialScience = ['history', 'geography', 'political science', 'economics', 'social studies', 'sociology', 'business studies', 'accountancy'].some(s => lowerCaseSubject.includes(s));
     const isLanguage = ['english', 'hindi'].some(s => lowerCaseSubject.includes(s));
 
-    const basePrompt = `
-        Act as an expert CBSE curriculum designer and a master teacher for competitive exams (like JEE, NEET, etc.).
-        Your mission is to generate a world-class, comprehensive, engaging, and pedagogically sound learning module for a ${gradeLevel} student 
-        on the chapter "${chapter}" in the subject of ${subject}. The entire response, including all field values,
-        must be in the ${language} language.
-
-        The content MUST align with the full CBSE syllabus, ensuring complete coverage, and must also be enriched to prepare students for competitive exams. 
-        It must promote NEP 2020 guidelines by fostering critical thinking, conceptual understanding, and linking concepts to real-world applications.
+    const mathFrameworkPrompt = `
+        **MATHEMATICS MASTERY FRAMEWORK (MANDATORY):**
+        You must adhere to the following framework for all Mathematics content:
+        1.  **Purpose-First Learning**: For EACH \`keyConcept\`, the \`explanation\` MUST begin with a section titled "Why is this important?". This section must connect the concept to a real, practical Indian application (e.g., GST calculations, stock market analysis, rocket trajectories).
+        2.  **Diverse Problem Solving**: For EACH problem type in \`problemSolvingTemplates\`, you MUST provide at least 3 different solution methods (e.g., Algebraic, Graphical, Logical/Intuitive method). For \`keyTheoremsAndProofs\`, include visual proof methods where applicable.
+        3.  **Vedic Mathematics Integration**: Within \`learningTricksAndMnemonics\`, you MUST include at least one relevant mental calculation technique from Vedic Mathematics and label it as such.
+        4.  **Enhanced Reasoning Skills**: Within \`categorizedProblems\`, ensure the 'higherOrderThinking' section includes questions that are explicitly designed to test pattern recognition and logical reasoning.
+        5.  **Career & Heritage Connection**: The \`competitiveExamMapping\` section MUST explicitly connect concepts to current STEM career opportunities in India and reference contributions from Indian mathematicians like Aryabata, Ramanujan, and C. R. Rao.
+        6.  **Financial Literacy**: For at least one \`keyConcept\`, the \`realWorldExample\` MUST be a financial literacy application using Indian banking, investment, or market scenarios (e.g., calculating compound interest for a Fixed Deposit, understanding EMI).
     `;
     
-    const generalStructure = `
-        The module MUST include these core pedagogical sections:
-        1.  **learningObjectives**: A list of 3-5 clear, measurable learning outcomes for the chapter.
-        2.  **introduction**: A brief, captivating introduction that sparks curiosity.
-        3.  **keyConcepts**: An array of 3 to 5 core concepts. For each concept, provide:
-            a. **conceptTitle**: A clear title.
-            b. **explanation**: A detailed, in-depth, and easy-to-understand explanation with analogies if possible.
-            c. **realWorldExample**: A practical, STEM-connected example.
-            d. **diagramDescription**: A purely visual description for an AI image generator (e.g., 'A simple flowchart showing three steps with arrows, no text').
-        4.  **conceptMap**: A brief text summary explaining how the key concepts in the chapter are interconnected.
-        5.  **learningTricksAndMnemonics**: A list of 1-3 clever memory aids or tricks for retaining complex information.
-        6.  **higherOrderThinkingQuestions**: A list of 2-3 challenging questions with hints to push students beyond rote memorization.
-        7.  **summary**: A concise summary of the chapter's key takeaways.
-        8.  **competitiveExamMapping**: Explain how chapter concepts apply to competitive exams (Olympiads, JEE, NEET, etc.).
-    `;
-
-    const mathPromptExtension = `
-        As this is a Mathematics chapter, you MUST also include these advanced sections. Do not return null or empty arrays for these fields:
-        9.  **keyTheoremsAndProofs**: For 2-3 fundamental theorems, provide their statements and step-by-step logical proofs.
-        10. **formulaDerivations**: For 1-2 important formulas, provide a step-by-step derivation.
-        11. **categorizedProblems**: Provide one detailed solved example for each category: conceptual, application, and higher-order thinking.
-        12. **commonMistakes**: Common errors students make and how to avoid them.
-        13. **formulaSheet**: A list of all key formulas with brief descriptions.
-    `;
-
-    const sciencePromptExtension = `
-        As this is a Science chapter, you MUST also include these advanced sections. Do not return null or empty arrays for these fields:
-        9.  **keyLawsAndPrinciples**: Explain 2-3 key scientific laws or principles relevant to the chapter.
-        10. **solvedNumericalProblems**: Especially for Physics/Chemistry, provide 2-3 solved numerical problems with detailed, step-by-step solutions.
-        11. **experiments**: One or two simple, safe experiments with materials, steps, and safety guidelines.
-        12. **vocabularyDeepDive**: An array of 3-5 key scientific terms, each with a definition, a usage example sentence, and its etymology if interesting.
-    `;
-    
-    const socialSciencePromptExtension = `
-        As this is a Social Science, Commerce, or Humanities chapter, you MUST also include these sections for deep contextual understanding. Do not return null or empty arrays:
-        9.  **timelineOfEvents**: A list of 2-4 key dates/periods with descriptions of events and their significance.
-        10. **keyFigures**: Profiles of 1-2 important personalities and their contributions.
-        11. **primarySourceAnalysis**: A short snippet from a relevant historical document, law, or economic report, followed by a brief analysis.
-        12. **inDepthCaseStudies**: One detailed case study related to a key concept in the chapter.
-        13. **vocabularyDeepDive**: An array of 3-5 key terms (e.g., 'Federalism', 'Globalization'), each with a definition and a usage example sentence.
-    `;
-
-    const languagePromptExtension = `
-         As this is a Language Arts chapter, you MUST also include these analytical sections. Do not return null or empty arrays:
-        9.  **grammarSpotlight**: Detailed explanation of 1-2 important grammar rules from the chapter, with clear examples.
-        10. **literaryDeviceAnalysis**: Analysis of 1-2 literary devices (e.g., metaphor, simile) used in the chapter's text, with examples.
-        11. **vocabularyDeepDive**: An array of 3-5 key vocabulary words, each with a definition, a usage example sentence, and its etymology.
+    const scienceExcellenceProtocolPrompt = `
+        **SCIENCE EXCELLENCE PROTOCOL (MANDATORY):**
+        You must adhere to the following framework for all Science content:
+        1.  **Inquiry-Based Start**: For EACH \`keyConcept\`, the \`explanation\` MUST begin with a section titled "Observe and Wonder". This section must pose a simple observational question that an Indian student can explore at home using everyday materials (e.g., "Why does a steel spoon get hot when left in hot dal, but a wooden one doesn't?").
+        2.  **Safety is Paramount**: For EACH \`experiment\`, the \`safetyGuidelines\` field MUST be populated with clear, specific, and easy-to-follow safety rules.
+        3.  **Connecting to Modern India**:
+            - The \`explanation\` or \`realWorldExample\` for at least one \`keyConcept\` MUST reference a recent achievement or ongoing research from an Indian scientific institution like ISRO (e.g., Chandrayaan, Mangalyaan), DRDO, or a prominent IIT.
+            - The \`environmentalAwareness\` section MUST connect the chapter's concepts to a specific ecological challenge faced in India (e.g., air pollution in Delhi, water scarcity in Chennai, Himalayan glacier melt).
+            - For relevant biology/chemistry chapters, you MUST include a health science application addressing a common Indian public health concern (e.g., malnutrition, diabetes, vector-borne diseases like dengue).
     `;
 
     const prompt = `
-        ${basePrompt}
-        ${generalStructure}
-        ${isMath ? mathPromptExtension : ''}
-        ${isScience ? sciencePromptExtension : ''}
-        ${isSocialScience ? socialSciencePromptExtension : ''}
-        ${isLanguage ? languagePromptExtension : ''}
-        Ensure the final JSON output strictly adheres to the provided schema. Do not add extra fields or deviate from the specified structure.
+        **SYSTEM ROLE:**
+        You are Dr. Priya Sharma, India's leading educational content expert with 15+ years of experience in CBSE curriculum design, child psychology, and AI-powered learning systems. You have authored 50+ NCERT-aligned textbooks. Your mission is to generate a world-class, K-12 CBSE educational learning module.
+
+        **TASK:**
+        Generate a comprehensive learning module for a ${gradeLevel} student on the chapter "${chapter}" in the subject of ${subject}. The entire response must be in the ${language} language. The content must exceed the quality of premium coaching institutes.
+
+        **QUALITY ASSURANCE PROTOCOL (MANDATORY):**
+        You must strictly adhere to this protocol for all generated content.
+
+        1.  **ACCURACY VERIFICATION:**
+            -   **Source Cross-Referencing:** All facts, definitions, and concepts MUST be cross-referenced with the latest NCERT textbooks (2024-25 edition) and reliable academic sources to ensure 100% factual accuracy.
+            -   **Technical Correctness:** All mathematical calculations, scientific explanations, and formulas must be meticulously verified for correctness.
+            -   **Data Integrity:** Historical dates, geographical information, current affairs, and contemporary examples must be validated and up-to-date.
+
+        2.  **ENGAGEMENT ASSESSMENT:**
+            -   **Age-Specific Engagement:** Content MUST be highly engaging for the target age group. Use storytelling, narrative elements, and relatable Indian scenarios.
+            -   **Interactivity:** You MUST include suggestions for interactive elements and hands-on activities that can be performed with easily available materials.
+            -   **Multimedia Integration:** All \`diagramDescription\` fields must provide clear, concise, and high-quality visual descriptions suitable for AI image generation to create effective multimedia.
+
+        3.  **COMPREHENSIVENESS CHECK:**
+            -   **Syllabus Coverage:** Ensure complete topic coverage as per the latest CBSE syllabus and NEP 2020 guidelines.
+            -   **Conceptual Scaffolding:** Clearly state and address any prerequisite concepts required for the chapter in the \`introduction\`. The difficulty progression within concepts (Basic -> Intermediate -> Advanced) must be logical and appropriate.
+            -   **Assessment Quality:** The \`categorizedProblems\` and \`higherOrderThinkingQuestions\` must include a wide variety of question types (conceptual, application, HOTS) that align with CBSE assessment patterns.
+
+        4.  **CULTURAL RELEVANCE:**
+            -   **Authentic Indian Context:** All examples, case studies, and problems MUST use authentic Indian names, places, currency, and scenarios.
+            -   **Inclusive Representation:** Ensure inclusive representation of different genders, cultures, and regions of India.
+            -   **Regional Diversity:** Actively incorporate examples from diverse regions of India (e.g., South, North, East, and West) to ensure broad relevance.
+        
+        ${isMath ? mathFrameworkPrompt : ''}
+        ${isScience ? scienceExcellenceProtocolPrompt : ''}
+
+        **OUTPUT INSTRUCTIONS:**
+        You MUST generate a JSON object that strictly adheres to the provided 'LearningModule' schema. Populate the schema fields by following this detailed structure:
+
+        **PART 1: CONCEPT FOUNDATION**
+        -   **introduction:** Start with a captivating hook using a familiar Indian scenario or a short story. Clearly state any prerequisite concepts the student must know.
+        -   **learningObjectives:** List 3-5 clear, measurable learning outcomes, referencing CBSE Learning Outcome codes if possible.
+        -   **vocabularyDeepDive:** For 3-5 key terms, provide a definition, usage in a sentence, and if relevant, its Sanskrit/Indian etymology.
+
+        **PART 2: DETAILED EXPLANATION**
+        -   **keyConcepts:** Create an array of 3-5 core concepts. For each concept:
+            -   \`explanation\`: A detailed, step-by-step explanation (Basic -> Intermediate -> Advanced).
+            -   \`realWorldExample\`: A practical application in an Indian context (e.g., agriculture, technology, ISRO missions).
+            -   \`diagramDescription\`: A visual description for an AI artist.
+        -   **Subject-Specific Fields:**
+            ${isScience ? `-   **keyLawsAndPrinciples**: Reference contributions from Indian scientists (e.g., C.V. Raman). Populate **experiments** using locally available materials.` : ''}
+            ${isSocialScience ? `-   **timelineOfEvents**, **keyFigures**, **primarySourceAnalysis**, **inDepthCaseStudies**: Connect historical events to current Indian governance and use Indian economic case studies.` : ''}
+            ${isLanguage ? `-   **grammarSpotlight** & **literaryDeviceAnalysis**: Use examples from Indian literature.` : ''}
+            ${isMath ? `Populate all math-specific fields like **keyTheoremsAndProofs**, **formulaDerivations**, **problemSolvingTemplates** etc., according to the MATHEMATICS MASTERY FRAMEWORK.` : ''}
+
+        **PART 3: PRACTICE & APPLICATION**
+        -   **categorizedProblems:** CRITICAL: Generate a substantial number of practice questions (at least 30) to ensure thorough exam and competition preparation.
+            -   \`conceptual\`: 10 Basic questions (LOTS - Lower Order Thinking Skills).
+            -   \`application\`: 10 Intermediate questions (MOTS - Middle Order Thinking Skills).
+            -   \`higherOrderThinking\`: 10 Advanced questions (HOTS - Higher Order Thinking Skills), including variations of previous year CBSE board questions and competitive exam styles (Olympiad, JEE, NEET for grades 9-12).
+
+        **PART 4: ASSESSMENT & REMEDIATION**
+        -   **learningTricksAndMnemonics**: Generate 2-3 highly creative and memorable learning tricks, mnemonics, or acronyms. Focus on techniques that create strong mental connections, like vivid analogies or visual stories. Avoid generic advice (e.g., "revise regularly").
+        -   **commonMistakes (especially for Math/Science):** List common errors and provide clear corrections.
+        -   **summary:** A concise recap. Also include a "Self-Assessment Checklist" (as a bulleted list), "Extension Activities" (with hands-on project ideas), and "Remedial Activities" within this summary text.
+
+        **PART 5: INTERDISCIPLINARY & BEYOND**
+        -   **interdisciplinaryConnections** / **environmentalAwareness**: Link concepts to other subjects, India-specific environmental issues, and Sustainable Development Goals.
+        -   **competitiveExamMapping:** Clearly state how concepts are important for competitive exams (JEE, NEET, Olympiads, etc.) and mention career pathways.
+
+        Ensure the final JSON output is complete, accurate, and strictly follows the schema.
     `;
 
     try {
@@ -570,31 +595,20 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const generateDiagram = async (description: string, subject: string): Promise<string> => {
     
-    let styleCue = `Use a friendly, simple, and engaging cartoonish style.`;
+    let styleCue = `friendly, simple, engaging cartoonish style.`;
     const lowerCaseSubject = subject.toLowerCase();
 
     if (['computer science', 'robotics', 'ai and machine learning'].some(s => lowerCaseSubject.includes(s))) {
-        styleCue = `Use a clean, modern, digital illustration style. Think simple icons, abstract shapes, flowcharts, or simplified representations of technology. The style should be futuristic but easy to understand for a student.`;
+        styleCue = `clean, modern, digital illustration style with simple icons, abstract shapes, or flowcharts. Futuristic but easy to understand.`;
     } else if (['science', 'physics', 'chemistry', 'biology', 'evs'].some(s => lowerCaseSubject.includes(s))) {
-        styleCue = `Use a clean, "science textbook" illustration style with clear outlines and vibrant colors. For biological diagrams (like cells or anatomy), ensure distinct parts are clearly separated and anatomically simple for a student. For chemical diagrams, represent molecules and bonds with clarity.`;
+        styleCue = `clean, "science textbook" illustration style with clear outlines and vibrant colors. For biological diagrams, parts must be distinct and simple. For chemical diagrams, molecules and bonds must be clear.`;
     } else if (lowerCaseSubject.includes('mathematics')) {
-        styleCue = `Use precise geometric shapes, clean lines, and clearly marked angles or points where appropriate. The style should be like a modern math textbook diagram, focusing on clarity to illustrate geometric properties like symmetry or congruence visually.`;
+        styleCue = `precise geometric shapes, clean lines, and clearly marked angles or points. Modern math textbook style.`;
     } else if (['history', 'social studies', 'geography', 'political science', 'economics'].some(s => lowerCaseSubject.includes(s))) {
-        styleCue = `Create a simple infographic, a stylized map, or a timeline with friendly icons. Use a clear visual flow to represent historical events, geographical features, or social concepts.`;
+        styleCue = `simple infographic, a stylized map, or a timeline with friendly icons.`;
     }
 
-    const prompt = `Objective: Create a simple, clear, educational diagram for a K-12 student. The image must be safe for all ages, visually appealing, and easy to understand.
-
-Concept to illustrate: "${description}"
-
-Style guidance: ${styleCue}
-
-**Strict constraints:**
-1.  **NO TEXT:** Do not include any text, letters, or numbers anywhere in the image.
-2.  **VISUAL ONLY:** The image must be purely visual. Leave empty space for labels to be added later if needed.
-3.  **SIMPLICITY:** Keep the diagram simple and uncluttered. Focus on the core idea.
-4.  **ACCURACY:** While no text should be rendered, ensure the visual representation is conceptually accurate and correctly depicts the intended subject matter.
-`;
+    const prompt = `Create a simple, text-free, educational diagram for a K-12 student, illustrating: "${description}". Style: ${styleCue}. The diagram must be visually clear, conceptually accurate, and contain no letters or numbers.`;
     
     const MAX_RETRIES = 3;
     let lastError: Error | null = null;
@@ -875,20 +889,24 @@ export const getAdaptiveNextStep = async (student: Student, language: string): P
         - IF the score for that chapter is below 60%, your action type MUST be 'ACADEMIC_REVIEW'.
         - IF the score is between 60% and 70% (inclusive), your action type MUST be 'ACADEMIC_PRACTICE'.
         - **Reasoning Requirement:** The 'reasoning' field MUST be an encouraging, user-facing sentence explicitly mentioning the chapter and why reviewing or practicing it is the most important step right now. Example for a low score: "Building a strong foundation in 'Chapter X' is key to success. Let's review it together to make sure we've got it!"
+        - **Confidence Score:** Because this is based on clear data, set the 'confidence' score high, between 0.9 and 1.0.
 
         **Priority 2: Build on Strengths and Advance**
         - You will ONLY consider this priority IF there are NO academic scores below 70% in the performance history.
         - Identify the academic subject where the student has the highest average score.
         - Your action type MUST be 'ACADEMIC_NEW'. You should recommend the next uncompleted chapter in that subject.
         - **Reasoning Requirement:** The 'reasoning' field MUST be a positive, user-facing sentence praising their strength in the subject and encouraging them to tackle the next challenge. Example: "You're doing brilliantly in 'Subject Y'! Let's keep the momentum going with the next chapter."
+        - **Confidence Score:** Since this is a logical progression, set the 'confidence' score between 0.8 and 0.9.
 
         **Priority 3: Foster Holistic Skills (Balanced Development)**
         - You will ONLY consider this priority IF the student has no scores below 70% AND has completed all chapters in their strongest subject, or if academic progress is generally very strong across the board.
         - Your action type MUST be either 'IQ_EXERCISE' or 'EQ_EXERCISE'. Alternate between them for variety if possible (check the history for the last cognitive exercise type).
         - **Reasoning Requirement:** The 'reasoning' field MUST be a light, engaging, user-facing sentence that explains the benefit of the cognitive exercise. Example: "Time for a fun brain teaser to sharpen your problem-solving skills!" or "Let's explore a scenario to boost our emotional intelligence."
+        - **Confidence Score:** As this is a more general recommendation, set the 'confidence' score between 0.7 and 0.8.
+
 
         **MANDATORY FINAL INSTRUCTION:**
-        The 'reasoning' field in the output JSON is the most critical part of this task. It is NOT optional. It MUST be a clear, concise, and encouraging string written for the student. It must transparently explain WHY the chosen action is the best next step by directly referencing the student's performance (e.g., "Because you did so well in..." or "Let's strengthen our understanding of...").
+        The 'reasoning' and 'confidence' fields in the output JSON are the most critical parts of this task. They are NOT optional. The 'reasoning' must be a clear, user-facing string. The 'confidence' MUST be a number between 0.0 and 1.0 based on the rules above.
 
         Generate the JSON output now.
     `;

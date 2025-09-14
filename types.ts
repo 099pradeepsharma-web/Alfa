@@ -267,6 +267,7 @@ export interface AdaptiveAction {
         concept?: string;
         skill?: string;
         reasoning: string; // AI's explanation for why this action was chosen
+        confidence?: number;
     };
 }
 

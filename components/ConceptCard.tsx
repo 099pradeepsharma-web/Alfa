@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Concept, Student, Grade, Subject, Chapter, StudentQuestion, FittoResponse } from '../types';
 import { LightBulbIcon, BeakerIcon, ViewfinderCircleIcon, ExclamationTriangleIcon, ClockIcon, PaperAirplaneIcon, SparklesIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 import LoadingSpinner from './LoadingSpinner';
 import PracticeExercises from './PracticeExercises';
+import FittoAvatar, { FittoState } from './FittoAvatar';
 import { useLanguage } from '../contexts/Language-context';
 
 interface ConceptCardProps {
@@ -23,6 +24,13 @@ interface ConceptCardProps {
   onMarkAsInProgress: () => void;
   renderText: (text: string) => React.ReactNode;
 }
+
+type ConversationTurn = {
+    id: number;
+    type: 'user' | 'fitto';
+    text: string;
+    state?: 'thinking' | 'error';
+};
 
 const ProgressBadge: React.FC<{ status: ConceptCardProps['progressStatus'] }> = ({ status }) => {
     const { t } = useLanguage();
@@ -41,50 +49,139 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
   const { currentUser } = useAuth();
   const student = currentUser!;
   
-  const [isAsking, setIsAsking] = useState(false);
   const [questionText, setQuestionText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [fittoResponse, setFittoResponse] = useState<FittoResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [conversation, setConversation] = useState<ConversationTurn[]>([]);
   const [showPractice, setShowPractice] = useState(false);
+  const chatHistoryRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    // Initialize with a welcome message from Fitto
+    setConversation([{
+        id: Date.now(),
+        type: 'fitto',
+        text: t('fittoWelcome', { concept: concept.conceptTitle })
+    }]);
+  }, [t, concept.conceptTitle]);
+  
+  useEffect(() => {
+    // Auto-scroll to the bottom of the chat history
+    if (chatHistoryRef.current) {
+      chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
+    }
+  }, [conversation]);
+
 
   const handleSubmitQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!questionText.trim()) return;
+    const trimmedQuestion = questionText.trim();
+    if (!trimmedQuestion || isSubmitting) return;
 
     setIsSubmitting(true);
-    setError(null);
-    setFittoResponse(null);
+    
+    const userTurn: ConversationTurn = { id: Date.now(), type: 'user', text: trimmedQuestion };
+    const thinkingTurn: ConversationTurn = { id: Date.now() + 1, type: 'fitto', text: '', state: 'thinking' };
+
+    setConversation(prev => [...prev, userTurn, thinkingTurn]);
+    setQuestionText("");
 
     const newQuestion: StudentQuestion = {
-        id: `q-${Date.now()}`,
+        id: `q-${userTurn.id}`,
         studentId: student.id,
         studentName: student.name,
         grade: grade.level,
         subject: subject.name,
         chapter: chapter.title,
         concept: concept.conceptTitle,
-        questionText: questionText.trim(),
+        questionText: trimmedQuestion,
         timestamp: new Date().toISOString(),
     };
 
     try {
         await saveStudentQuestion(newQuestion, language);
-        
         const response = await getFittoAnswer(newQuestion, language);
-        setFittoResponse(response);
+        
+        setConversation(prev => prev.map(turn => 
+            turn.id === thinkingTurn.id ? { ...turn, text: response.responseText, state: undefined } : turn
+        ));
         
         const updatedQuestion = { ...newQuestion, fittoResponse: response };
         await updateStudentQuestion(updatedQuestion, language);
 
     } catch (err: any) {
-        setError(err.message);
+        setConversation(prev => prev.map(turn => 
+            turn.id === thinkingTurn.id ? { ...turn, text: err.message, state: 'error' } : turn
+        ));
     } finally {
         setIsSubmitting(false);
-        setQuestionText("");
-        setIsAsking(false);
     }
   };
+
+  const renderQnA = () => {
+    return (
+        <div className="flex flex-col space-y-4">
+            <div ref={chatHistoryRef} className="space-y-4 h-72 overflow-y-auto pr-2 rounded-lg bg-white dark:bg-slate-900/50 p-3 border border-slate-200 dark:border-slate-700">
+                {conversation.map(turn => {
+                    if (turn.type === 'user') {
+                        return (
+                            <div key={turn.id} className="flex justify-end animate-fade-in">
+                                <div className="chat-bubble user-bubble inline-block">
+                                    {turn.text}
+                                </div>
+                            </div>
+                        );
+                    } else { // Fitto's turn
+                        const avatarState: FittoState = turn.state === 'thinking' ? 'thinking' : turn.state === 'error' ? 'encouraging' : 'speaking';
+                        return (
+                            <div key={turn.id} className="flex items-end space-x-3 animate-fade-in">
+                                <div className="flex-shrink-0 self-start">
+                                    <FittoAvatar state={avatarState} size={40} />
+                                </div>
+                                <div className="flex-grow">
+                                    {turn.state === 'thinking' ? (
+                                        <div className="chat-bubble fitto-bubble inline-block">
+                                            <div className="typing-indicator"><span></span><span></span><span></span></div>
+                                        </div>
+                                    ) : turn.state === 'error' ? (
+                                        <div role="status" className="p-3 text-sm bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300 rounded-lg">
+                                            {turn.text}
+                                        </div>
+                                    ) : (
+                                        <div className="chat-bubble fitto-bubble">
+                                            <p className="text-slate-700 dark:text-slate-200">{turn.text}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    }
+                })}
+            </div>
+
+            <form onSubmit={handleSubmitQuestion} className="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <textarea
+                  value={questionText}
+                  onChange={(e) => setQuestionText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleSubmitQuestion(e); }}
+                  placeholder={t('askQuestionPlaceholder')}
+                  className="w-full flex-grow p-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-md focus:ring-2 focus:ring-primary focus:border-primary transition"
+                  rows={1}
+                  disabled={isSubmitting}
+                />
+                <button 
+                  type="submit" 
+                  className="flex-shrink-0 p-2.5 bg-primary text-white font-semibold rounded-lg shadow-sm hover:bg-primary-dark transition disabled:opacity-50 disabled:cursor-not-allowed" 
+                  style={{backgroundColor: 'rgb(var(--c-primary))'}}
+                  disabled={isSubmitting || !questionText.trim()}
+                  aria-label={t('submitQuestion')}
+                >
+                  {isSubmitting ? <LoadingSpinner /> : <PaperAirplaneIcon className="h-5 w-5" />}
+                </button>
+            </form>
+        </div>
+    );
+  };
+
 
   return (
     <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-6 transition-shadow hover:shadow-md not-prose">
@@ -170,58 +267,11 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
 
        {/* Q&A Section */}
       <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-        {isSubmitting ? (
-             <div role="status" className="p-3 text-center bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300 rounded-lg animate-pulse font-semibold flex items-center justify-center">
-                <LoadingSpinner />
-                <span className="ml-2">{t('fittoIsThinking')}</span>
-           </div>
-        ) : error ? (
-            <div role="status" className="p-3 text-center bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300 rounded-lg">
-                {error}
-            </div>
-        ) : fittoResponse ? (
-            <div role="status" className="bg-white dark:bg-slate-700 rounded-lg p-4 animate-fade-in">
-                <div className="flex items-start space-x-3">
-                    <div className="bg-primary text-white rounded-full h-10 w-10 flex-shrink-0 flex items-center justify-center" style={{backgroundColor: 'rgb(var(--c-primary))'}}>
-                        <SparklesIcon className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <h5 className="font-bold text-primary-dark" style={{color: 'rgb(var(--c-primary-dark))'}}>
-                            {t('fittoResponseTitle')}
-                        </h5>
-                        <p className="text-slate-700 dark:text-slate-200 mt-1">{fittoResponse.responseText}</p>
-                    </div>
-                </div>
-            </div>
-        ) : isAsking ? (
-          <form onSubmit={handleSubmitQuestion} className="space-y-3 animate-fade-in">
-            <label htmlFor={`question-${concept.conceptTitle}`} className="font-semibold text-slate-700 dark:text-slate-200 block">{t('yourQuestion')}:</label>
-            <textarea
-              id={`question-${concept.conceptTitle}`}
-              value={questionText}
-              onChange={(e) => setQuestionText(e.target.value)}
-              placeholder={t('askQuestionPlaceholder')}
-              className="w-full p-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-md focus:ring-2 focus:ring-primary focus:border-primary transition"
-              rows={3}
-            />
-            <div className="flex items-center justify-end gap-3">
-              <button type="button" onClick={() => setIsAsking(false)} className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100">
-                {t('cancel')}
-              </button>
-              <button type="submit" className="flex items-center px-4 py-2 bg-primary text-white font-semibold rounded-lg shadow-sm hover:bg-primary-dark transition" style={{backgroundColor: 'rgb(var(--c-primary))'}}>
-                <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-                {t('submitQuestion')}
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div className="text-center">
-            <button onClick={() => setIsAsking(true)} className="flex items-center mx-auto text-sm font-semibold text-primary-dark hover:text-primary-dark/80 transition" style={{color: 'rgb(var(--c-primary-dark))'}}>
-              <SparklesIcon className="h-5 w-5 mr-1.5" />
-              {t('askFitto')}
-            </button>
-          </div>
-        )}
+          <h4 className="text-lg font-bold text-slate-700 dark:text-slate-200 flex items-center mb-4">
+             <SparklesIcon className="h-6 w-6 mr-2 text-primary" style={{color: 'rgb(var(--c-primary))'}} />
+             {t('askFitto')}
+          </h4>
+          {renderQnA()}
       </div>
     </div>
   );

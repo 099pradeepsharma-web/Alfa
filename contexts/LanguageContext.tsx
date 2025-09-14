@@ -79,7 +79,6 @@ const enTranslations: Record<string, string> = {
     "roleTeacherDesc": "Monitor progress and generate reports.",
     "roleParent": "Parent",
     "roleParentDesc": "View your child's progress and reports.",
-    // FIX: Removed duplicate `parentDashboard` and `parentDashboardPrompt` keys. The more descriptive versions are kept below.
     "backToRoleSelection": "Back to Role Selection",
     "teacherDashboard": "Teacher Dashboard",
     "teacherDashboardPrompt": "Select a student to view their academic performance and generate reports.",
@@ -100,6 +99,7 @@ const enTranslations: Record<string, string> = {
     "submitQuestion": "Submit Question",
     "fittoIsThinking": "Fitto is thinking...",
     "fittoResponseTitle": "Fitto's Answer",
+    "fittoWelcome": "Hello! Do you have any questions about '{{concept}}'? I'm here to help!",
     "performance": "Performance",
     "studentQuestions": "Student Questions",
     "aiReports": "AI Reports",
@@ -283,7 +283,8 @@ const enTranslations: Record<string, string> = {
     "keyLawsAndPrinciples": "Key Laws and Principles",
     "conceptMap": "Chapter Concept Map",
     "learningTricksAndMnemonics": "Learning Tricks & Mnemonics",
-    "higherOrderThinkingQuestions": "Higher-Order Thinking Corner"
+    // FIX: Add missing comma to prevent syntax error
+    "higherOrderThinkingQuestions": "Higher-Order Thinking Corner",
 };
 
 const hiTranslations: Record<string, string> = {
@@ -364,7 +365,6 @@ const hiTranslations: Record<string, string> = {
     "roleTeacherDesc": "प्रगति की निगरानी करें और रिपोर्ट तैयार करें।",
     "roleParent": "अभिभावक",
     "roleParentDesc": "अपने बच्चे की प्रगति और रिपोर्ट देखें।",
-    // FIX: Removed duplicate `parentDashboard` and `parentDashboardPrompt` keys. The more descriptive versions are kept below.
     "backToRoleSelection": "भूमिका चयन पर वापस जाएं",
     "teacherDashboard": "शिक्षक डैशबोर्ड",
     "teacherDashboardPrompt": "किसी छात्र के शैक्षणिक प्रदर्शन को देखने और रिपोर्ट तैयार करने के लिए उसका चयन करें।",
@@ -385,6 +385,7 @@ const hiTranslations: Record<string, string> = {
     "submitQuestion": "प्रश्न सबमिट करें",
     "fittoIsThinking": "फिटो सोच रहा है...",
     "fittoResponseTitle": "फिटो का उत्तर",
+    "fittoWelcome": "नमस्ते! क्या आपके पास '{{concept}}' के बारे में कोई प्रश्न हैं? मैं मदद के लिए यहाँ हूँ!",
     "performance": "प्रदर्शन",
     "studentQuestions": "छात्र प्रश्न",
     "aiReports": "एआई रिपोर्ट",
@@ -568,7 +569,8 @@ const hiTranslations: Record<string, string> = {
     "keyLawsAndPrinciples": "मुख्य नियम और सिद्धांत",
     "conceptMap": "अध्याय अवधारणा मानचित्र",
     "learningTricksAndMnemonics": "सीखने की तरकीबें और स्मरक",
-    "higherOrderThinkingQuestions": "उच्च-स्तरीय सोच कॉर्नर"
+    // FIX: Add missing comma to prevent syntax error
+    "higherOrderThinkingQuestions": "उच्च-स्तरीय सोच कॉर्नर",
 };
 
 const hiCurriculumTranslations: Record<string, string> = {
