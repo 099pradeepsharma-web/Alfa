@@ -1,3 +1,5 @@
+
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter } from '../types';
 
@@ -435,7 +437,7 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
 
     const prompt = `
         **SYSTEM ROLE:**
-        You are Dr. Priya Sharma, India's leading educational content expert with 15+ years experience in CBSE curriculum design, child psychology, and AI-powered learning systems. You have authored 50+ NCERT-aligned textbooks and trained 10,000+ teachers across India. Your entire response must be in the ${language} language.
+        You are an expert educational content creator specializing in the Indian K-12 CBSE curriculum. You have extensive experience in curriculum design, child psychology, and creating AI-powered learning materials. Your goal is to produce content that is NCERT-aligned, pedagogically sound, and engaging for students. Your entire response must be in the ${language} language.
 
         **CONTENT MISSION:**
         Create a world-class K-12 CBSE learning module for a ${gradeLevel} student on the chapter "${chapter}" in ${subject}. The content must exceed international standards while being perfectly aligned with Indian educational contexts and NEP 2020 guidelines. You are talking to the student, ${studentName}, but your content should be structured for a learning platform. The tone should be authoritative yet encouraging, like an expert mentor.
@@ -445,6 +447,11 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
         2.  **CBSE Alignment:** Align with the latest CBSE syllabus (2024-25), NCERT textbooks, and NEP 2020 competency-based questions.
         3.  **Content Depth & Accuracy:** Provide multi-level explanations, real-world Indian examples, and address common misconceptions.
         4.  **Cultural Sensitivity:** Use Indian contexts, names, and examples.
+        5.  **Factual Accuracy:** All information, especially scientific laws, historical dates, and mathematical formulas, must be factually correct and verifiable.
+
+        **SAFETY & GROUNDING INSTRUCTIONS (CRUCIAL):**
+        - If a topic is highly specialized, controversial, or not typically covered in the standard NCERT textbook for this grade, you MUST state that and provide a foundational, age-appropriate overview rather than inventing complex details.
+        - Prioritize accuracy and pedagogical soundness above all else. Do not fabricate content to fill a field if the information is not readily available or suitable for the student's level.
 
         **CONTENT GENERATION GUIDE (Applying Principles to the JSON Schema):**
         -   **chapterTitle**: Must be "${chapter}".
@@ -622,7 +629,17 @@ export const generateDiagram = async (description: string, subject: string): Pro
         styleCue = `simple infographic, a stylized map, or a timeline with friendly icons.`;
     }
 
-    const prompt = `Generate a minimalist, 2D educational diagram for a K-12 student. The diagram should illustrate: "${description}". Key requirements: **text-free** (no words, letters, or numbers), clean lines, simple shapes, and a plain white background for clarity. Style: ${styleCue}. The final image must be visually clear, conceptually accurate, and easy to understand.`;
+    const prompt = `Generate a minimalist, 2D educational diagram for a K-12 student. The diagram should illustrate: "${description}".
+**Positive Requirements:**
+-   **Text-free:** Absolutely no words, letters, or numbers.
+-   **Clarity:** Clean lines, simple shapes, and a plain white background.
+-   **Style:** ${styleCue}.
+-   **Conceptually Accurate:** The visual representation must be correct and easy to understand.
+**Negative Requirements (AVOID):**
+-   Overly complex scenes or backgrounds.
+-   3D rendering, shadows, or photorealism.
+-   Text labels or annotations.
+-   Confusing or abstract metaphors.`;
     
     const MAX_RETRIES = 3;
     let lastError: Error | null = null;

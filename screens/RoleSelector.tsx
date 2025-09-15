@@ -5,6 +5,7 @@ import { useLanguage } from '../contexts/Language-context';
 interface RoleSelectorProps {
   onSelectRole: (role: 'student' | 'teacher' | 'parent') => void;
   onShowPrivacyPolicy: () => void;
+  onShowFaq: () => void;
 }
 
 // --- Custom Illustrations for each role ---
@@ -60,7 +61,7 @@ const ParentIllustration = () => (
 );
 
 
-const RoleSelector: React.FC<RoleSelectorProps> = ({ onSelectRole, onShowPrivacyPolicy }) => {
+const RoleSelector: React.FC<RoleSelectorProps> = ({ onSelectRole, onShowPrivacyPolicy, onShowFaq }) => {
   const { t } = useLanguage();
 
   const roles = [
@@ -124,13 +125,23 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onSelectRole, onShowPrivacy
         </div>
       </div>
       <footer className="text-center mt-12 py-4">
-        <button
-          onClick={onShowPrivacyPolicy}
-          className="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary-light transition-colors"
-          style={{textDecorationColor: 'rgb(var(--c-primary))'}}
-        >
-          {t('viewPrivacyPolicy')}
-        </button>
+        <div className="inline-flex items-center gap-x-6">
+            <button
+              onClick={onShowFaq}
+              className="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary-light transition-colors"
+              style={{textDecorationColor: 'rgb(var(--c-primary))'}}
+            >
+              {t('faqAndHelp')}
+            </button>
+            <span className="text-slate-300 dark:text-slate-600">|</span>
+            <button
+              onClick={onShowPrivacyPolicy}
+              className="text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary-light transition-colors"
+              style={{textDecorationColor: 'rgb(var(--c-primary))'}}
+            >
+              {t('viewPrivacyPolicy')}
+            </button>
+        </div>
       </footer>
     </div>
   );

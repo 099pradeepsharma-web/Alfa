@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Concept, Student, Grade, Subject, Chapter, StudentQuestion, FittoResponse } from '../types';
 import { BeakerIcon, ViewfinderCircleIcon, ExclamationTriangleIcon, ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
-import { CheckCircleIcon as CheckCircleSolid, MicrophoneIcon, PaperAirplaneIcon, PencilSquareIcon } from '@heroicons/react/24/solid';
+import { CheckCircleIcon as CheckCircleSolid, MicrophoneIcon, PaperAirplaneIcon, PencilSquareIcon, StopCircleIcon } from '@heroicons/react/24/solid';
 import { saveStudentQuestion, updateStudentQuestion } from '../services/pineconeService';
 import { getFittoAnswer } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,6 +11,7 @@ import PracticeExercises from './PracticeExercises';
 import FittoAvatar, { FittoState } from './FittoAvatar';
 import { useLanguage } from '../contexts/Language-context';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { useTTS } from '../hooks/useTTS';
 import { getIcon } from './IconMap';
 
 interface ConceptCardProps {
@@ -58,12 +59,15 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
   const chatHistoryRef = useRef<HTMLDivElement>(null);
   
   const SubjectIcon = getIcon(subject.icon);
+  
+  const { isSpeaking: isFittoSpeaking, play: playFittoResponse, stop: stopFittoResponse } = useTTS();
 
   const handleSubmitText = useCallback(async (text: string) => {
     const trimmedQuestion = text.trim();
     if (!trimmedQuestion || isSubmitting) return;
 
     setIsSubmitting(true);
+    if (isFittoSpeaking) stopFittoResponse();
     
     const userTurn: ConversationTurn = { id: Date.now(), type: 'user', text: trimmedQuestion };
     const thinkingTurn: ConversationTurn = { id: Date.now() + 1, type: 'fitto', text: '', state: 'thinking' };
@@ -87,6 +91,8 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
         await saveStudentQuestion(newQuestion, language);
         const response = await getFittoAnswer(newQuestion, language);
         
+        playFittoResponse(response.responseText);
+        
         setConversation(prev => prev.map(turn => 
             turn.id === thinkingTurn.id ? { ...turn, text: response.responseText, state: undefined } : turn
         ));
@@ -101,7 +107,7 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
     } finally {
         setIsSubmitting(false);
     }
-  }, [isSubmitting, student, grade, subject, chapter, concept.conceptTitle, language]);
+  }, [isSubmitting, student, grade, subject, chapter, concept.conceptTitle, language, playFittoResponse, isFittoSpeaking, stopFittoResponse]);
   
   const { isListening, transcript, startListening, stopListening, isSupported } = useSpeechRecognition({
       onEnd: handleSubmitText
@@ -146,7 +152,7 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
     return (
         <div className="flex flex-col space-y-4">
             <div ref={chatHistoryRef} className="space-y-4 h-72 overflow-y-auto pr-2 rounded-lg bg-white dark:bg-slate-900/50 p-3 border border-slate-200 dark:border-slate-700">
-                {conversation.map(turn => {
+                {conversation.map((turn, index) => {
                     if (turn.type === 'user') {
                         return (
                             <div key={turn.id} className="flex justify-end animate-fade-in">
@@ -156,13 +162,20 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
                             </div>
                         );
                     } else { // Fitto's turn
-                        const avatarState: FittoState = turn.state === 'thinking' ? 'thinking' : turn.state === 'error' ? 'encouraging' : 'speaking';
+                        const isLastTurn = index === conversation.length - 1;
+                        const avatarState: FittoState = turn.state === 'thinking' 
+                            ? 'thinking' 
+                            : turn.state === 'error' 
+                                ? 'encouraging' 
+                                : (isLastTurn && isFittoSpeaking ? 'speaking' : 'idle');
+
                         return (
                             <div key={`${turn.id}-${turn.state || 'final'}`} className="flex items-end space-x-3 animate-fade-in">
                                 <div className="flex-shrink-0 self-start">
                                     <FittoAvatar state={avatarState} size={40} />
                                 </div>
                                 <div className="flex-grow">
+                                  <div className="flex items-end gap-2">
                                     {turn.state === 'thinking' ? (
                                         <div className="chat-bubble fitto-bubble inline-block">
                                             <div className="typing-indicator"><span></span><span></span><span></span></div>
@@ -176,6 +189,16 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
                                             <p className="text-slate-700 dark:text-slate-200">{turn.text}</p>
                                         </div>
                                     )}
+                                    {isLastTurn && isFittoSpeaking && !turn.state && (
+                                      <button
+                                        onClick={stopFittoResponse}
+                                        className="flex-shrink-0 p-2 rounded-full bg-slate-200 dark:bg-slate-600 hover:bg-red-100 dark:hover:bg-red-800/50 text-slate-600 dark:text-slate-200 hover:text-red-500 dark:hover:text-red-400 transition"
+                                        aria-label="Stop speaking"
+                                      >
+                                          <StopCircleIcon className="h-5 w-5"/>
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
                             </div>
                         );

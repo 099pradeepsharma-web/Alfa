@@ -140,7 +140,7 @@ export interface LearningModule {
   learningTricksAndMnemonics?: string[];
   higherOrderThinkingQuestions?: HOTQuestion[];
 
-  // New fields from Dr. Priya Sharma prompt
+  // New pedagogical fields
   prerequisitesCheck?: string[];
   selfAssessmentChecklist?: string[];
   extensionActivities?: string[];
@@ -335,4 +335,16 @@ export interface AIFeedback {
     rating: 'up' | 'down';
     comment?: string;
     timestamp: string;
+}
+
+// --- New Types for FAQ/Tutorial ---
+export interface FAQItem {
+  questionKey: string;
+  answerKey: string;
+}
+
+export interface FAQSection {
+  role: 'student' | 'teacher' | 'parent';
+  titleKey: string;
+  items: FAQItem[];
 }

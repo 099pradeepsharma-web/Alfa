@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Grade, Subject, Chapter, LearningModule, QuizQuestion, NextStepRecommendation, ChapterProgress, Student, CategorizedProblems, VocabularyDeepDive, Theorem, FormulaDerivation, Formula, ProblemSolvingTemplate, CommonMistake, Experiment, TimelineEvent, KeyFigure, PrimarySourceSnippet, CaseStudy, GrammarRule, LiteraryDevice } from '../types';
 import * as contentService from '../services/contentService';
 import { generateQuiz, generateDiagram, generateNextStepRecommendation } from '../services/geminiService';
@@ -7,7 +7,7 @@ import LoadingSpinner from './LoadingSpinner';
 import ConceptCard from './ConceptCard';
 import Quiz from './Quiz';
 import Confetti from './Confetti';
-import { ArrowLeftIcon, RocketLaunchIcon, ArchiveBoxIcon, LightBulbIcon, ArrowPathIcon, ForwardIcon, CheckCircleIcon, BookOpenIcon, VariableIcon, ClipboardDocumentListIcon, QuestionMarkCircleIcon, ExclamationTriangleIcon as ExclamationTriangleSolid, TrophyIcon as TrophySolid, BeakerIcon, GlobeAltIcon, LinkIcon, AcademicCapIcon, PlayCircleIcon, PauseCircleIcon, StopCircleIcon, ClockIcon, UserGroupIcon, DocumentTextIcon, LanguageIcon, SparklesIcon as SparklesSolid, MapIcon, PuzzlePieceIcon, CalculatorIcon, ScaleIcon, ShareIcon, CheckBadgeIcon, CpuChipIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon, RocketLaunchIcon, ArchiveBoxIcon, LightBulbIcon, ArrowPathIcon, ForwardIcon, CheckCircleIcon, BookOpenIcon, VariableIcon, ClipboardDocumentListIcon, QuestionMarkCircleIcon, ExclamationTriangleIcon as ExclamationTriangleSolid, TrophyIcon as TrophySolid, BeakerIcon, GlobeAltIcon, LinkIcon, AcademicCapIcon, PlayCircleIcon, PauseCircleIcon, StopCircleIcon, ClockIcon, UserGroupIcon, DocumentTextIcon, LanguageIcon, SparklesIcon as SparklesSolid, MapIcon, PuzzlePieceIcon, CalculatorIcon, ScaleIcon, ShareIcon, CheckBadgeIcon, CpuChipIcon, SpeakerWaveIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from '../contexts/Language-context';
 import { useTTS } from '../hooks/useTTS';
 import { useAuth } from '../contexts/AuthContext';
@@ -31,7 +31,7 @@ interface DiagramState {
 
 // A more robust sentence tokenizer that handles abbreviations.
 const getSentences = (text: string): string[] => {
-    if (!text) return [];
+    if (!text || typeof text !== 'string') return [];
     const sentences = text.replace(/([.!?])\s*(?=[A-Z])/g, "$1|").split("|");
     return sentences.map(s => s.trim()).filter(Boolean);
 };
@@ -345,6 +345,12 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
   const { isSupported, isSpeaking, isPaused, currentSentenceIndex, play, pause, resume, stop } = useTTS();
   const [fullText, setFullText] = useState('');
 
+  const sentenceOffset = useRef(0);
+    useEffect(() => {
+        // This effect runs after every render, resetting the offset for the next render pass.
+        sentenceOffset.current = 0;
+    });
+
   const resetStateForNewChapter = () => {
     setLearningModule(null);
     setQuiz(null);
@@ -358,6 +364,43 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
     setFullText('');
   }
   
+  const sections = useMemo(() => {
+    if (!learningModule) return [];
+    return [
+        { key: 'prerequisitesCheck', title: t('prerequisitesCheck'), content: learningModule.prerequisitesCheck, icon: LinkIcon, type: 'string-list' },
+        { key: 'keyTheoremsAndProofs', title: t('keyTheoremsAndProofs'), content: learningModule.keyTheoremsAndProofs, icon: VariableIcon, type: 'theorems' },
+        { key: 'formulaDerivations', title: t('formulaDerivations'), content: learningModule.formulaDerivations, icon: CalculatorIcon, type: 'derivations' },
+        { key: 'formulaSheet', title: t('formulaSheet'), content: learningModule.formulaSheet, icon: ClipboardDocumentListIcon, type: 'formulas' },
+        { key: 'problemSolvingTemplates', title: t('problemSolvingTemplates'), content: learningModule.problemSolvingTemplates, icon: PuzzlePieceIcon, type: 'templates' },
+        { key: 'categorizedProblems', title: t('categorizedProblems'), content: learningModule.categorizedProblems, icon: QuestionMarkCircleIcon, type: 'problems' },
+        { key: 'commonMistakes', title: t('commonMistakes'), content: learningModule.commonMistakes, icon: ExclamationTriangleSolid, type: 'mistakes' },
+        { key: 'keyLawsAndPrinciples', title: t('keyLawsAndPrinciples'), content: learningModule.keyLawsAndPrinciples, icon: ScaleIcon, type: 'simple-text', text: learningModule.keyLawsAndPrinciples?.map(p => `${p.name}: ${p.explanation}`).join('\n') },
+        { key: 'solvedNumericalProblems', title: t('solvedNumericalProblems'), content: learningModule.solvedNumericalProblems, icon: CalculatorIcon, type: 'theorems', textItems: learningModule.solvedNumericalProblems?.map(p => ({name: p.question, proof: p.solution})) },
+        { key: 'experiments', title: t('experiments'), content: learningModule.experiments, icon: BeakerIcon, type: 'experiments' },
+        { key: 'scientificMethodApplications', title: t('scientificMethodApplications'), content: learningModule.scientificMethodApplications, icon: LightBulbIcon, type: 'simple-text', text: learningModule.scientificMethodApplications },
+        { key: 'currentDiscoveries', title: t('currentDiscoveries'), content: learningModule.currentDiscoveries, icon: SparklesSolid, type: 'simple-text', text: learningModule.currentDiscoveries },
+        { key: 'environmentalAwareness', title: t('environmentalAwareness'), content: learningModule.environmentalAwareness, icon: GlobeAltIcon, type: 'simple-text', text: learningModule.environmentalAwareness },
+        { key: 'interdisciplinaryConnections', title: t('interdisciplinaryConnections'), content: learningModule.interdisciplinaryConnections, icon: LinkIcon, type: 'simple-text', text: learningModule.interdisciplinaryConnections },
+        { key: 'timelineOfEvents', title: t('timelineOfEvents'), content: learningModule.timelineOfEvents, icon: ClockIcon, type: 'timeline' },
+        { key: 'keyFigures', title: t('keyFigures'), content: learningModule.keyFigures, icon: UserGroupIcon, type: 'key-figures' },
+        { key: 'primarySourceAnalysis', title: t('primarySourceAnalysis'), content: learningModule.primarySourceAnalysis, icon: DocumentTextIcon, type: 'sources' },
+        { key: 'inDepthCaseStudies', title: t('inDepthCaseStudies'), content: learningModule.inDepthCaseStudies, icon: AcademicCapIcon, type: 'case-studies' },
+        { key: 'grammarSpotlight', title: t('grammarSpotlight'), content: learningModule.grammarSpotlight, icon: LanguageIcon, type: 'grammar' },
+        { key: 'literaryDeviceAnalysis', title: t('literaryDeviceAnalysis'), content: learningModule.literaryDeviceAnalysis, icon: BookOpenIcon, type: 'literary' },
+        { key: 'vocabularyDeepDive', title: t('vocabularyDeepDive'), content: learningModule.vocabularyDeepDive, icon: LanguageIcon, type: 'vocab' },
+        { key: 'selfAssessmentChecklist', title: t('selfAssessmentChecklist'), content: learningModule.selfAssessmentChecklist, icon: CheckBadgeIcon, type: 'string-list' },
+        { key: 'extensionActivities', title: t('extensionActivities'), content: learningModule.extensionActivities, icon: RocketLaunchIcon, type: 'string-list' },
+        { key: 'remedialActivities', title: t('remedialActivities'), content: learningModule.remedialActivities, icon: ArrowPathIcon, type: 'string-list' },
+        { key: 'careerConnections', title: t('careerConnections'), content: learningModule.careerConnections, icon: AcademicCapIcon, type: 'simple-text', text: learningModule.careerConnections },
+        { key: 'technologyIntegration', title: t('technologyIntegration'), content: learningModule.technologyIntegration, icon: CpuChipIcon, type: 'simple-text', text: learningModule.technologyIntegration },
+        { key: 'summary', title: t('summary'), content: learningModule.summary, icon: ArchiveBoxIcon, type: 'simple-text', text: learningModule.summary },
+    ].filter(section => 
+        section.key !== 'learningObjectives' &&
+        section.content && 
+        (Array.isArray(section.content) ? section.content.length > 0 : typeof section.content === 'object' ? Object.keys(section.content).length > 0 : true)
+    );
+  }, [learningModule, t]);
+
   const fetchAllDiagrams = useCallback(async (module: LearningModule) => {
     const initialDiagramStates = module.keyConcepts.reduce((acc, concept) => {
         acc[concept.conceptTitle] = { url: null, isLoading: true, error: null };
@@ -408,14 +451,6 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
       );
 
       setIsFromDB(fromCache);
-      
-      const textToSpeak = [
-        content.introduction,
-        ...content.keyConcepts.flatMap(c => [c.explanation, c.realWorldExample]),
-        content.summary,
-      ].filter(Boolean).join(' ');
-      
-      setFullText(textToSpeak);
       setLearningModule(content);
       fetchAllDiagrams(content);
 
@@ -425,6 +460,67 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
         setIsLoadingModule(false);
     }
   }, [grade.level, subject.name, chapter.title, student, progressDbKey, language, t, fetchAllDiagrams]);
+
+    useEffect(() => {
+        if (!learningModule) return;
+
+        const learningObjectivesText = learningModule.learningObjectives ? learningModule.learningObjectives.join('. ') : '';
+
+        // Construct the full text for TTS in render order
+        const textParts: (string | undefined)[] = [
+            learningModule.introduction,
+            learningObjectivesText
+        ];
+        
+        learningModule.keyConcepts.forEach(c => {
+            textParts.push(c.explanation);
+            textParts.push(c.realWorldExample);
+        });
+        
+        sections.forEach(section => {
+             switch(section.type) {
+                case 'simple-text':
+                    textParts.push(section.text);
+                    break;
+                case 'vocab':
+                    (section.content as VocabularyDeepDive[])?.forEach(item => {
+                        textParts.push(item.definition);
+                        textParts.push(item.usageInSentence);
+                        if (item.etymology) textParts.push(item.etymology);
+                    });
+                    break;
+                case 'theorems':
+                    (section.textItems as Theorem[] || section.content as Theorem[])?.forEach(item => {
+                        textParts.push(item.name);
+                        textParts.push(item.proof);
+                    });
+                    break;
+                case 'derivations':
+                    (section.content as FormulaDerivation[])?.forEach(item => {
+                        textParts.push(item.formula);
+                        textParts.push(item.derivation);
+                    });
+                    break;
+                case 'sources':
+                     (section.content as PrimarySourceSnippet[])?.forEach(item => {
+                        textParts.push(item.snippet);
+                        textParts.push(item.analysis);
+                    });
+                    break;
+                case 'case-studies':
+                     (section.content as CaseStudy[])?.forEach(item => {
+                        textParts.push(item.title);
+                        textParts.push(item.background);
+                        textParts.push(item.analysis);
+                        textParts.push(item.conclusion);
+                    });
+                    break;
+             }
+        });
+      
+        setFullText(textParts.filter(Boolean).join(' '));
+
+  }, [learningModule, sections]);
 
   useEffect(() => {
     fetchContent();
@@ -501,18 +597,26 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
     saveChapterProgress(progressDbKey, newProgress, language);
   }, [progress, progressDbKey, language]);
   
-  const renderTextWithTTS = (text: string) => {
-    const sentences = getSentences(text);
+  const renderTextWithTTS = useCallback((text: string): React.ReactNode => {
+    if (!text || typeof text !== 'string') return text;
+    const localSentences = getSentences(text);
+    const startIndex = sentenceOffset.current;
+    sentenceOffset.current += localSentences.length;
+
     return (
-        <span className="tts-container">
-            {sentences.map((sentence, index) => (
-                <span key={index} className={`tts-sentence ${currentSentenceIndex === index ? 'speaking' : ''}`}>
-                    {sentence}{' '}
-                </span>
-            ))}
-        </span>
+        <>
+            {localSentences.map((sentence, index) => {
+                const globalIndex = startIndex + index;
+                const isSpeaking = globalIndex === currentSentenceIndex;
+                return (
+                    <span key={index} className={isSpeaking ? 'tts-highlight' : ''}>
+                        {sentence}{' '}
+                    </span>
+                );
+            })}
+        </>
     );
-  };
+  }, [currentSentenceIndex]);
   
   const allConceptsMastered = useMemo(() => {
     if (!learningModule) return false;
@@ -586,38 +690,30 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
   if (!learningModule) {
     return <div className="text-center"><p>{t('noContent')}</p></div>;
   }
+  
+  const renderSectionComponent = (section: any) => {
+    switch (section.type) {
+        case 'string-list': return <StringListComponent items={section.content} />;
+        case 'simple-text': return <SimpleTextComponent text={section.text} renderText={renderTextWithTTS} />;
+        case 'vocab': return <VocabularyComponent items={section.content} renderText={renderTextWithTTS} />;
+        case 'theorems': return <TheoremsComponent items={section.textItems || section.content} renderText={renderTextWithTTS} />;
+        case 'derivations': return <FormulaDerivationsComponent items={section.content} renderText={renderTextWithTTS} />;
+        case 'formulas': return <FormulaSheetComponent items={section.content} />;
+        case 'templates': return <ProblemSolvingTemplatesComponent items={section.content} />;
+        case 'problems': return <CategorizedProblemsComponent problems={section.content!} />;
+        case 'mistakes': return <CommonMistakesComponent items={section.content} />;
+        case 'experiments': return <ExperimentsComponent items={section.content} />;
+        case 'timeline': return <TimelineComponent items={section.content} />;
+        case 'key-figures': return <KeyFiguresComponent items={section.content} />;
+        case 'sources': return <PrimarySourceAnalysisComponent items={section.content} renderText={renderTextWithTTS} />;
+        case 'case-studies': return <CaseStudiesComponent items={section.content} renderText={renderTextWithTTS} />;
+        case 'grammar': return <GrammarSpotlightComponent items={section.content} />;
+        case 'literary': return <LiteraryDeviceAnalysisComponent items={section.content} />;
+        default: return null;
+    }
+  };
 
-  const sections = [
-        { title: t('prerequisitesCheck'), content: learningModule.prerequisitesCheck, icon: LinkIcon, component: <StringListComponent items={learningModule.prerequisitesCheck} /> },
-        { title: t('learningObjectives'), content: learningModule.learningObjectives, icon: CheckCircleIcon, component: <StringListComponent items={learningModule.learningObjectives} /> },
-        { title: t('keyTheoremsAndProofs'), content: learningModule.keyTheoremsAndProofs, icon: VariableIcon, component: <TheoremsComponent items={learningModule.keyTheoremsAndProofs} renderText={renderTextWithTTS} /> },
-        { title: t('formulaDerivations'), content: learningModule.formulaDerivations, icon: CalculatorIcon, component: <FormulaDerivationsComponent items={learningModule.formulaDerivations} renderText={renderTextWithTTS} /> },
-        { title: t('formulaSheet'), content: learningModule.formulaSheet, icon: ClipboardDocumentListIcon, component: <FormulaSheetComponent items={learningModule.formulaSheet} /> },
-        { title: t('problemSolvingTemplates'), content: learningModule.problemSolvingTemplates, icon: PuzzlePieceIcon, component: <ProblemSolvingTemplatesComponent items={learningModule.problemSolvingTemplates} /> },
-        { title: t('categorizedProblems'), content: learningModule.categorizedProblems, icon: QuestionMarkCircleIcon, component: <CategorizedProblemsComponent problems={learningModule.categorizedProblems!} /> },
-        { title: t('commonMistakes'), content: learningModule.commonMistakes, icon: ExclamationTriangleSolid, component: <CommonMistakesComponent items={learningModule.commonMistakes} /> },
-        { title: t('keyLawsAndPrinciples'), content: learningModule.keyLawsAndPrinciples, icon: ScaleIcon, component: <SimpleTextComponent text={learningModule.keyLawsAndPrinciples?.map(p => `${p.name}: ${p.explanation}`).join('\n')} renderText={renderTextWithTTS} /> },
-        { title: t('solvedNumericalProblems'), content: learningModule.solvedNumericalProblems, icon: CalculatorIcon, component: <TheoremsComponent items={learningModule.solvedNumericalProblems?.map(p => ({name: p.question, proof: p.solution}))} renderText={renderTextWithTTS} /> },
-        { title: t('experiments'), content: learningModule.experiments, icon: BeakerIcon, component: <ExperimentsComponent items={learningModule.experiments} /> },
-        { title: t('scientificMethodApplications'), content: learningModule.scientificMethodApplications, icon: LightBulbIcon, component: <SimpleTextComponent text={learningModule.scientificMethodApplications} renderText={renderTextWithTTS} /> },
-        { title: t('currentDiscoveries'), content: learningModule.currentDiscoveries, icon: SparklesSolid, component: <SimpleTextComponent text={learningModule.currentDiscoveries} renderText={renderTextWithTTS} /> },
-        { title: t('environmentalAwareness'), content: learningModule.environmentalAwareness, icon: GlobeAltIcon, component: <SimpleTextComponent text={learningModule.environmentalAwareness} renderText={renderTextWithTTS} /> },
-        { title: t('interdisciplinaryConnections'), content: learningModule.interdisciplinaryConnections, icon: LinkIcon, component: <SimpleTextComponent text={learningModule.interdisciplinaryConnections} renderText={renderTextWithTTS} /> },
-        { title: t('timelineOfEvents'), content: learningModule.timelineOfEvents, icon: ClockIcon, component: <TimelineComponent items={learningModule.timelineOfEvents} /> },
-        { title: t('keyFigures'), content: learningModule.keyFigures, icon: UserGroupIcon, component: <KeyFiguresComponent items={learningModule.keyFigures} /> },
-        { title: t('primarySourceAnalysis'), content: learningModule.primarySourceAnalysis, icon: DocumentTextIcon, component: <PrimarySourceAnalysisComponent items={learningModule.primarySourceAnalysis} renderText={renderTextWithTTS} /> },
-        { title: t('inDepthCaseStudies'), content: learningModule.inDepthCaseStudies, icon: AcademicCapIcon, component: <CaseStudiesComponent items={learningModule.inDepthCaseStudies} renderText={renderTextWithTTS} /> },
-        { title: t('grammarSpotlight'), content: learningModule.grammarSpotlight, icon: LanguageIcon, component: <GrammarSpotlightComponent items={learningModule.grammarSpotlight} /> },
-        { title: t('literaryDeviceAnalysis'), content: learningModule.literaryDeviceAnalysis, icon: BookOpenIcon, component: <LiteraryDeviceAnalysisComponent items={learningModule.literaryDeviceAnalysis} /> },
-        { title: t('vocabularyDeepDive'), content: learningModule.vocabularyDeepDive, icon: LanguageIcon, component: <VocabularyComponent items={learningModule.vocabularyDeepDive} renderText={renderTextWithTTS} /> },
-        { title: t('selfAssessmentChecklist'), content: learningModule.selfAssessmentChecklist, icon: CheckBadgeIcon, component: <StringListComponent items={learningModule.selfAssessmentChecklist} /> },
-        { title: t('extensionActivities'), content: learningModule.extensionActivities, icon: RocketLaunchIcon, component: <StringListComponent items={learningModule.extensionActivities} /> },
-        { title: t('remedialActivities'), content: learningModule.remedialActivities, icon: ArrowPathIcon, component: <StringListComponent items={learningModule.remedialActivities} /> },
-        { title: t('careerConnections'), content: learningModule.careerConnections, icon: AcademicCapIcon, component: <SimpleTextComponent text={learningModule.careerConnections} renderText={renderTextWithTTS} /> },
-        { title: t('technologyIntegration'), content: learningModule.technologyIntegration, icon: CpuChipIcon, component: <SimpleTextComponent text={learningModule.technologyIntegration} renderText={renderTextWithTTS} /> },
-        { title: t('summary'), content: learningModule.summary, icon: ArchiveBoxIcon, component: <SimpleTextComponent text={learningModule.summary} renderText={renderTextWithTTS} /> },
-    ].filter(section => section.content && (Array.isArray(section.content) ? section.content.length > 0 : true));
-
+  const learningObjectives = learningModule.learningObjectives;
 
   return (
     <div className="animate-fade-in relative pb-24">
@@ -637,8 +733,61 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
         <h2 className="text-4xl md:text-5xl font-bold text-slate-800 dark:text-slate-100">{tCurriculum(learningModule.chapterTitle)}</h2>
         <div className="introduction-text">{renderTextWithTTS(learningModule.introduction)}</div>
       </header>
+      
+       {isSupported && fullText && (
+        <div className="my-8 p-4 bg-slate-100 dark:bg-slate-800 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-3">
+                 <div className="p-2 bg-primary-light rounded-full" style={{backgroundColor: 'rgb(var(--c-primary-light))'}}>
+                    <SpeakerWaveIcon className="h-7 w-7 text-primary-dark" style={{color: 'rgb(var(--c-primary-dark))'}} />
+                </div>
+                <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100">Listen to this Lesson</h4>
+            </div>
+            <div className="flex items-center gap-3">
+                {!isSpeaking ? (
+                    <button 
+                        onClick={() => play(fullText)} 
+                        className="flex items-center justify-center px-5 py-2.5 text-white font-bold rounded-lg btn-primary-gradient"
+                        aria-label="Play lesson audio"
+                    >
+                        <PlayCircleIcon className="h-6 w-6 mr-2" />
+                        <span>Play</span>
+                    </button>
+                ) : (
+                    <>
+                        <button 
+                            onClick={isPaused ? resume : pause} 
+                            className="flex items-center justify-center px-5 py-2.5 text-white font-bold rounded-lg btn-primary-gradient"
+                            aria-label={isPaused ? "Resume audio" : "Pause audio"}
+                        >
+                            {isPaused ? <PlayCircleIcon className="h-6 w-6 mr-2" /> : <PauseCircleIcon className="h-6 w-6 mr-2" />}
+                            <span>{isPaused ? 'Resume' : 'Pause'}</span>
+                        </button>
+                        <button 
+                            onClick={stop}
+                            className="p-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 hover:text-red-600 dark:hover:text-red-400 transition"
+                            aria-label="Stop audio playback"
+                        >
+                            <StopCircleIcon className="h-6 w-6" />
+                        </button>
+                    </>
+                )}
+            </div>
+        </div>
+    )}
+
 
       <main className="space-y-12">
+        {learningObjectives && learningObjectives.length > 0 && (
+            <section>
+                <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center mb-6">
+                    <CheckCircleIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
+                    {t('learningObjectives')}
+                </h3>
+                <div className="prose prose-lg max-w-none prose-indigo dark:prose-invert text-slate-600 dark:text-slate-300">
+                    <StringListComponent items={learningObjectives} />
+                </div>
+            </section>
+        )}
         <section>
           <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center mb-6">
             <MapIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
@@ -665,13 +814,13 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
         </section>
         
         {sections.map(section => (
-            <section key={section.title}>
+            <section key={section.key}>
                  <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center mb-6">
                     <section.icon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
                     {section.title}
                 </h3>
                 <div className="prose prose-lg max-w-none prose-indigo dark:prose-invert text-slate-600 dark:text-slate-300">
-                    {section.component}
+                    {renderSectionComponent(section)}
                 </div>
             </section>
         ))}
@@ -694,18 +843,6 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
         </section>
       </main>
 
-      {isSupported && fullText && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-50">
-            <div className="bg-slate-800/90 dark:bg-slate-900/90 backdrop-blur-sm text-white rounded-xl shadow-2xl p-3 flex items-center justify-center gap-4">
-                <button onClick={isSpeaking ? stop : () => play(fullText)} className="p-2 hover:bg-white/20 rounded-full transition">
-                    {isSpeaking ? <StopCircleIcon className="h-7 w-7" /> : <PlayCircleIcon className="h-7 w-7" />}
-                </button>
-                <button onClick={isPaused ? resume : pause} disabled={!isSpeaking} className="p-2 hover:bg-white/20 rounded-full transition disabled:opacity-50">
-                    {isPaused ? <PlayCircleIcon className="h-7 w-7" /> : <PauseCircleIcon className="h-7 w-7" />}
-                </button>
-            </div>
-        </div>
-      )}
     </div>
   );
 };

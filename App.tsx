@@ -15,16 +15,18 @@ import StudentDashboard from './screens/StudentDashboard';
 import LoginScreen from './screens/LoginScreen';
 import PersonalizedPathScreen from './screens/PersonalizedPathScreen';
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
+import FAQScreen from './screens/FAQScreen';
 import { useLanguage } from './contexts/Language-context';
 import { useAuth } from './contexts/AuthContext';
 import LoadingSpinner from './components/LoadingSpinner';
 
 type UserRole = 'student' | 'teacher' | 'parent';
 type StudentView = 'dashboard' | 'path' | 'browse';
+type AppState = 'role_selection' | 'student_flow' | 'teacher_flow' | 'parent_flow' | 'privacy_policy' | 'faq';
 
 const App: React.FC = () => {
   // Global State
-  const [appState, setAppState] = useState<'role_selection' | 'student_flow' | 'teacher_flow' | 'parent_flow' | 'privacy_policy'>('role_selection');
+  const [appState, setAppState] = useState<AppState>('role_selection');
   const [activeStudent, setActiveStudent] = useState<Student | null>(null); // For teacher/parent view
   const { language } = useLanguage();
   const { isLoggedIn, currentUser, loading: authLoading } = useAuth();
@@ -196,9 +198,13 @@ const App: React.FC = () => {
       return <PrivacyPolicyScreen onBack={() => setAppState('role_selection')} />;
     }
 
+    if (appState === 'faq') {
+        return <FAQScreen onBack={() => setAppState('role_selection')} />;
+    }
+
     switch(appState) {
       case 'role_selection':
-        return <RoleSelector onSelectRole={handleRoleSelect} onShowPrivacyPolicy={() => setAppState('privacy_policy')} />;
+        return <RoleSelector onSelectRole={handleRoleSelect} onShowPrivacyPolicy={() => setAppState('privacy_policy')} onShowFaq={() => setAppState('faq')} />;
       
       case 'student_flow':
         return renderStudentFlow();
@@ -217,7 +223,7 @@ const App: React.FC = () => {
         return <StudentPerformanceView userRole="parent" student={activeStudent} language={language} onBack={backToStudentList} />;
 
       default:
-        return <RoleSelector onSelectRole={handleRoleSelect} onShowPrivacyPolicy={() => setAppState('privacy_policy')} />;
+        return <RoleSelector onSelectRole={handleRoleSelect} onShowPrivacyPolicy={() => setAppState('privacy_policy')} onShowFaq={() => setAppState('faq')} />;
     }
   };
   

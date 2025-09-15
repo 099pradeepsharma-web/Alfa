@@ -63,7 +63,7 @@ export const useTTS = () => {
             }
             // Adjust rate and pitch for a more inspirational, storytelling tone.
             utterance.rate = 0.95; // Slower, storytelling pace
-            utterance.pitch = 1.2; // Higher, more inspirational pitch
+            utterance.pitch = 1.1; // Higher, more inspirational pitch
             return utterance;
         });
 

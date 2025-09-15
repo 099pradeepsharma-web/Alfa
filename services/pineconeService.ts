@@ -1,3 +1,6 @@
+// This service acts as a data access layer for student-specific information,
+// persisting data to the local browser storage (IndexedDB).
+// The name 'pineconeService' is a legacy name.
 import { LearningModule, ChapterProgress, StudentQuestion, PerformanceRecord, AIFeedback, LearningStreak } from '../types';
 import * as db from './databaseService';
 
