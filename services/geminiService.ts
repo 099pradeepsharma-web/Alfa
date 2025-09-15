@@ -1,6 +1,3 @@
-
-
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter } from '../types';
 
@@ -214,6 +211,14 @@ const learningModuleSchema = {
         higherOrderThinkingQuestions: { type: Type.ARRAY, items: hotQuestionSchema, nullable: true },
         competitiveExamMapping: { type: Type.STRING, nullable: true },
 
+        // New fields
+        prerequisitesCheck: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
+        selfAssessmentChecklist: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
+        extensionActivities: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
+        remedialActivities: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
+        careerConnections: { type: Type.STRING, nullable: true },
+        technologyIntegration: { type: Type.STRING, nullable: true },
+
         // Math
         keyTheoremsAndProofs: { type: Type.ARRAY, items: theoremSchema, nullable: true },
         formulaDerivations: { type: Type.ARRAY, items: formulaDerivationSchema, nullable: true },
@@ -359,103 +364,112 @@ const curriculumOutlineSchema = {
 };
 
 
-export const getChapterContent = async (gradeLevel: string, subject: string, chapter: string, language: string): Promise<LearningModule> => {
-    const lowerCaseSubject = subject.toLowerCase();
-    const isMath = lowerCaseSubject.includes('mathematics');
-    const isScience = ['science', 'physics', 'chemistry', 'biology', 'evs'].some(s => lowerCaseSubject.includes(s));
-    const isSocialScience = ['history', 'geography', 'political science', 'economics', 'social studies', 'sociology', 'business studies', 'accountancy'].some(s => lowerCaseSubject.includes(s));
-    const isLanguage = ['english', 'hindi'].some(s => lowerCaseSubject.includes(s));
-
-    const mathFrameworkPrompt = `
-        **MATHEMATICS MASTERY FRAMEWORK (MANDATORY):**
-        You must adhere to the following framework for all Mathematics content:
-        1.  **Purpose-First Learning**: For EACH \`keyConcept\`, the \`explanation\` MUST begin with a section titled "Why is this important?". This section must connect the concept to a real, practical Indian application (e.g., GST calculations, stock market analysis, rocket trajectories).
-        2.  **Diverse Problem Solving**: For EACH problem type in \`problemSolvingTemplates\`, you MUST provide at least 3 different solution methods (e.g., Algebraic, Graphical, Logical/Intuitive method). For \`keyTheoremsAndProofs\`, include visual proof methods where applicable.
-        3.  **Vedic Mathematics Integration**: Within \`learningTricksAndMnemonics\`, you MUST include at least one relevant mental calculation technique from Vedic Mathematics and label it as such.
-        4.  **Enhanced Reasoning Skills**: Within \`categorizedProblems\`, ensure the 'higherOrderThinking' section includes questions that are explicitly designed to test pattern recognition and logical reasoning.
-        5.  **Career & Heritage Connection**: The \`competitiveExamMapping\` section MUST explicitly connect concepts to current STEM career opportunities in India and reference contributions from Indian mathematicians like Aryabata, Ramanujan, and C. R. Rao.
-        6.  **Financial Literacy**: For at least one \`keyConcept\`, the \`realWorldExample\` MUST be a financial literacy application using Indian banking, investment, or market scenarios (e.g., calculating compound interest for a Fixed Deposit, understanding EMI).
-    `;
+export const getChapterContent = async (gradeLevel: string, subject: string, chapter: string, studentName: string, language: string): Promise<LearningModule> => {
     
-    const scienceExcellenceProtocolPrompt = `
-        **SCIENCE EXCELLENCE PROTOCOL (MANDATORY):**
-        You must adhere to the following framework for all Science content:
-        1.  **Inquiry-Based Start**: For EACH \`keyConcept\`, the \`explanation\` MUST begin with a section titled "Observe and Wonder". This section must pose a simple observational question that an Indian student can explore at home using everyday materials (e.g., "Why does a steel spoon get hot when left in hot dal, but a wooden one doesn't?").
-        2.  **Safety is Paramount**: For EACH \`experiment\`, the \`safetyGuidelines\` field MUST be populated with clear, specific, and easy-to-follow safety rules.
-        3.  **Connecting to Modern India**:
-            - The \`explanation\` or \`realWorldExample\` for at least one \`keyConcept\` MUST reference a recent achievement or ongoing research from an Indian scientific institution like ISRO (e.g., Chandrayaan, Mangalyaan), DRDO, or a prominent IIT.
-            - The \`environmentalAwareness\` section MUST connect the chapter's concepts to a specific ecological challenge faced in India (e.g., air pollution in Delhi, water scarcity in Chennai, Himalayan glacier melt).
-            - For relevant biology/chemistry chapters, you MUST include a health science application addressing a common Indian public health concern (e.g., malnutrition, diabetes, vector-borne diseases like dengue).
-    `;
+    let subjectSpecificInstructions = '';
+    const lowerCaseSubject = subject.toLowerCase();
+
+    if (lowerCaseSubject.includes('mathematics')) {
+        subjectSpecificInstructions = `
+        **MATHEMATICS MASTERY FRAMEWORK (Apply these specific instructions for Mathematics content ONLY):**
+        -   **Content Structure**: Ensure the response includes fields like \`keyTheoremsAndProofs\`, \`formulaDerivations\`, etc., where relevant.
+        -   **Real-World Connection First**: Begin EVERY key concept explanation with a "Why is this important?" section, connecting it to a tangible, real-world Indian application (e.g., GST calculations for Percentages, rocket trajectories for Conic Sections).
+        -   **Multiple Solution Methods**: For \`problemSolvingTemplates\` and \`categorizedProblems\`, provide at least three distinct methods for solving each major problem type where applicable. Label them clearly (e.g., "Method 1: Traditional," "Method 2: Logical Reasoning," "Method 3: Shortcut").
+        -   **Vedic Mathematics Integration**: Within the \`learningTricksAndMnemonics\` section, include specific mental calculation shortcuts inspired by Vedic Mathematics relevant to the chapter.
+        -   **Pattern Recognition & Logic**: Include a subsection in \`categorizedProblems\` or as an \`extensionActivity\` specifically designed for pattern recognition or logical reasoning related to the mathematical concepts.
+        -   **Career & Heritage Connection**: Ensure the \`careerConnections\` section is robust, linking the chapter's concepts to modern Indian STEM careers (ISRO, data science, etc.). Also, explicitly mention contributions of Indian mathematicians like Aryabhata, Ramanujan, etc., in the relevant \`introduction\` or concept explanations.
+        -   **Financial Literacy**: Where relevant (e.g., Percentages, Simple/Compound Interest, Linear Equations), add examples in the \`realWorldExample\` field that relate to Indian financial contexts like banking (loans, interest rates), or taxes.
+        `;
+    } else if (['science', 'physics', 'chemistry', 'biology', 'evs'].some(s => lowerCaseSubject.includes(s))) {
+        subjectSpecificInstructions = `
+        **SCIENCE EXCELLENCE PROTOCOL (Apply these specific instructions for Science/Physics/Chemistry/Biology content ONLY):**
+        -   **Content Structure**: Ensure the response includes fields like \`experiments\`, \`keyLawsAndPrinciples\`, \`scientificMethodApplications\`, \`currentDiscoveries\`, and \`environmentalAwareness\`.
+        -   **Start with Observation**: Begin EVERY key concept explanation with an "Observe at Home" section, posing a simple question that an Indian student can explore using everyday materials (e.g., "Why does a steel spoon get hot when left in a cup of chai?").
+        -   **Safety First**: For every experiment in the \`experiments\` section, the \`safetyGuidelines\` field MUST be detailed and practical, mentioning the need for adult supervision where necessary.
+        -   **Connect to Indian Research**: Within the \`explanation\` of relevant concepts, explicitly reference achievements from Indian scientific bodies like ISRO (e.g., Chandrayaan, Mangalyaan), DRDO, or research from IITs.
+        -   **Ecological Relevance**: The \`environmentalAwareness\` section MUST connect the chapter's topic to a specific Indian ecological challenge (e.g., water conservation in arid regions, air pollution in cities, Himalayan ecosystem preservation).
+        -   **Public Health Connection**: Include a "Health Connection" within the \`realWorldExample\` field where applicable, linking the scientific concept to a public health issue in India (e.g., nutrition, vaccination, water-borne diseases).
+        `;
+    } else {
+        // Fallback for other subjects.
+        subjectSpecificInstructions = `
+        -   **For Social Science, Commerce, Humanities**: Include \`timelineOfEvents\` and \`keyFigures\`. Connect to the Indian Constitution and current events.
+        -   **For Language Arts**: Include \`grammarSpotlight\` and \`literaryDeviceAnalysis\` with examples from Indian literature.
+        `;
+    }
+    
+    // New logic for dynamic question generation instructions based on grade level and CBSE patterns
+    const gradeNumber = parseInt(gradeLevel.replace(/[^0-9]/g, ''), 10) || 0;
+    let questionGenerationInstructions = '';
+
+    if (gradeNumber >= 11) {
+        questionGenerationInstructions = `
+        -   **categorizedProblems**: This is "PART 3 - PRACTICE & APPLICATION". Generate a comprehensive bank of at least 40 practice questions to ensure exhaustive coverage, making Alfanumrik the only resource a student needs. The questions must be meticulously designed based on the last 10 years of CBSE exam patterns for senior secondary classes. Distribute the questions across \`conceptual\`, \`application\`, and \`higherOrderThinking\` categories. Ensure a diverse mix of question types, including:
+            -   Multiple Choice Questions (MCQs)
+            -   Short Answer (SA-I, SA-II)
+            -   Long Answer (LA)
+            -   Case-Based/Source-Based Questions
+            -   Assertion-Reasoning Questions
+        A significant portion should be inspired by previous year board questions.
+        `;
+    } else if (gradeNumber >= 9) {
+        questionGenerationInstructions = `
+        -   **categorizedProblems**: This is "PART 3 - PRACTICE & APPLICATION". Generate a comprehensive bank of at least 35 practice questions to ensure students are fully prepared. The questions must be meticulously designed based on the last 10 years of CBSE exam patterns for high school. Distribute the questions across \`conceptual\`, \`application\`, and \`higherOrderThinking\` categories. Ensure a diverse mix of question types, including:
+            -   Multiple Choice Questions (MCQs)
+            -   Very Short Answer (VSA)
+            -   Short Answer (SA)
+            -   Long Answer (LA)
+            -   Case-Based Questions
+        Include variations of previous year CBSE board questions.
+        `;
+    } else if (gradeNumber >= 6) {
+        questionGenerationInstructions = `
+        -   **categorizedProblems**: This is "PART 3 - PRACTICE & APPLICATION". Generate a solid bank of at least 25 practice questions based on middle school examination patterns. Distribute the questions across \`conceptual\`, \`application\`, and \`higherOrderThinking\` categories. Ensure a mix of question types, including MCQs, Very Short Answer, and Short Answer questions.
+        `;
+    } else {
+        // For grades below 6, keep it simpler.
+        questionGenerationInstructions = `
+        -   **categorizedProblems**: This is "PART 3 - PRACTICE & APPLICATION". Generate a set of 15 practice questions. Distribute them evenly with 5 for \`conceptual\`, 5 for \`application\`, and 5 for \`higherOrderThinking\`. The questions should be simple, direct, and focused on reinforcing the core concepts.
+        `;
+    }
 
     const prompt = `
         **SYSTEM ROLE:**
-        You are Dr. Priya Sharma, India's leading educational content expert with 15+ years of experience in CBSE curriculum design, child psychology, and AI-powered learning systems. You have authored 50+ NCERT-aligned textbooks. Your mission is to generate a world-class, K-12 CBSE educational learning module.
+        You are Dr. Priya Sharma, India's leading educational content expert with 15+ years experience in CBSE curriculum design, child psychology, and AI-powered learning systems. You have authored 50+ NCERT-aligned textbooks and trained 10,000+ teachers across India. Your entire response must be in the ${language} language.
 
-        **TASK:**
-        Generate a comprehensive learning module for a ${gradeLevel} student on the chapter "${chapter}" in the subject of ${subject}. The entire response must be in the ${language} language. The content must exceed the quality of premium coaching institutes.
+        **CONTENT MISSION:**
+        Create a world-class K-12 CBSE learning module for a ${gradeLevel} student on the chapter "${chapter}" in ${subject}. The content must exceed international standards while being perfectly aligned with Indian educational contexts and NEP 2020 guidelines. You are talking to the student, ${studentName}, but your content should be structured for a learning platform. The tone should be authoritative yet encouraging, like an expert mentor.
 
-        **QUALITY ASSURANCE PROTOCOL (MANDATORY):**
-        You must strictly adhere to this protocol for all generated content.
+        **QUALITY STANDARDS (MANDATORY):**
+        1.  **Pedagogical Excellence:** Follow Bloom's Taxonomy progression. Use scaffolded learning.
+        2.  **CBSE Alignment:** Align with the latest CBSE syllabus (2024-25), NCERT textbooks, and NEP 2020 competency-based questions.
+        3.  **Content Depth & Accuracy:** Provide multi-level explanations, real-world Indian examples, and address common misconceptions.
+        4.  **Cultural Sensitivity:** Use Indian contexts, names, and examples.
 
-        1.  **ACCURACY VERIFICATION:**
-            -   **Source Cross-Referencing:** All facts, definitions, and concepts MUST be cross-referenced with the latest NCERT textbooks (2024-25 edition) and reliable academic sources to ensure 100% factual accuracy.
-            -   **Technical Correctness:** All mathematical calculations, scientific explanations, and formulas must be meticulously verified for correctness.
-            -   **Data Integrity:** Historical dates, geographical information, current affairs, and contemporary examples must be validated and up-to-date.
-
-        2.  **ENGAGEMENT ASSESSMENT:**
-            -   **Age-Specific Engagement:** Content MUST be highly engaging for the target age group. Use storytelling, narrative elements, and relatable Indian scenarios.
-            -   **Interactivity:** You MUST include suggestions for interactive elements and hands-on activities that can be performed with easily available materials.
-            -   **Multimedia Integration:** All \`diagramDescription\` fields must provide clear, concise, and high-quality visual descriptions suitable for AI image generation to create effective multimedia.
-
-        3.  **COMPREHENSIVENESS CHECK:**
-            -   **Syllabus Coverage:** Ensure complete topic coverage as per the latest CBSE syllabus and NEP 2020 guidelines.
-            -   **Conceptual Scaffolding:** Clearly state and address any prerequisite concepts required for the chapter in the \`introduction\`. The difficulty progression within concepts (Basic -> Intermediate -> Advanced) must be logical and appropriate.
-            -   **Assessment Quality:** The \`categorizedProblems\` and \`higherOrderThinkingQuestions\` must include a wide variety of question types (conceptual, application, HOTS) that align with CBSE assessment patterns.
-
-        4.  **CULTURAL RELEVANCE:**
-            -   **Authentic Indian Context:** All examples, case studies, and problems MUST use authentic Indian names, places, currency, and scenarios.
-            -   **Inclusive Representation:** Ensure inclusive representation of different genders, cultures, and regions of India.
-            -   **Regional Diversity:** Actively incorporate examples from diverse regions of India (e.g., South, North, East, and West) to ensure broad relevance.
+        **CONTENT GENERATION GUIDE (Applying Principles to the JSON Schema):**
+        -   **chapterTitle**: Must be "${chapter}".
+        -   **introduction**: This is your "CONCEPT FOUNDATION". Start with a hook, introduce the concept with a familiar Indian scenario.
+        -   **learningObjectives**: These are the CBSE Learning Outcomes. Be specific and measurable.
+        -   **prerequisitesCheck**: A list of concepts the student MUST know before starting this chapter.
+        -   **keyConcepts**: This is your "DETAILED EXPLANATION". Each concept should have:
+            -   \`conceptTitle\`: A clear title for the concept.
+            -   \`explanation\`: A step-by-step breakdown.
+            -   \`realWorldExample\`: An application in an Indian context (e.g., technology, culture, economy).
+            -   \`diagramDescription\`: A detailed description for a visual aid.
+        ${questionGenerationInstructions}
+        -   **commonMistakes**: This is for "ASSESSMENT & REMEDIATION". List common errors students make and their corrections.
+        -   **selfAssessmentChecklist**: A list of "I can..." statements for students to check their understanding.
+        -   **extensionActivities**: For advanced learners. Suggest projects or further reading.
+        -   **remedialActivities**: For struggling students. Suggest simpler problems or foundational concept reviews.
+        -   **interdisciplinaryConnections**: This is "PART 5". Explain how this chapter connects to other subjects.
+        -   **careerConnections**: List potential career paths related to this topic.
+        -   **technologyIntegration**: Suggest how technology (apps, simulations) can be used to learn this topic.
+        -   **summary**: A concise summary of the key takeaways from the chapter.
         
-        ${isMath ? mathFrameworkPrompt : ''}
-        ${isScience ? scienceExcellenceProtocolPrompt : ''}
+        ${subjectSpecificInstructions}
 
-        **OUTPUT INSTRUCTIONS:**
-        You MUST generate a JSON object that strictly adheres to the provided 'LearningModule' schema. Populate the schema fields by following this detailed structure:
-
-        **PART 1: CONCEPT FOUNDATION**
-        -   **introduction:** Start with a captivating hook using a familiar Indian scenario or a short story. Clearly state any prerequisite concepts the student must know.
-        -   **learningObjectives:** List 3-5 clear, measurable learning outcomes, referencing CBSE Learning Outcome codes if possible.
-        -   **vocabularyDeepDive:** For 3-5 key terms, provide a definition, usage in a sentence, and if relevant, its Sanskrit/Indian etymology.
-
-        **PART 2: DETAILED EXPLANATION**
-        -   **keyConcepts:** Create an array of 3-5 core concepts. For each concept:
-            -   \`explanation\`: A detailed, step-by-step explanation (Basic -> Intermediate -> Advanced).
-            -   \`realWorldExample\`: A practical application in an Indian context (e.g., agriculture, technology, ISRO missions).
-            -   \`diagramDescription\`: A visual description for an AI artist.
-        -   **Subject-Specific Fields:**
-            ${isScience ? `-   **keyLawsAndPrinciples**: Reference contributions from Indian scientists (e.g., C.V. Raman). Populate **experiments** using locally available materials.` : ''}
-            ${isSocialScience ? `-   **timelineOfEvents**, **keyFigures**, **primarySourceAnalysis**, **inDepthCaseStudies**: Connect historical events to current Indian governance and use Indian economic case studies.` : ''}
-            ${isLanguage ? `-   **grammarSpotlight** & **literaryDeviceAnalysis**: Use examples from Indian literature.` : ''}
-            ${isMath ? `Populate all math-specific fields like **keyTheoremsAndProofs**, **formulaDerivations**, **problemSolvingTemplates** etc., according to the MATHEMATICS MASTERY FRAMEWORK.` : ''}
-
-        **PART 3: PRACTICE & APPLICATION**
-        -   **categorizedProblems:** CRITICAL: Generate a substantial number of practice questions (at least 30) to ensure thorough exam and competition preparation.
-            -   \`conceptual\`: 10 Basic questions (LOTS - Lower Order Thinking Skills).
-            -   \`application\`: 10 Intermediate questions (MOTS - Middle Order Thinking Skills).
-            -   \`higherOrderThinking\`: 10 Advanced questions (HOTS - Higher Order Thinking Skills), including variations of previous year CBSE board questions and competitive exam styles (Olympiad, JEE, NEET for grades 9-12).
-
-        **PART 4: ASSESSMENT & REMEDIATION**
-        -   **learningTricksAndMnemonics**: Generate 2-3 highly creative and memorable learning tricks, mnemonics, or acronyms. Focus on techniques that create strong mental connections, like vivid analogies or visual stories. Avoid generic advice (e.g., "revise regularly").
-        -   **commonMistakes (especially for Math/Science):** List common errors and provide clear corrections.
-        -   **summary:** A concise recap. Also include a "Self-Assessment Checklist" (as a bulleted list), "Extension Activities" (with hands-on project ideas), and "Remedial Activities" within this summary text.
-
-        **PART 5: INTERDISCIPLINARY & BEYOND**
-        -   **interdisciplinaryConnections** / **environmentalAwareness**: Link concepts to other subjects, India-specific environmental issues, and Sustainable Development Goals.
-        -   **competitiveExamMapping:** Clearly state how concepts are important for competitive exams (JEE, NEET, Olympiads, etc.) and mention career pathways.
-
-        Ensure the final JSON output is complete, accurate, and strictly follows the schema.
+        **FINAL INSTRUCTION:**
+        Your entire output MUST be a JSON object that strictly follows the 'LearningModule' schema. Ensure all text fields embody the expert, culturally-relevant, and pedagogically sound principles outlined above. No markdown, just plain text with newline characters (\\n) for breaks.
     `;
 
     try {
@@ -465,7 +479,7 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
             config: {
                 responseMimeType: "application/json",
                 responseSchema: learningModuleSchema,
-                temperature: 0.7,
+                temperature: 0.8,
             },
         });
 
@@ -608,7 +622,7 @@ export const generateDiagram = async (description: string, subject: string): Pro
         styleCue = `simple infographic, a stylized map, or a timeline with friendly icons.`;
     }
 
-    const prompt = `Create a simple, text-free, educational diagram for a K-12 student, illustrating: "${description}". Style: ${styleCue}. The diagram must be visually clear, conceptually accurate, and contain no letters or numbers.`;
+    const prompt = `Generate a minimalist, 2D educational diagram for a K-12 student. The diagram should illustrate: "${description}". Key requirements: **text-free** (no words, letters, or numbers), clean lines, simple shapes, and a plain white background for clarity. Style: ${styleCue}. The final image must be visually clear, conceptually accurate, and easy to understand.`;
     
     const MAX_RETRIES = 3;
     let lastError: Error | null = null;
@@ -634,7 +648,14 @@ export const generateDiagram = async (description: string, subject: string): Pro
         } catch (error: any) {
             lastError = error;
             const errorMessage = (error.message || '').toLowerCase();
-            if (errorMessage.includes('quota') || errorMessage.includes('rate limit') || (error.status === 'RESOURCE_EXHAUSTED')) {
+            
+            // Production-ready fix: Identify quota errors and fail fast.
+            if (errorMessage.includes('quota')) {
+                console.error("Gemini API daily quota exceeded for image generation.");
+                throw new Error("QUOTA_EXCEEDED"); // Custom error identifier for the UI to catch.
+            }
+
+            if (errorMessage.includes('rate limit') || (error.status === 'RESOURCE_EXHAUSTED')) {
                 if (i < MAX_RETRIES - 1) {
                     const delayTime = Math.pow(2, i) * 1000 + Math.random() * 1000;
                     console.warn(`Rate limit hit. Retrying in ${Math.round(delayTime / 1000)}s...`);
@@ -642,6 +663,7 @@ export const generateDiagram = async (description: string, subject: string): Pro
                     continue; 
                 }
             }
+            // For other, non-retriable errors, break the loop.
             break;
         }
     }

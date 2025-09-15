@@ -90,8 +90,8 @@ const LoginScreen: React.FC<AuthScreenProps> = ({ grades, onBack }) => {
             <div className="inline-block p-3 bg-primary-light rounded-full mb-3" style={{backgroundColor: 'rgb(var(--c-primary-light))'}}>
                 <AcademicCapIcon className="h-10 w-10 text-primary-dark" style={{color: 'rgb(var(--c-primary-dark))'}}/>
             </div>
-            <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">{isLoginView ? 'Student Login' : 'Create Account'}</h2>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">{isLoginView ? 'Welcome back! Please enter your details.' : 'Join us to start your learning journey!'}</p>
+            <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">{isLoginView ? t('welcomeBackLearner') : t('joinTheAdventure')}</h2>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">{isLoginView ? t('loginPrompt') : t('signupPrompt')}</p>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -160,13 +160,13 @@ const LoginScreen: React.FC<AuthScreenProps> = ({ grades, onBack }) => {
 
           <div>
             <button type="submit" disabled={loading} className="w-full flex items-center justify-center px-8 py-3 text-white font-bold rounded-lg btn-primary-gradient disabled:opacity-70">
-              {loading ? <LoadingSpinner /> : (isLoginView ? 'Login' : 'Sign Up')}
+              {loading ? <LoadingSpinner /> : (isLoginView ? t('loginButton') : t('createAccountButton'))}
             </button>
           </div>
         </form>
         <div className="mt-6 text-center">
             <button onClick={toggleView} className="text-sm font-semibold text-primary hover:underline" style={{color: 'rgb(var(--c-primary))'}}>
-                {isLoginView ? "Don't have an account? Sign Up" : "Already have an account? Login"}
+                {isLoginView ? t('signupInstead') : t('loginInstead')}
             </button>
         </div>
       </div>

@@ -110,13 +110,16 @@
         background-color: rgb(var(--c-bg));
         font-family: var(--font-sans);
         color: rgb(var(--c-text-primary));
-        /* Subtle grid pattern for texture */
-        background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234A5568' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        /* New: Soft gradient background for a modern feel */
+        background-image: radial-gradient(circle at 10% 20%, rgba(var(--c-primary-light), 0.3) 0%, transparent 40%),
+                          radial-gradient(circle at 90% 80%, rgba(var(--c-success), 0.1) 0%, transparent 50%);
         transition: background-color 0.4s ease, color 0.4s ease;
       }
       
       .dark body {
-         background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23CBD5E1' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        /* New: Subtle dark mode gradient */
+        background-image: radial-gradient(circle at 10% 20%, rgba(var(--c-primary-light), 0.1) 0%, transparent 40%),
+                          radial-gradient(circle at 90% 80%, rgba(var(--c-success), 0.05) 0%, transparent 50%);
       }
 
       /* 6. COMPONENT STYLES */
@@ -133,11 +136,42 @@
         filter: brightness(1.1);
       }
       
+      .btn-secondary-outline {
+        padding: 0.9rem 1.5rem;
+        font-weight: 600;
+        border-radius: var(--radius-button);
+        background-color: transparent;
+        color: rgb(var(--c-primary-dark));
+        border: 2px solid rgb(var(--c-primary-light));
+        transition: all 0.3s ease;
+      }
+      .btn-secondary-outline:hover {
+        background-color: rgba(var(--c-primary-light), 0.5);
+        border-color: rgb(var(--c-primary));
+        transform: translateY(-2px);
+      }
+      .dark .btn-secondary-outline {
+        color: rgb(var(--c-text-accent));
+        border-color: rgba(var(--c-text-accent), 0.3);
+      }
+      .dark .btn-secondary-outline:hover {
+        background-color: rgba(var(--c-text-accent), 0.1);
+        border-color: rgb(var(--c-text-accent));
+      }
+      
       .progress-bar-gradient {
          background-color: rgb(var(--c-text-accent));
       }
 
       /* 7. ANIMATIONS */
+      @keyframes fade-in {
+        0% { opacity: 0; transform: translateY(10px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fade-in {
+        animation: fade-in 0.5s ease-out forwards;
+      }
+      
       @keyframes confetti-fall {
         0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
         100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
@@ -150,6 +184,16 @@
         opacity: 0;
         animation: confetti-fall 5s linear infinite;
       }
+      
+      @keyframes logo-float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-3px); }
+      }
+      @keyframes logo-glow {
+        0%, 100% { filter: drop-shadow(0 0 3px rgba(var(--c-text-accent), 0.4)); }
+        50% { filter: drop-shadow(0 0 6px rgba(var(--c-text-accent), 0.6)); }
+      }
+
 
       /* 8. TTS HIGHLIGHT */
        .tts-highlight {
@@ -381,6 +425,16 @@
         transition: width 0.5s ease-out;
         z-index: 1;
       }
+      
+      .mission-card-gradient {
+        background-image: radial-gradient(circle at top left, rgba(var(--c-primary-light), 0.5) 0%, transparent 40%),
+                          radial-gradient(circle at bottom right, rgba(var(--c-primary), 0.2) 0%, transparent 50%);
+      }
+      .dark .mission-card-gradient {
+        background-image: radial-gradient(circle at top left, rgba(var(--c-text-accent), 0.1) 0%, transparent 40%),
+                          radial-gradient(circle at bottom right, rgba(var(--c-bg-accent), 0.3) 0%, transparent 50%);
+      }
+      
       .ai-generated-tag {
         display: inline-flex;
         align-items: center;

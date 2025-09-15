@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Grade, Subject, Chapter, Student } from './types';
-import { CURRICULUM } from './data/curriculum';
+import { getCurriculum } from './services/curriculumService';
 import { MOCK_STUDENTS } from './data/mockData';
 
 import Header from './components/Header';
@@ -29,11 +29,30 @@ const App: React.FC = () => {
   const { language } = useLanguage();
   const { isLoggedIn, currentUser, loading: authLoading } = useAuth();
 
+  // Curriculum State
+  const [curriculum, setCurriculum] = useState<Grade[]>([]);
+  const [isLoadingCurriculum, setIsLoadingCurriculum] = useState(true);
+
   // Student-specific State
   const [studentView, setStudentView] = useState<StudentView>('dashboard');
   const [selectedGrade, setSelectedGrade] = useState<Grade | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
+
+  useEffect(() => {
+    const loadCurriculum = async () => {
+        try {
+            const data = await getCurriculum();
+            setCurriculum(data);
+        } catch (error) {
+            console.error("Failed to load curriculum:", error);
+            // In a real app, you might want to set an error state and show a message
+        } finally {
+            setIsLoadingCurriculum(false);
+        }
+    };
+    loadCurriculum();
+  }, []);
 
   useEffect(() => {
     // Apply age-adaptive theme
@@ -112,17 +131,17 @@ const App: React.FC = () => {
 
   const handleStartBrowsing = useCallback(() => {
     if (currentUser) {
-        const studentGrade = CURRICULUM.find(g => g.level === currentUser.grade);
+        const studentGrade = curriculum.find(g => g.level === currentUser.grade);
         if (studentGrade) {
             setSelectedGrade(studentGrade);
         }
         setStudentView('browse');
     }
-  }, [currentUser]);
+  }, [currentUser, curriculum]);
 
   const renderStudentBrowseFlow = () => {
     if (!selectedGrade) {
-      return <GradeSelector grades={CURRICULUM} onSelect={handleGradeSelect} onBack={handleBackToDashboard} />;
+      return <GradeSelector grades={curriculum} onSelect={handleGradeSelect} onBack={handleBackToDashboard} />;
     }
     if (!selectedSubject) {
         return <SubjectSelector grade={selectedGrade} onSubjectSelect={handleSubjectSelect} onChapterSelect={handleChapterSelect} onBack={handleBackToDashboard} />;
@@ -149,7 +168,7 @@ const App: React.FC = () => {
         return <div className="flex justify-center items-center h-64"><LoadingSpinner /></div>;
     }
     if (!isLoggedIn || !currentUser) {
-        return <LoginScreen grades={CURRICULUM} onBack={() => setAppState('role_selection')} />;
+        return <LoginScreen grades={curriculum} onBack={() => setAppState('role_selection')} />;
     }
     switch(studentView) {
         case 'dashboard':
@@ -164,6 +183,15 @@ const App: React.FC = () => {
   };
 
   const renderContent = () => {
+    if (isLoadingCurriculum) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+                <LoadingSpinner />
+                <p className="mt-4 text-slate-600 dark:text-slate-300 text-lg">Loading curriculum...</p>
+            </div>
+        );
+    }
+    
     if (appState === 'privacy_policy') {
       return <PrivacyPolicyScreen onBack={() => setAppState('role_selection')} />;
     }

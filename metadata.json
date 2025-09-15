@@ -1,5 +1,7 @@
 {
   "name": "Alfanumrik",
   "description": "Alfanumrik is an AI-powered adaptive learning platform for K-12 students designed to help every learner unlock their brilliance. It aligns with NEP 2020 and STEM principles, providing personalized content, diagrams, and quizzes.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }

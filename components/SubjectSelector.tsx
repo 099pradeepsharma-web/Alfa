@@ -3,6 +3,7 @@ import { Grade, Subject, Chapter } from '../types';
 import { ArrowLeftIcon, ChevronRightIcon, DocumentChartBarIcon } from '@heroicons/react/24/solid';
 import DiagnosticTest from './DiagnosticTest';
 import { useLanguage } from '../contexts/Language-context';
+import { getIcon } from './IconMap';
 
 interface SubjectSelectorProps {
   grade: Grade;
@@ -38,7 +39,9 @@ const SubjectSelector: React.FC<SubjectSelectorProps> = ({ grade, selectedSubjec
         <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md">
           <h3 className="text-xl font-bold text-slate-700 dark:text-slate-200 border-b dark:border-slate-600 pb-3 mb-4">{t('subjects')}</h3>
           <ul className="space-y-2">
-            {grade.subjects.map((subject) => (
+            {grade.subjects.map((subject) => {
+              const Icon = getIcon(subject.icon);
+              return (
               <li key={subject.name}>
                 <button
                   onClick={() => onSubjectSelect(subject)}
@@ -53,11 +56,11 @@ const SubjectSelector: React.FC<SubjectSelectorProps> = ({ grade, selectedSubjec
                       color: selectedSubject?.name === subject.name ? 'rgb(var(--c-primary-dark))' : '',
                   }}
                 >
-                  <subject.icon className="h-6 w-6" />
+                  <Icon className="h-6 w-6" />
                   <span>{tCurriculum(subject.name)}</span>
                 </button>
               </li>
-            ))}
+            )})}
           </ul>
         </div>
 
@@ -75,7 +78,7 @@ const SubjectSelector: React.FC<SubjectSelectorProps> = ({ grade, selectedSubjec
                      style={{color: 'rgb(var(--c-primary-dark))', borderColor: 'rgba(var(--c-primary), 0.5)'}}
                   >
                     <DocumentChartBarIcon className="h-5 w-5 mr-2" />
-                    {t('takeDiagnosticTest')}
+                    {t('findMyLevel')}
                   </button>
                 </div>
               </div>

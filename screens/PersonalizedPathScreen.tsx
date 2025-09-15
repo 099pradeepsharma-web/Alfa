@@ -80,7 +80,8 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ onBack 
                         throw new Error("Missing subject or chapter details for academic task.");
                     }
                     // Mission: 6 Academic, 2 IQ, 2 EQ
-                    const module = await getChapterContent(student.grade, details.subject, details.chapter, language);
+                    // FIX: Added missing student.name argument
+                    const module = await getChapterContent(student.grade, details.subject, details.chapter, student.name, language);
                     const academicQuestions = await generateQuiz(module.keyConcepts, language, 6);
                     const iqQuestions = await generateIQExercises(student.grade, language, 2);
                     const eqQuestions = await generateEQExercises(student.grade, language, 2);
@@ -93,7 +94,8 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ onBack 
                     missionTasks.push(...iqQuestions, ...eqQuestions);
                     
                     const weakArea = findWeakestAcademicArea(student.performance, student.grade);
-                    const module = await getChapterContent(student.grade, weakArea.subject, weakArea.chapter, language);
+                    // FIX: Added missing student.name argument
+                    const module = await getChapterContent(student.grade, weakArea.subject, weakArea.chapter, student.name, language);
                     const academicQuestions = await generateQuiz(module.keyConcepts, language, 2);
                     missionTasks.push(...academicQuestions);
 
@@ -104,7 +106,8 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ onBack 
                     missionTasks.push(...eqQuestions, ...iqQuestions);
                      
                     const weakArea = findWeakestAcademicArea(student.performance, student.grade);
-                    const module = await getChapterContent(student.grade, weakArea.subject, weakArea.chapter, language);
+                    // FIX: Added missing student.name argument
+                    const module = await getChapterContent(student.grade, weakArea.subject, weakArea.chapter, student.name, language);
                     const academicQuestions = await generateQuiz(module.keyConcepts, language, 2);
                     missionTasks.push(...academicQuestions);
                 }
@@ -188,7 +191,7 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ onBack 
                     <ArrowLeftIcon className="h-5 w-5 mr-2" />
                     {t('backToDashboard')}
                 </button>
-                <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">{t('todaysTask')}</h1>
+                <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">{t('yourNextMission')}</h1>
                 <div className="mt-2 text-left p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
                     <p className="font-semibold text-primary flex items-center" style={{color: 'rgb(var(--c-primary))'}}>
                         <SparklesIcon className="h-5 w-5 mr-2" />

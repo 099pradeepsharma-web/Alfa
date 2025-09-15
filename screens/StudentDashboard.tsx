@@ -1,11 +1,26 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Student, PerformanceRecord, AdaptiveAction, AdaptiveActionType } from '../types';
-import { getPerformanceRecords, getLearningModule, saveLearningModule, getDiagram, saveDiagram } from '../services/pineconeService';
+import { Student, PerformanceRecord, AdaptiveAction, AdaptiveActionType, LearningStreak } from '../types';
+import { getPerformanceRecords, getLearningModule, saveLearningModule, getDiagram, saveDiagram, getLearningStreak } from '../services/pineconeService';
 import { getAdaptiveNextStep, getChapterContent, generateDiagram } from '../services/geminiService';
 import { useLanguage } from '../contexts/Language-context';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowRightIcon, BookOpenIcon, SparklesIcon, RocketLaunchIcon, PuzzlePieceIcon, HeartIcon, TrophyIcon } from '@heroicons/react/24/solid';
+import { ArrowRightIcon, BookOpenIcon, SparklesIcon, RocketLaunchIcon, PuzzlePieceIcon, HeartIcon, TrophyIcon, MagnifyingGlassIcon, FireIcon } from '@heroicons/react/24/solid';
 import LoadingSpinner from '../components/LoadingSpinner';
+import FittoAvatar from '../components/FittoAvatar';
+import { CURRICULUM } from '../data/curriculum';
+
+const LearningStreakDisplay: React.FC<{ streak: number }> = ({ streak }) => {
+    const { t } = useLanguage();
+    if (streak < 2) return null;
+
+    return (
+        <div className="flex items-center gap-2 bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 font-bold px-4 py-1.5 rounded-full animate-fade-in">
+            <FireIcon className="h-6 w-6 text-amber-500" />
+            <span>{t('learningStreakText', { count: streak })}</span>
+        </div>
+    );
+};
+
 
 interface StudentDashboardProps {
   onStartMission: () => void;
@@ -125,7 +140,7 @@ const MissionCard: React.FC<{ onStartMission: () => void, student: Student }> = 
     }
 
     return (
-        <div className="smart-card bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+        <div className="smart-card bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 mission-card-gradient">
             <div 
                 className="smart-card-confidence-bar"
                 style={{
@@ -139,7 +154,7 @@ const MissionCard: React.FC<{ onStartMission: () => void, student: Student }> = 
                     <div>
                         <div className="ai-generated-tag mb-2">
                             <SparklesIcon className="h-3.5 w-3.5 mr-1.5" />
-                            AI-Generated
+                            AI-Personalized
                         </div>
                         <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('todaysMission')}</h2>
                     </div>
@@ -176,10 +191,25 @@ const MissionCard: React.FC<{ onStartMission: () => void, student: Student }> = 
                             onClick={onStartMission}
                             className="flex items-center justify-center w-full md:w-auto px-6 py-3 text-white font-bold rounded-lg btn-primary-gradient"
                         >
-                            <span>{t('beginMission')}</span>
+                            <span>{t('launchMission')}</span>
                             <ArrowRightIcon className="h-5 w-5 ml-2" />
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const FittoMessage: React.FC<{ message: string }> = ({ message }) => {
+    return (
+        <div className="flex items-start gap-3 animate-fade-in">
+            <div className="flex-shrink-0 mt-1">
+                <FittoAvatar state={'speaking'} size={56} />
+            </div>
+            <div className="relative">
+                <div className="chat-bubble fitto-bubble text-base">
+                    <p className="text-slate-700 dark:text-slate-200">{message}</p>
                 </div>
             </div>
         </div>
@@ -191,84 +221,101 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onB
     const { t, tCurriculum, language } = useLanguage();
     const { currentUser: student } = useAuth();
     const [activities, setActivities] = useState<PerformanceRecord[]>([]);
+    const [learningStreak, setLearningStreak] = useState(0);
     
     useEffect(() => {
-        const fetchActivities = async () => {
+        const fetchDashboardData = async () => {
             if (student) {
+                // Fetch activities
                 const storedRecords = await getPerformanceRecords(student.id);
                 storedRecords.sort((a, b) => new Date(b.completedDate).getTime() - new Date(a.completedDate).getTime());
                 setActivities(storedRecords);
+
+                // Fetch learning streak
+                const streakData = await getLearningStreak(student.id);
+                setLearningStreak(streakData?.count || 0);
             }
         };
 
-        fetchActivities();
+        fetchDashboardData();
     }, [student]);
 
-    // Pre-fetching logic for offline curriculum storage
+    // Enhanced predictive loading for production scaling
     useEffect(() => {
         const prefetchContent = async () => {
             if (!student) return;
 
-            console.log("Alfanumrik: Starting background content pre-fetch...");
+            console.log("Alfanumrik: Starting predictive content pre-fetch...");
             try {
                 // 1. Determine which chapter to pre-fetch based on AI recommendation
                 const action = await getAdaptiveNextStep(student, language);
 
                 if (!action.type.startsWith('ACADEMIC') || !action.details.subject || !action.details.chapter) {
-                    console.log("Alfanumrik: No academic chapter recommended for pre-fetching.");
+                    console.log("Alfanumrik: No academic chapter recommended for predictive loading.");
                     return;
                 }
                 
                 const { subject: subjectName, chapter: chapterTitle } = action.details;
                 
-                // 2. Check if the chapter content is already cached
-                const dbKey = `module-${student.grade}-${subjectName}-${chapterTitle}`;
-                const cachedContent = await getLearningModule(dbKey, language);
-
-                if (cachedContent) {
-                    console.log(`Alfanumrik: Content for "${chapterTitle}" is already cached. Pre-fetch not needed.`);
+                // 2. Find the subject and the starting chapter index from the curriculum
+                const subjectData = CURRICULUM.find(g => g.level === student.grade)?.subjects.find(s => s.name === subjectName);
+                if (!subjectData) {
+                    console.log(`Alfanumrik: Could not find subject data for '${subjectName}' for pre-fetching.`);
+                    return;
+                }
+                const chapterIndex = subjectData.chapters.findIndex(c => c.title === chapterTitle);
+                if (chapterIndex === -1) {
+                    console.log(`Alfanumrik: Could not find chapter index for '${chapterTitle}' for pre-fetching.`);
                     return;
                 }
 
-                console.log(`Alfanumrik: Pre-fetching content for "${chapterTitle}" in ${subjectName}...`);
-
-                // 3. Fetch and cache the chapter content
-                const content = await getChapterContent(student.grade, subjectName, chapterTitle, language);
-                await saveLearningModule(dbKey, content, language);
+                // 3. Create a list of up to 3 chapters to pre-fetch (the recommended one + next 2)
+                const chaptersToPrefetch = subjectData.chapters.slice(chapterIndex, chapterIndex + 3);
+                console.log(`Alfanumrik: Identified ${chaptersToPrefetch.length} chapters for predictive loading in ${subjectName}.`);
                 
-                console.log(`Alfanumrik: Successfully pre-fetched and cached module for "${chapterTitle}".`);
-                
-                // 4. Fetch and cache diagrams for the chapter in parallel
-                const diagramPromises = content.keyConcepts.map(async (concept) => {
-                    const diagramDbKey = `diagram-${student.grade}-${subjectName}-${chapterTitle}-${concept.conceptTitle}`;
-                    const cachedDiagram = await getDiagram(diagramDbKey);
-                    if (!cachedDiagram && concept.diagramDescription && concept.diagramDescription.trim().length > 10) {
-                        try {
-                            console.log(`Alfanumrik: Pre-fetching diagram for concept "${concept.conceptTitle}"...`);
-                            const diagramUrl = await generateDiagram(concept.diagramDescription, subjectName);
-                            await saveDiagram(diagramDbKey, diagramUrl);
-                            console.log(`Alfanumrik: Successfully pre-fetched and cached diagram for "${concept.conceptTitle}".`);
-                        } catch (e) {
-                             console.error(`Alfanumrik: Failed to pre-fetch diagram for "${concept.conceptTitle}".`, e);
-                        }
+                // 4. Pre-fetch each chapter and its diagrams in parallel
+                const prefetchPromises = chaptersToPrefetch.map(async (chapterToPrefetch) => {
+                    const dbKey = `module-${student.grade}-${subjectName}-${chapterToPrefetch.title}`;
+                    
+                    const isModuleCached = await getLearningModule(dbKey, language);
+                    if (isModuleCached) {
+                        console.log(`Alfanumrik: Module for "${chapterToPrefetch.title}" is already cached. Skipping.`);
+                        return;
                     }
+
+                    console.log(`Alfanumrik: Pre-fetching module for "${chapterToPrefetch.title}"...`);
+                    const content = await getChapterContent(student.grade, subjectName, chapterToPrefetch.title, student.name, language);
+                    await saveLearningModule(dbKey, content, language);
+                    console.log(`Alfanumrik: Successfully cached module for "${chapterToPrefetch.title}".`);
+                    
+                    // 5. Also pre-fetch diagrams for the newly cached content
+                    content.keyConcepts.forEach(async (concept) => {
+                         const diagramDbKey = `diagram-${student.grade}-${subjectName}-${chapterToPrefetch.title}-${concept.conceptTitle}`;
+                         const isDiagramCached = await getDiagram(diagramDbKey);
+                         if (!isDiagramCached && concept.diagramDescription && concept.diagramDescription.trim().length > 10) {
+                             try {
+                                 console.log(`Alfanumrik: Pre-fetching diagram for concept "${concept.conceptTitle}"...`);
+                                 const diagramUrl = await generateDiagram(concept.diagramDescription, subjectName);
+                                 await saveDiagram(diagramDbKey, diagramUrl);
+                             } catch (e) {
+                                  console.error(`Alfanumrik: Failed to pre-fetch diagram for "${concept.conceptTitle}".`, e);
+                             }
+                         }
+                    });
                 });
 
-                // Fire and forget: let the promises resolve in the background
-                Promise.allSettled(diagramPromises).then(() => {
-                    console.log("Alfanumrik: Background diagram pre-fetch process completed.");
-                });
-
+                await Promise.allSettled(prefetchPromises);
+                console.log("Alfanumrik: Predictive loading sequence complete.");
 
             } catch (error) {
                 console.error("Alfanumrik: Background pre-fetch failed:", error);
-                // Fail silently as this is a background optimization, not a critical user-facing feature.
+                // Fail silently as this is a background optimization.
             }
         };
 
-        const timer = setTimeout(prefetchContent, 3000);
+        const timer = setTimeout(prefetchContent, 3000); // Start after a delay
         
-        return () => clearTimeout(timer); // Cleanup timer on unmount
+        return () => clearTimeout(timer); // Cleanup on unmount
 
     }, [student, language]);
 
@@ -310,11 +357,14 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onB
 
     return (
         <div className="animate-fade-in space-y-8">
-            <div>
-                <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-100">
-                    {t('welcomeBack', { name: student.name.split(' ')[0] })}
-                </h1>
-                <p className="text-lg text-slate-500 dark:text-slate-400 mt-1">{t('dashboardSubtitle')}</p>
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <div>
+                    <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-100">
+                        {t('welcomeBack', { name: student.name.split(' ')[0] })} 👋
+                    </h1>
+                    <p className="text-lg text-slate-500 dark:text-slate-400 mt-1">{t('dashboardSubtitle')}</p>
+                </div>
+                <LearningStreakDisplay streak={learningStreak} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -322,8 +372,9 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onB
                 <div className="lg:col-span-2 space-y-8">
                     <MissionCard onStartMission={onStartMission} student={student} />
                     
-                    <button onClick={onBrowse} className="w-full text-center py-4 bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 text-primary-dark font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
-                         {t('browseCurriculum')}
+                    <button onClick={onBrowse} className="btn-secondary-outline w-full flex items-center justify-center">
+                        <MagnifyingGlassIcon className="h-5 w-5 mr-2" />
+                        {t('exploreAllTopics')}
                     </button>
                      
                      {/* Fitto's Recommendations */}
@@ -331,16 +382,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onB
                         <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4">
                             {t('fittoRecommendations')}
                         </h2>
-                        <ul className="space-y-3">
-                            {recommendations.slice(0, 3).map((rec, index) => (
-                                <li key={index} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-slate-600 dark:text-slate-300 flex items-start border border-slate-200 dark:border-slate-700">
-                                    <div className="flex-shrink-0 mr-3 mt-1">
-                                        <SparklesIcon className="h-5 w-5 text-primary" style={{color: 'rgb(var(--c-primary))'}} />
-                                    </div>
-                                    <span>{rec}</span>
-                                </li>
-                            ))}
-                        </ul>
+                        {recommendations[0] && <FittoMessage message={recommendations[0]} />}
                     </div>
                 </div>
 

@@ -1,5 +1,4 @@
 import React from 'react';
-// Fix: Corrected import path for useLanguage hook to follow project conventions.
 import { useLanguage } from '../contexts/Language-context';
 import { ArrowLeftIcon, ShieldCheckIcon } from '@heroicons/react/24/solid';
 

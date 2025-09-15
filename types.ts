@@ -14,7 +14,7 @@ export interface Chapter {
 
 export interface Subject {
   name: string;
-  icon: React.ElementType;
+  icon: string;
   chapters: Chapter[];
 }
 
@@ -139,6 +139,14 @@ export interface LearningModule {
   conceptMap?: string;
   learningTricksAndMnemonics?: string[];
   higherOrderThinkingQuestions?: HOTQuestion[];
+
+  // New fields from Dr. Priya Sharma prompt
+  prerequisitesCheck?: string[];
+  selfAssessmentChecklist?: string[];
+  extensionActivities?: string[];
+  remedialActivities?: string[];
+  careerConnections?: string;
+  technologyIntegration?: string;
   
   // Mathematics
   keyTheoremsAndProofs?: Theorem[];
@@ -270,6 +278,13 @@ export interface AdaptiveAction {
         confidence?: number;
     };
 }
+
+// --- New Type for Learning Streak ---
+export interface LearningStreak {
+    count: number;
+    lastDate: string; // YYYY-MM-DD
+}
+
 
 // --- New Types for Question Bank ---
 export type QuestionType = 'MCQ' | 'Short Answer' | 'Long Answer';

@@ -1,4 +1,4 @@
-import { LearningModule, ChapterProgress, StudentQuestion, PerformanceRecord, AIFeedback } from '../types';
+import { LearningModule, ChapterProgress, StudentQuestion, PerformanceRecord, AIFeedback, LearningStreak } from '../types';
 import * as db from './databaseService';
 
 /**
@@ -57,12 +57,55 @@ export const getPerformanceRecords = async (userId: number): Promise<Performance
     return await db.queryCollection<StoredPerformanceRecord>('performance', (record) => record.studentId === userId);
 };
 
+// --- New Learning Streak Logic ---
+const getTodayDateString = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // YYYY-MM-DD
+}
+
+const getYesterdayDateString = () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().split('T')[0]; // YYYY-MM-DD
+}
+
 /**
- * Saves a new performance record to the database for a specific student.
+ * Retrieves the learning streak for a student.
+ * @param userId The ID of the student.
+ * @returns A promise that resolves to the LearningStreak object or null.
+ */
+export const getLearningStreak = async (userId: number): Promise<LearningStreak | null> => {
+    const streakKey = `streak-${userId}`;
+    const streakData = await db.getDoc<LearningStreak>('cache', streakKey);
+
+    // If streak is from before yesterday, it's broken.
+    if (streakData && streakData.lastDate < getYesterdayDateString()) {
+        return { count: 0, lastDate: streakData.lastDate };
+    }
+    return streakData;
+}
+
+
+/**
+ * Saves a new performance record and updates the learning streak.
  * @param userId The ID of the student.
  * @param newRecord The PerformanceRecord object to save.
  */
 export const savePerformanceRecord = async (userId: number, newRecord: PerformanceRecord): Promise<void> => {
+    const streakKey = `streak-${userId}`;
+    const todayStr = getTodayDateString();
+
+    const currentStreak = await db.getDoc<LearningStreak>('cache', streakKey);
+
+    if (!currentStreak || currentStreak.lastDate < getYesterdayDateString()) {
+        // Start a new streak or reset a broken one
+        await db.setDoc<LearningStreak>('cache', streakKey, { count: 1, lastDate: todayStr });
+    } else if (currentStreak.lastDate === getYesterdayDateString()) {
+        // Continue the streak
+        await db.setDoc<LearningStreak>('cache', streakKey, { count: currentStreak.count + 1, lastDate: todayStr });
+    }
+    // If lastDate is today, do nothing.
+
     const recordToSave = { ...newRecord, studentId: userId };
     await db.addDocToCollection('performance', recordToSave);
 };

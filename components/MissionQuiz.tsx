@@ -4,6 +4,7 @@ import { savePerformanceRecord } from '../services/pineconeService';
 import { useLanguage } from '../contexts/Language-context';
 import { useAuth } from '../contexts/AuthContext';
 import { LightBulbIcon, XCircleIcon, CheckCircleIcon, ArrowRightIcon } from '@heroicons/react/24/solid';
+import FittoAvatar from './FittoAvatar';
 
 type MissionTask = QuizQuestion | IQExercise | EQExercise;
 
@@ -84,8 +85,11 @@ const MissionQuiz: React.FC<MissionQuizProps> = ({ tasks, adaptiveAction, onFini
     };
 
     if (isFinished) {
+        const percentage = Math.round((correctAnswers / tasks.length) * 100);
+        const isHighScorer = percentage >= 80;
         return (
-             <div className="text-center animate-fade-in">
+             <div className="text-center animate-fade-in flex flex-col items-center">
+                {isHighScorer && <div className="mb-4"><FittoAvatar state="celebrating" size={100} /></div>}
                 <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">{t('missionComplete')}</h2>
                 <p className="text-lg text-slate-500 dark:text-slate-400 mt-2">{t('greatWork')}</p>
                 <div className="text-5xl font-bold text-primary my-4" style={{color: 'rgb(var(--c-primary))'}}>

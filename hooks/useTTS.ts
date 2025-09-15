@@ -61,9 +61,9 @@ export const useTTS = () => {
             if (preferredVoice) {
                 utterance.voice = preferredVoice;
             }
-            // Adjust rate and pitch for a more exciting and clear narration
-            utterance.rate = 1.1;
-            utterance.pitch = 1.1;
+            // Adjust rate and pitch for a more inspirational, storytelling tone.
+            utterance.rate = 0.95; // Slower, storytelling pace
+            utterance.pitch = 1.2; // Higher, more inspirational pitch
             return utterance;
         });
 

@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Concept, Student, Grade, Subject, Chapter, StudentQuestion, FittoResponse } from '../types';
-import { LightBulbIcon, BeakerIcon, ViewfinderCircleIcon, ExclamationTriangleIcon, ClockIcon, PaperAirplaneIcon, SparklesIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
-import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid';
+import { BeakerIcon, ViewfinderCircleIcon, ExclamationTriangleIcon, ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon as CheckCircleSolid, MicrophoneIcon, PaperAirplaneIcon, PencilSquareIcon } from '@heroicons/react/24/solid';
 import { saveStudentQuestion, updateStudentQuestion } from '../services/pineconeService';
 import { getFittoAnswer } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,6 +10,8 @@ import LoadingSpinner from './LoadingSpinner';
 import PracticeExercises from './PracticeExercises';
 import FittoAvatar, { FittoState } from './FittoAvatar';
 import { useLanguage } from '../contexts/Language-context';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { getIcon } from './IconMap';
 
 interface ConceptCardProps {
   concept: Concept;
@@ -55,26 +57,10 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
   const [showPractice, setShowPractice] = useState(false);
   const chatHistoryRef = useRef<HTMLDivElement>(null);
   
-  useEffect(() => {
-    // Initialize with a welcome message from Fitto
-    setConversation([{
-        id: Date.now(),
-        type: 'fitto',
-        text: t('fittoWelcome', { concept: concept.conceptTitle })
-    }]);
-  }, [t, concept.conceptTitle]);
-  
-  useEffect(() => {
-    // Auto-scroll to the bottom of the chat history
-    if (chatHistoryRef.current) {
-      chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
-    }
-  }, [conversation]);
+  const SubjectIcon = getIcon(subject.icon);
 
-
-  const handleSubmitQuestion = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmedQuestion = questionText.trim();
+  const handleSubmitText = useCallback(async (text: string) => {
+    const trimmedQuestion = text.trim();
     if (!trimmedQuestion || isSubmitting) return;
 
     setIsSubmitting(true);
@@ -115,6 +101,45 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
     } finally {
         setIsSubmitting(false);
     }
+  }, [isSubmitting, student, grade, subject, chapter, concept.conceptTitle, language]);
+  
+  const { isListening, transcript, startListening, stopListening, isSupported } = useSpeechRecognition({
+      onEnd: handleSubmitText
+  });
+
+  useEffect(() => {
+    // This effect synchronizes the speech recognition transcript with the input field
+    // It provides live feedback to the user as they speak.
+    setQuestionText(transcript);
+  }, [transcript]);
+  
+  useEffect(() => {
+    // Initialize with a welcome message from Fitto
+    setConversation([{
+        id: Date.now(),
+        type: 'fitto',
+        text: t('fittoWelcome', { concept: concept.conceptTitle })
+    }]);
+  }, [t, concept.conceptTitle]);
+  
+  useEffect(() => {
+    // Auto-scroll to the bottom of the chat history
+    if (chatHistoryRef.current) {
+      chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
+    }
+  }, [conversation]);
+
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isListening) {
+        // If user submits while listening, stop listening.
+        // The onEnd callback will then trigger the submission.
+        stopListening();
+    } else {
+        // If not listening, submit the text from the input field directly.
+        handleSubmitText(questionText);
+    }
   };
 
   const renderQnA = () => {
@@ -133,7 +158,7 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
                     } else { // Fitto's turn
                         const avatarState: FittoState = turn.state === 'thinking' ? 'thinking' : turn.state === 'error' ? 'encouraging' : 'speaking';
                         return (
-                            <div key={turn.id} className="flex items-end space-x-3 animate-fade-in">
+                            <div key={`${turn.id}-${turn.state || 'final'}`} className="flex items-end space-x-3 animate-fade-in">
                                 <div className="flex-shrink-0 self-start">
                                     <FittoAvatar state={avatarState} size={40} />
                                 </div>
@@ -158,21 +183,35 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
                 })}
             </div>
 
-            <form onSubmit={handleSubmitQuestion} className="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <form onSubmit={handleFormSubmit} className="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
                 <textarea
                   value={questionText}
                   onChange={(e) => setQuestionText(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleSubmitQuestion(e); }}
-                  placeholder={t('askQuestionPlaceholder')}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleFormSubmit(e); }}
+                  placeholder={isListening ? "Listening..." : t('askQuestionPlaceholder')}
                   className="w-full flex-grow p-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-md focus:ring-2 focus:ring-primary focus:border-primary transition"
                   rows={1}
                   disabled={isSubmitting}
                 />
+                 {isSupported && (
+                    <button
+                        type="button"
+                        onClick={isListening ? stopListening : startListening}
+                        className={`flex-shrink-0 p-2.5 rounded-lg shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed ${
+                            isListening 
+                            ? 'bg-red-500 text-white animate-pulse' 
+                            : 'bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-500'
+                        }`}
+                        aria-label={isListening ? "Stop listening" : "Start listening"}
+                    >
+                        <MicrophoneIcon className="h-5 w-5" />
+                    </button>
+                )}
                 <button 
                   type="submit" 
                   className="flex-shrink-0 p-2.5 bg-primary text-white font-semibold rounded-lg shadow-sm hover:bg-primary-dark transition disabled:opacity-50 disabled:cursor-not-allowed" 
                   style={{backgroundColor: 'rgb(var(--c-primary))'}}
-                  disabled={isSubmitting || !questionText.trim()}
+                  disabled={isSubmitting || (!questionText.trim() && !isListening)}
                   aria-label={t('submitQuestion')}
                 >
                   {isSubmitting ? <LoadingSpinner /> : <PaperAirplaneIcon className="h-5 w-5" />}
@@ -187,13 +226,13 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
     <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-6 transition-shadow hover:shadow-md not-prose">
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center">
-            <LightBulbIcon className="h-7 w-7 text-yellow-500 mr-3" />
+            <SubjectIcon className="h-7 w-7 text-primary mr-3 flex-shrink-0" style={{color: 'rgb(var(--c-primary))'}} />
             {concept.conceptTitle}
         </h3>
         <ProgressBadge status={progressStatus} />
       </div>
       
-      <div className="text-slate-600 dark:text-slate-300 mb-4">{renderText(concept.explanation)}</div>
+      <div className="text-slate-600 dark:text-slate-300 mb-4 whitespace-pre-wrap">{renderText(concept.explanation)}</div>
       
        {progressStatus === 'not-started' && (
         <div className="text-right mb-4">
@@ -227,9 +266,16 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
                 </div>
             )}
             {diagramError && (
-                <div className="text-red-500 dark:text-red-400 flex flex-col items-center">
-                    <ExclamationTriangleIcon className="h-8 w-8 mb-2" />
-                    <p className="text-sm font-semibold">{diagramError}</p>
+                 <div className="text-slate-500 dark:text-slate-400 flex flex-col items-center p-4">
+                    {diagramError === t('diagramQuotaError') ? (
+                        <ClockIcon className="h-10 w-10 mb-3 text-amber-500" />
+                    ) : (
+                        <ExclamationTriangleIcon className="h-10 w-10 mb-3 text-red-500" />
+                    )}
+                    <p className="font-semibold text-center">{diagramError}</p>
+                    <p className="text-xs italic mt-3 text-slate-400 dark:text-slate-500 text-center">
+                        <strong>{t('visualContext')}:</strong> "{concept.diagramDescription}"
+                    </p>
                 </div>
             )}
             {!isDiagramLoading && !diagramError && imageUrl && (

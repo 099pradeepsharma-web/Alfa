@@ -1,8 +1,9 @@
 import React from 'react';
-import { AcademicCapIcon, HomeIcon, LanguageIcon, ArrowRightOnRectangleIcon, UserCircleIcon } from '@heroicons/react/24/solid';
+import { HomeIcon, LanguageIcon, ArrowRightOnRectangleIcon, UserCircleIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from '../contexts/Language-context';
 import { useAuth } from '../contexts/AuthContext';
 import ThemeToggle from './ThemeToggle';
+import Logo from './Logo';
 
 interface HeaderProps {
     onGoHome: () => void;
@@ -21,12 +22,10 @@ const Header: React.FC<HeaderProps> = ({ onGoHome, showHomeButton }) => {
     <header className="sticky top-0 z-50 backdrop-blur-lg bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
       <div className="container mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-primary-light rounded-full" style={{backgroundColor: 'rgb(var(--c-primary-light))'}}>
-             <AcademicCapIcon className="h-8 w-8 text-primary-dark" style={{color: 'rgb(var(--c-primary-dark))'}}/>
-          </div>
+          <Logo size={48} />
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
-              {t('appTitle')}
+              {t('appTitle')}<sup>™</sup>
             </h1>
             <p className="text-xs font-medium text-primary -mt-1 hidden sm:block" style={{color: 'rgb(var(--c-primary))'}}>
                 {t('appSubtitle')}

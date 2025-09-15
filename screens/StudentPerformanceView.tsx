@@ -175,7 +175,7 @@ const StudentPerformanceView: React.FC<StudentPerformanceViewProps> = ({ userRol
                 return;
             }
             const lowestScoreRecord = [...allPerformance].sort((a, b) => a.score - b.score)[0];
-            const moduleContent = await getChapterContent(student.grade, lowestScoreRecord.subject, lowestScoreRecord.chapter, language);
+            const moduleContent = await getChapterContent(student.grade, lowestScoreRecord.subject, lowestScoreRecord.chapter, student.name, language);
             const quiz = await generateQuiz(moduleContent.keyConcepts, language);
             setPracticeSheet(quiz);
         } catch (err: any) {
