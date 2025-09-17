@@ -380,7 +380,7 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
         -   **Vedic Mathematics Integration**: Within the \`learningTricksAndMnemonics\` section, include specific mental calculation shortcuts inspired by Vedic Mathematics relevant to the chapter.
         -   **Pattern Recognition & Logic**: Include a subsection in \`categorizedProblems\` or as an \`extensionActivity\` specifically designed for pattern recognition or logical reasoning related to the mathematical concepts.
         -   **Career & Heritage Connection**: Ensure the \`careerConnections\` section is robust, linking the chapter's concepts to modern Indian STEM careers (ISRO, data science, etc.). Also, explicitly mention contributions of Indian mathematicians like Aryabhata, Ramanujan, etc., in the relevant \`introduction\` or concept explanations.
-        -   **Financial Literacy**: Where relevant (e.g., Percentages, Simple/Compound Interest, Linear Equations), add examples in the \`realWorldExample\` field that relate to Indian financial contexts like banking (loans, interest rates), or taxes.
+        -   **Financial Literacy**: Where relevant (e.g., Percentages, Simple/Compound Interest, Linear Equations), add examples in the \`realWorldExample\` field that relate to an Indian financial contexts like banking (loans, interest rates), or taxes.
         `;
     } else if (['science', 'physics', 'chemistry', 'biology', 'evs'].some(s => lowerCaseSubject.includes(s))) {
         subjectSpecificInstructions = `
