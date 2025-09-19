@@ -129,6 +129,13 @@ export interface VocabularyDeepDive {
     etymology?: string; // Optional: origin of the word
 }
 
+// --- New Type for Video Simulations ---
+export interface InteractiveVideoSimulation {
+    title: string;
+    description: string; // Explains what the simulation will show and why it's useful.
+    videoPrompt: string; // The detailed prompt for the VEO model.
+}
+
 
 export interface LearningModule {
   chapterTitle: string;
@@ -139,6 +146,7 @@ export interface LearningModule {
   conceptMap?: string;
   learningTricksAndMnemonics?: string[];
   higherOrderThinkingQuestions?: HOTQuestion[];
+  interactiveVideoSimulation?: InteractiveVideoSimulation;
 
   // New pedagogical fields
   prerequisitesCheck?: string[];

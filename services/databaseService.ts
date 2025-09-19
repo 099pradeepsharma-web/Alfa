@@ -14,7 +14,9 @@ const STORES = [
     'performance', 
     'diagrams', 
     'feedback', 
-    'cache'
+    'cache',
+    'videos',
+    'conceptMaps'
 ];
 
 /**
@@ -82,7 +84,7 @@ const promisifyRequest = <T>(request: IDBRequest<T>): Promise<T> => {
 
 // --- API Implementation using IndexedDB ---
 
-type ObjectTables = 'modules' | 'reports' | 'progress' | 'diagrams' | 'cache';
+type ObjectTables = 'modules' | 'reports' | 'progress' | 'diagrams' | 'cache' | 'videos' | 'conceptMaps';
 type ArrayTables = 'users' | 'questions' | 'performance' | 'feedback';
 
 /**

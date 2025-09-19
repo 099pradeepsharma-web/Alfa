@@ -188,9 +188,67 @@ export const saveDiagram = async (key: string, dataUrl: string): Promise<void> =
 };
 
 /**
+ * Retrieves a cached video Blob from the database.
+ * @param key The unique key for the video.
+ * @returns A Promise that resolves to the video Blob or null.
+ */
+export const getVideo = async (key: string): Promise<Blob | null> => {
+  return db.getDoc<Blob>('videos', key);
+};
+
+/**
+ * Saves a generated video Blob to the database.
+ * @param key The unique key for the video.
+ * @param blob The video Blob to save.
+ */
+export const saveVideo = async (key: string, blob: Blob): Promise<void> => {
+  await db.setDoc<Blob>('videos', key, blob);
+};
+
+/**
+ * Retrieves a cached concept map URL from the database.
+ * @param key The unique key for the concept map.
+ * @returns A Promise that resolves to the concept map's data URL string or null.
+ */
+export const getConceptMap = async (key: string): Promise<string | null> => {
+  return db.getDoc<string>('conceptMaps', key);
+};
+
+/**
+ * Saves a generated concept map's data URL to the database.
+ * @param key The unique key for the concept map.
+ * @param dataUrl The base64 data URL of the concept map to save.
+ */
+export const saveConceptMap = async (key: string, dataUrl: string): Promise<void> => {
+  await db.setDoc<string>('conceptMaps', key, dataUrl);
+};
+
+
+/**
  * Saves AI content feedback to the database.
  * @param feedback The AIFeedback object to save.
  */
 export const saveAIFeedback = async (feedback: AIFeedback): Promise<void> => {
     await db.addDocToCollection('feedback', feedback);
+};
+
+/**
+ * Checks if the well-being module has been assigned to a student.
+ * @param studentId The ID of the student.
+ * @returns A promise that resolves to true if assigned, false otherwise.
+ */
+export const getWellbeingModuleStatus = async (studentId: number): Promise<boolean> => {
+    const key = `wellbeing-assigned-${studentId}`;
+    const status = await db.getDoc<boolean>('cache', key);
+    return status === true;
+};
+
+/**
+ * Sets the assignment status of the well-being module for a student.
+ * @param studentId The ID of the student.
+ * @param isAssigned The assignment status.
+ */
+export const setWellbeingModuleStatus = async (studentId: number, isAssigned: boolean): Promise<void> => {
+    const key = `wellbeing-assigned-${studentId}`;
+    await db.setDoc('cache', key, isAssigned);
 };

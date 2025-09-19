@@ -1,9 +1,14 @@
+
+
+
+
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Concept, Student, Grade, Subject, Chapter, StudentQuestion, FittoResponse } from '../types';
 import { BeakerIcon, ViewfinderCircleIcon, ExclamationTriangleIcon, ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
-import { CheckCircleIcon as CheckCircleSolid, MicrophoneIcon, PaperAirplaneIcon, PencilSquareIcon, StopCircleIcon } from '@heroicons/react/24/solid';
-import { saveStudentQuestion, updateStudentQuestion } from '../services/pineconeService';
-import { getFittoAnswer } from '../services/geminiService';
+import { CheckCircleIcon as CheckCircleSolid, MicrophoneIcon, PaperAirplaneIcon, PencilSquareIcon, StopCircleIcon, TrophyIcon } from '@heroicons/react/24/solid';
+import { saveStudentQuestion, updateStudentQuestion, getDiagram, saveDiagram } from '../services/pineconeService';
+import { getFittoAnswer, generateDiagram } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 
 import LoadingSpinner from './LoadingSpinner';
@@ -20,11 +25,9 @@ interface ConceptCardProps {
   subject: Subject;
   chapter: Chapter;
   language: string;
-  imageUrl: string | null;
-  isDiagramLoading: boolean;
-  diagramError: string | null;
   progressStatus: 'not-started' | 'in-progress' | 'mastered';
   onMarkAsInProgress: () => void;
+  onConceptMastered: (conceptTitle: string) => void;
   renderText: (text: string) => React.ReactNode;
 }
 
@@ -47,7 +50,7 @@ const ProgressBadge: React.FC<{ status: ConceptCardProps['progressStatus'] }> = 
     }
 }
 
-const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chapter, language, imageUrl, isDiagramLoading, diagramError, progressStatus, onMarkAsInProgress, renderText }) => {
+const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chapter, language, progressStatus, onMarkAsInProgress, onConceptMastered, renderText }) => {
   const { t } = useLanguage();
   const { currentUser } = useAuth();
   const student = currentUser!;
@@ -58,6 +61,41 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
   const [showPractice, setShowPractice] = useState(false);
   const chatHistoryRef = useRef<HTMLDivElement>(null);
   
+  const [diagramUrl, setDiagramUrl] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [diagramError, setDiagramError] = useState<string | null>(null);
+
+  const diagramDbKey = `diagram-${grade.level}-${subject.name}-${chapter.title}-${concept.conceptTitle}`;
+
+  useEffect(() => {
+    const checkCache = async () => {
+        const cachedUrl = await getDiagram(diagramDbKey);
+        if (cachedUrl) {
+            setDiagramUrl(cachedUrl);
+        }
+    };
+    checkCache();
+  }, [diagramDbKey]);
+
+  const handleGenerateDiagram = useCallback(async () => {
+    setIsGenerating(true);
+    setDiagramError(null);
+    try {
+        const generatedImageUrl = await generateDiagram(concept.diagramDescription, subject.name);
+        await saveDiagram(diagramDbKey, generatedImageUrl);
+        setDiagramUrl(generatedImageUrl);
+    } catch (err: any) {
+        let errorMessage = t('diagramFailedError');
+        if (err.message === "QUOTA_EXCEEDED") {
+            errorMessage = t('diagramQuotaError');
+        }
+        setDiagramError(errorMessage);
+    } finally {
+        setIsGenerating(false);
+    }
+  }, [concept.diagramDescription, subject.name, diagramDbKey, t]);
+
+
   const SubjectIcon = getIcon(subject.icon);
   
   const { isSpeaking: isFittoSpeaking, play: playFittoResponse, stop: stopFittoResponse } = useTTS();
@@ -112,6 +150,10 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
   const { isListening, transcript, startListening, stopListening, isSupported } = useSpeechRecognition({
       onEnd: handleSubmitText
   });
+
+  const handleMastered = useCallback(() => {
+    onConceptMastered(concept.conceptTitle);
+  }, [onConceptMastered, concept.conceptTitle]);
 
   useEffect(() => {
     // This effect synchronizes the speech recognition transcript with the input field
@@ -246,7 +288,13 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
 
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-6 transition-shadow hover:shadow-md not-prose">
+    <div className="relative bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-6 transition-shadow hover:shadow-md not-prose">
+      {progressStatus === 'mastered' && (
+        <div className="absolute top-3 right-3 bg-green-500 text-white font-bold px-3 py-1 text-xs rounded-full shadow-lg flex items-center gap-1.5 animate-fade-in z-10">
+            <TrophyIcon className="h-4 w-4" />
+            {t('masteryBadge')}
+        </div>
+      )}
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center">
             <SubjectIcon className="h-7 w-7 text-primary mr-3 flex-shrink-0" style={{color: 'rgb(var(--c-primary))'}} />
@@ -282,7 +330,7 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
             {t('visualDiagram')}
         </h4>
         <div role="status" className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-4 text-center min-h-[200px] flex items-center justify-center bg-white dark:bg-slate-800">
-            {isDiagramLoading && (
+            {isGenerating && (
                 <div className="flex flex-col items-center text-slate-500 dark:text-slate-400">
                     <div className="text-primary h-8 w-8" style={{color: 'rgb(var(--c-primary))'}}><LoadingSpinner /></div>
                     <p className="text-sm mt-2">{t('aiDrawingDiagram')}</p>
@@ -301,11 +349,20 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
                     </p>
                 </div>
             )}
-            {!isDiagramLoading && !diagramError && imageUrl && (
+            {!isGenerating && !diagramError && diagramUrl && (
                 <div>
-                <img src={imageUrl} alt={concept.diagramDescription} className="rounded-md mx-auto mb-2 max-h-[300px] w-auto bg-white" />
-                <p className="text-sm text-slate-500 dark:text-slate-400 italic">{concept.diagramDescription}</p>
+                    <img src={diagramUrl} alt={concept.diagramDescription} className="rounded-md mx-auto mb-2 max-h-[300px] w-auto bg-white" />
+                    <p className="text-sm text-slate-500 dark:text-slate-400 italic">{concept.diagramDescription}</p>
                 </div>
+            )}
+            {!isGenerating && !diagramError && !diagramUrl && concept.diagramDescription && concept.diagramDescription.trim().length > 10 && (
+                <button 
+                    onClick={handleGenerateDiagram} 
+                    className="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary-light transition-colors group"
+                >
+                    <SparklesIcon className="h-10 w-10 mb-2 transition-transform group-hover:scale-110" />
+                    <span className="font-semibold">{t('generateDiagramButton')}</span>
+                </button>
             )}
         </div>
       </div>
@@ -319,6 +376,7 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
                 chapter={chapter}
                 language={language}
                 onClose={() => setShowPractice(false)}
+                onMastered={handleMastered}
             />
         ) : (
              <div className="text-center">

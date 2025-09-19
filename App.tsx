@@ -21,7 +21,7 @@ import { useAuth } from './contexts/AuthContext';
 import LoadingSpinner from './components/LoadingSpinner';
 
 type UserRole = 'student' | 'teacher' | 'parent';
-type StudentView = 'dashboard' | 'path' | 'browse';
+type StudentView = 'dashboard' | 'path' | 'browse' | 'wellbeing';
 type AppState = 'role_selection' | 'student_flow' | 'teacher_flow' | 'parent_flow' | 'privacy_policy' | 'faq';
 
 const App: React.FC = () => {
@@ -141,6 +141,10 @@ const App: React.FC = () => {
     }
   }, [currentUser, curriculum]);
 
+  const handleStartWellbeingModule = useCallback(() => {
+    setStudentView('wellbeing');
+  }, []);
+
   const renderStudentBrowseFlow = () => {
     if (!selectedGrade) {
       return <GradeSelector grades={curriculum} onSelect={handleGradeSelect} onBack={handleBackToDashboard} />;
@@ -158,7 +162,8 @@ const App: React.FC = () => {
             chapter={selectedChapter}
             student={currentUser}
             language={language}
-            onBack={handleBackToChapters}
+            onBackToChapters={handleBackToChapters}
+            onBackToSubjects={handleBackToSubjects}
             onChapterSelect={handleChapterSelect}
         />;
     }
@@ -174,13 +179,37 @@ const App: React.FC = () => {
     }
     switch(studentView) {
         case 'dashboard':
-            return <StudentDashboard onStartMission={() => setStudentView('path')} onBrowse={handleStartBrowsing} />;
+            return <StudentDashboard onStartMission={() => setStudentView('path')} onBrowse={handleStartBrowsing} onStartWellbeing={handleStartWellbeingModule} />;
         case 'path':
             return <PersonalizedPathScreen onBack={handleBackToDashboard} />;
         case 'browse':
             return renderStudentBrowseFlow();
+        case 'wellbeing': {
+            if (!currentUser) return null;
+            const wellbeingChapter: Chapter = { title: 'The Great Transformation: Navigating Your Journey from Teen to Adult' };
+            const wellbeingSubject: Subject = {
+                name: 'Personal Growth & Well-being',
+                icon: 'SparklesIcon',
+                chapters: [wellbeingChapter]
+            };
+            const wellbeingGrade: Grade = {
+                level: currentUser.grade,
+                description: 'Special Module',
+                subjects: [wellbeingSubject]
+            };
+            return <ChapterView 
+                grade={wellbeingGrade} 
+                subject={wellbeingSubject} 
+                chapter={wellbeingChapter}
+                student={currentUser}
+                language={language}
+                onBackToChapters={handleBackToDashboard}
+                onBackToSubjects={handleBackToDashboard}
+                onChapterSelect={() => {}}
+            />;
+        }
         default:
-            return <StudentDashboard onStartMission={() => setStudentView('path')} onBrowse={handleStartBrowsing} />;
+            return <StudentDashboard onStartMission={() => setStudentView('path')} onBrowse={handleStartBrowsing} onStartWellbeing={handleStartWellbeingModule} />;
     }
   };
 
@@ -211,12 +240,15 @@ const App: React.FC = () => {
       
       case 'teacher_flow':
         if (!activeStudent) {
-          return <TeacherDashboard students={MOCK_STUDENTS} onSelectStudent={handleStudentSelect} onBack={() => setAppState('role_selection')} />;
+          // If a student is logged in, show only them. Otherwise, show all mock students.
+          const studentsToShow = isLoggedIn && currentUser ? [currentUser] : MOCK_STUDENTS;
+          return <TeacherDashboard students={studentsToShow} onSelectStudent={handleStudentSelect} onBack={() => setAppState('role_selection')} />;
         }
         return <StudentPerformanceView userRole="teacher" student={activeStudent} language={language} onBack={backToStudentList} />;
 
       case 'parent_flow':
-        const child = MOCK_STUDENTS[0]; 
+        // If a student is logged in, show them. Otherwise, default to the first mock student.
+        const child = isLoggedIn && currentUser ? currentUser : MOCK_STUDENTS[0]; 
         if (!activeStudent) {
             return <ParentDashboard child={child} onSelectStudent={handleStudentSelect} onBack={() => setAppState('role_selection')} />;
         }

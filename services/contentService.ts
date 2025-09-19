@@ -1,3 +1,5 @@
+
+
 import { LearningModule, Student } from '../types';
 import * as geminiService from './geminiService';
 import * as pineconeService from './pineconeService';
@@ -64,4 +66,21 @@ export const getChapterContent = async (
         };
         return { content: fallbackContent, fromCache: false };
     }
+};
+
+
+/**
+ * Updates a chapter's content in both the in-memory and persistent cache.
+ * Used after lazily loading a new section.
+ */
+export const updateChapterContent = async (
+    grade: string, 
+    subject: string, 
+    chapter: string, 
+    language: string,
+    updatedModule: LearningModule
+): Promise<void> => {
+    const dbKey = generateDbKey(grade, subject, chapter, language);
+    IN_MEMORY_STORE[dbKey] = updatedModule;
+    await pineconeService.saveLearningModule(dbKey, updatedModule, language);
 };

@@ -12,7 +12,7 @@
     <style>
       /******************************************************************
        * Alfanumrik Design System & Style Guide
-       * Version: 2.1 (Refined)
+       * Version: 2.2 (Student-Focused UI Enhancement)
        *
        * This system is designed for a K-12 educational app, prioritizing
        * readability, accessibility (WCAG AAA contrast), and an engaging,
@@ -23,7 +23,6 @@
       /* 1. DESIGN TOKENS (CSS VARIABLES) */
       :root {
         /* 1.1. LIGHT MODE COLORS */
-        /* RGB format for use with rgba() for opacity */
         --c-bg-primary: 250 251 252;      /* #FAFBFC (Soft off-white) */
         --c-bg-secondary: 245 247 250;   /* #F5F7FA (Subtle grey for cards/sections) */
         --c-surface: 255 255 255;        /* #FFFFFF (Pure white for content cards) */
@@ -35,6 +34,7 @@
         
         --c-success: 56 161 105;         /* #38A169 (Green for correct answers) */
         --c-error: 229 62 62;           /* #E53E3E (Red for mistakes) */
+        --c-streak-text: 161 98 7;       /* amber-700 */
         
         --c-border: 226 232 240;        /* #E2E8F0 */
 
@@ -44,7 +44,7 @@
 
         /* 1.3. Mapped variables for component compatibility */
         --c-primary: var(--c-text-accent);
-        --c-primary-dark: var(--c-button-primary-bg); /* Renamed for clarity */
+        --c-primary-dark: var(--c-button-primary-bg);
         --c-primary-light: var(--c-bg-accent);
         --c-bg: var(--c-bg-primary);
         --c-bg-card: var(--c-surface);
@@ -55,9 +55,14 @@
         --font-mono: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
 
         /* 1.5. COMPONENT TOKENS */
-        --radius-card: 12px;
+        --radius-card: 16px; /* Increased for a softer look */
         --radius-button: 8px;
-        --shadow-card: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+        --shadow-card: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.07);
+        --shadow-card-hover: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+
+        /* 1.6 NEW: Gradient & Highlight Colors */
+        --c-streak-bg-start: 254 249 195; /* amber-100 */
+        --c-streak-bg-end: 253 224 71;    /* amber-300 */
       }
 
       .dark {
@@ -73,6 +78,7 @@
         
         --c-success: 52 211 153;         /* #34D399 (Bright green) */
         --c-error: 248 113 113;          /* #F87171 (Coral red) */
+        --c-streak-text: 254 240 138;    /* amber-200 */
 
         --c-border: 51 65 85;            /* #334155 (Softer border for a cleaner look) */
 
@@ -90,6 +96,11 @@
         
         /* 2.4. COMPONENT TOKENS (DARK) */
         --shadow-card: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -4px rgba(0,0,0,0.3);
+        --shadow-card-hover: 0 20px 25px -5px rgba(0,0,0,0.4), 0 8px 10px -6px rgba(0,0,0,0.4);
+
+         /* 2.5 NEW: Gradient & Highlight Colors (Dark) */
+        --c-streak-bg-start: 59 45 6;    /* custom dark amber */
+        --c-streak-bg-end: 146 64 14;   /* custom dark amber */
       }
       
       /* 3. TYPOGRAPHY SYSTEM DOCUMENTATION */
@@ -110,16 +121,19 @@
         background-color: rgb(var(--c-bg));
         font-family: var(--font-sans);
         color: rgb(var(--c-text-primary));
-        /* New: Soft gradient background for a modern feel */
-        background-image: radial-gradient(circle at 10% 20%, rgba(var(--c-primary-light), 0.3) 0%, transparent 40%),
-                          radial-gradient(circle at 90% 80%, rgba(var(--c-success), 0.1) 0%, transparent 50%);
+        /* REFINED: Subtle grid pattern for a modern, educational feel */
+        background-image: 
+            linear-gradient(rgba(var(--c-border), 0.6) 1px, transparent 1px),
+            linear-gradient(to right, rgba(var(--c-border), 0.6) 1px, transparent 1px);
+        background-size: 3rem 3rem;
         transition: background-color 0.4s ease, color 0.4s ease;
       }
       
       .dark body {
-        /* New: Subtle dark mode gradient */
-        background-image: radial-gradient(circle at 10% 20%, rgba(var(--c-primary-light), 0.1) 0%, transparent 40%),
-                          radial-gradient(circle at 90% 80%, rgba(var(--c-success), 0.05) 0%, transparent 50%);
+        /* REFINED: Darker grid lines for dark mode */
+        background-image: 
+            linear-gradient(rgba(var(--c-border), 0.15) 1px, transparent 1px),
+            linear-gradient(to right, rgba(var(--c-border), 0.15) 1px, transparent 1px);
       }
 
       /* 6. COMPONENT STYLES */
@@ -247,255 +261,334 @@
         border-width: 0;
       }
       
-      /* --- 10. AI-SPECIFIC UI STYLES --- */
-
-      /* Fitto Avatar Styles */
-      .fitto-avatar {
-        position: relative;
-        border-radius: 9999px;
-        background-color: rgb(var(--c-surface));
-        box-shadow: var(--shadow-card), inset 0 2px 4px rgba(0,0,0,0.05);
-        transition: transform 0.3s ease;
+      /* 10. VIDEO SIMULATION PLAYER */
+      .video-simulation-card-gradient {
+          background: linear-gradient(135deg, #4f46e5, #7c3aed);
       }
-      .fitto-avatar:hover {
-          transform: translateY(-2px) scale(1.05);
-      }
-      .fitto-eye {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        border-radius: 50%;
-        transition: all 0.4s ease-in-out;
+      .dark .video-simulation-card-gradient {
+          background: linear-gradient(135deg, #3730a3, #5b21b6);
       }
 
-      /* States */
-      .fitto-avatar.idle .fitto-eye {
-        background-color: rgb(var(--c-text-accent));
-        box-shadow: 0 0 8px rgba(var(--c-text-accent), 0.7);
-        animation: glow-pulse 2.5s infinite ease-in-out;
-      }
-      @keyframes glow-pulse {
-        0%, 100% { box-shadow: 0 0 8px rgba(var(--c-text-accent), 0.7); }
-        50% { box-shadow: 0 0 16px rgba(var(--c-text-accent), 1); }
+      .video-loading-message {
+          animation: pulse-text 3s infinite ease-in-out;
       }
 
-      .fitto-avatar.thinking .fitto-eye {
-        background-color: transparent;
-        border: 2px solid rgb(var(--c-primary));
-        animation: thinking-pulse 1.2s infinite cubic-bezier(0.65, 0, 0.35, 1);
-      }
-      @keyframes thinking-pulse {
-        0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-        100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+      @keyframes pulse-text {
+        0%, 100% { opacity: 0.7; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.02); }
       }
 
-      .fitto-avatar.speaking .fitto-eye {
-          width: 60%;
-          height: 60%;
-          background-color: transparent;
-          border: none;
-          box-shadow: none;
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-      }
-      .fitto-avatar.speaking .fitto-eye .waveform-bar {
-          width: 25%;
-          background-color: rgb(var(--c-primary-dark));
-          border-radius: 2px;
-          animation: speak-waveform 1s infinite ease-in-out;
-      }
-      .fitto-avatar.speaking .fitto-eye .waveform-bar:nth-child(2) { animation-delay: 0.2s; }
-      .fitto-avatar.speaking .fitto-eye .waveform-bar:nth-child(3) { animation-delay: 0.4s; }
-      @keyframes speak-waveform {
-          0%, 100% { height: 20%; }
-          50% { height: 100%; }
-      }
-      
-      .fitto-avatar.celebrating {
-          animation: celebrate-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-      }
-      .fitto-avatar.celebrating .fitto-eye {
-          height: 20%;
-          width: 60%;
-          background-color: transparent;
-          border-bottom: 4px solid rgb(var(--c-success));
-          border-radius: 0 0 60% 60% / 0 0 100% 100%;
-          box-shadow: none;
-          animation: none;
-      }
-      @keyframes celebrate-bounce {
-          0% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-15px) scale(1.1); }
-          100% { transform: translateY(0) scale(1); }
-      }
-
-      .fitto-confetti-container {
-          position: absolute;
-          top: 0; left: 0; right: 0; bottom: 0;
-          pointer-events: none;
-      }
-      .fitto-confetti-particle {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 6px;
-          height: 10px;
-          border-radius: 2px;
-          opacity: 0;
-      }
-      .fitto-avatar.celebrating .fitto-confetti-particle {
-          animation: confetti-burst 0.8s ease-out forwards;
-      }
-      @keyframes confetti-burst {
-          0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
-          100% { transform: translate(var(--x), var(--y)) scale(1); opacity: 0; }
-      }
-
-      .fitto-avatar.encouraging {
-          animation: encourage-tilt-nod 1.2s ease-in-out;
-      }
-      .fitto-avatar.encouraging .fitto-eye {
-          transform: translate(-50%, -50%) scaleY(0.7);
-      }
-      @keyframes encourage-tilt-nod {
-          0%, 100% { transform: rotate(0deg); }
-          20% { transform: rotate(-15deg); }
-          40% { transform: rotate(10deg) translateY(-5px); }
-          60% { transform: rotate(10deg) translateY(0); }
-          80% { transform: rotate(-15deg); }
-      }
-
-
-      /* Chat Bubble Styles */
+      /* Add styles for the typing indicator in chat bubbles */
       .chat-bubble {
-        padding: 12px 16px;
-        border-radius: 20px;
-        max-width: 80%;
-        word-wrap: break-word;
-      }
-      .fitto-bubble {
-        background-color: rgb(var(--c-surface));
-        color: rgb(var(--c-text-primary));
-        border-radius: 20px 20px 20px 4px;
-        box-shadow: var(--shadow-card);
+          padding: 0.75rem 1rem;
+          border-radius: 1.25rem;
+          max-width: 80%;
+          word-wrap: break-word;
       }
       .user-bubble {
-        background-color: rgb(var(--c-primary-light));
-        color: rgb(var(--c-primary-dark));
-        border-radius: 20px 20px 4px 20px;
+          background-color: rgb(var(--c-primary-dark));
+          color: white;
+          border-bottom-right-radius: 0.25rem;
       }
-      .dark .fitto-bubble {
-        background-color: rgb(var(--c-surface));
+      .fitto-bubble {
+          background-color: rgb(var(--c-bg-card-hover));
+          color: rgb(var(--c-text-primary));
+          border-bottom-left-radius: 0.25rem;
       }
-      .dark .user-bubble {
-        background-color: rgb(var(--c-bg-accent));
-        color: rgb(var(--c-text-primary));
+      .typing-indicator {
+          display: flex;
+          align-items: center;
+          padding: 0.5rem;
       }
-
       .typing-indicator span {
-          display: inline-block;
-          width: 8px;
           height: 8px;
+          width: 8px;
+          background-color: rgba(var(--c-text-secondary), 0.7);
           border-radius: 50%;
-          background-color: rgb(var(--c-text-secondary));
           margin: 0 2px;
-          animation: typing-dots 1.4s infinite ease-in-out both;
+          animation: typing-bounce 1.2s infinite ease-in-out;
       }
-      .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-      .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-      @keyframes typing-dots {
+      .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+      .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes typing-bounce {
           0%, 80%, 100% { transform: scale(0); }
           40% { transform: scale(1.0); }
       }
 
-      /* --- 11. Smart Card Styles --- */
-      .smart-card {
-        position: relative;
-        overflow: hidden; /* To contain the confidence bar */
+      /* 11. FITTO AVATAR STYLES */
+      .fitto-avatar {
+          background-color: rgb(var(--c-primary));
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          transition: all 0.3s ease;
       }
-      .smart-card-confidence-bar {
+      .fitto-eye {
+          background-color: white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          position: relative;
+          transition: all 0.3s ease;
+      }
+      .fitto-avatar.thinking .fitto-eye {
+          animation: fitto-thinking 1.5s infinite;
+      }
+      @keyframes fitto-thinking {
+          0%, 100% { transform: scale(1) rotate(0deg); }
+          25% { transform: scale(0.9) rotate(-15deg); }
+          50% { transform: scale(1) rotate(0deg); }
+          75% { transform: scale(0.9) rotate(15deg); }
+      }
+      .fitto-avatar.speaking .fitto-eye {
+          transform: scale(1.05);
+      }
+      .waveform-bar {
+          width: 20%;
+          height: 10%;
+          background-color: rgb(var(--c-primary-dark));
+          margin: 0 1px;
+          animation: waveform-speak 1s infinite ease-in-out alternate;
+      }
+      .waveform-bar:nth-child(1) { animation-delay: 0s; }
+      .waveform-bar:nth-child(2) { animation-delay: 0.2s; }
+      .waveform-bar:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes waveform-speak {
+          from { height: 10%; } to { height: 60%; }
+      }
+      .fitto-avatar.celebrating {
+          animation: fitto-celebrate-jump 0.5s ease-in-out;
+      }
+      @keyframes fitto-celebrate-jump {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+      }
+      .fitto-confetti-container { position: absolute; width: 100%; height: 100%; }
+      .fitto-confetti-particle {
+          position: absolute;
+          top: 50%; left: 50%;
+          width: 5px; height: 5px;
+          border-radius: 50%;
+          opacity: 0;
+          animation: fitto-confetti-burst 0.5s ease-out forwards;
+      }
+      @keyframes fitto-confetti-burst {
+          from { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+          to { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1); opacity: 0; }
+      }
+      .fitto-avatar.encouraging .fitto-eye {
+          transform: scale(0.95);
+          border-radius: 40% 60% 40% 60% / 60% 40% 60% 40%;
+          animation: fitto-encouraging-wobble 2s infinite ease-in-out;
+      }
+      @keyframes fitto-encouraging-wobble {
+          0%, 100% { transform: rotate(0deg); }
+          25% { transform: rotate(-5deg); }
+          75% { transform: rotate(5deg); }
+      }
+      
+      /* 12. DASHBOARD CARDS & TESTIMONIAL */
+      .dashboard-highlight-card {
+        position: relative; /* For the glowing border pseudo-element */
+        transition: all 0.3s ease-in-out;
+        cursor: pointer;
+        background-color: rgb(var(--c-bg-card));
+        border: 1px solid rgb(var(--c-border));
+        z-index: 1; /* Ensure card content is above any background elements */
+      }
+      /* REFINED: Glowing "aurora" border effect on hover */
+      .dashboard-highlight-card::before {
+        content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        height: 4px;
-        width: var(--confidence, 0%);
-        background-color: var(--confidence-color, rgb(var(--c-border)));
-        transition: width 0.5s ease-out;
-        z-index: 1;
+        inset: -1px;
+        border-radius: calc(var(--radius-card) + 1px); /* Match parent's radius */
+        background: linear-gradient(120deg, transparent, rgba(var(--c-primary), 0.8), transparent);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        z-index: -1;
+        background-size: 200% 200%;
+        animation: gradient-pan 4s linear infinite;
+      }
+      .dashboard-highlight-card:hover::before {
+        opacity: 1;
+      }
+      .dashboard-highlight-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-card-hover);
+        border-color: transparent; /* Hide original border to reveal glow */
+      }
+      @keyframes gradient-pan {
+        0% { background-position: 150% 50%; }
+        50% { background-position: -50% 50%; }
+        100% { background-position: 150% 50%; }
+      }
+
+      .streak-card-gradient {
+          background-image: linear-gradient(135deg, rgb(var(--c-streak-bg-start)), rgb(var(--c-streak-bg-end)));
       }
       
       .mission-card-gradient {
-        background-image: radial-gradient(circle at top left, rgba(var(--c-primary-light), 0.5) 0%, transparent 40%),
-                          radial-gradient(circle at bottom right, rgba(var(--c-primary), 0.2) 0%, transparent 50%);
+          position: relative;
+          overflow: hidden;
       }
-      .dark .mission-card-gradient {
-        background-image: radial-gradient(circle at top left, rgba(var(--c-text-accent), 0.1) 0%, transparent 40%),
-                          radial-gradient(circle at bottom right, rgba(var(--c-bg-accent), 0.3) 0%, transparent 50%);
+      /* REFINED: Dynamic, rotating gradient background for the main mission card */
+      .mission-card-gradient::after {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background-image: 
+              radial-gradient(circle at 20% 20%, rgba(var(--c-primary), 0.15), transparent 35%),
+              radial-gradient(circle at 80% 70%, rgba(var(--c-success), 0.1), transparent 35%);
+          animation: rotate-gradient 20s linear infinite;
+          z-index: 0;
       }
-      
+      /* Ensure content stays above the pseudo-element */
+      .mission-card-gradient > * {
+          position: relative;
+          z-index: 1;
+      }
+      @keyframes rotate-gradient {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+      }
+
+      .smart-card-confidence-bar {
+          position: absolute;
+          top: 0;
+          left: 0;
+          height: 6px;
+          width: var(--confidence, 0%);
+          background-color: var(--confidence-color, rgb(var(--c-success)));
+          border-radius: 6px;
+          transition: width 0.5s ease-out;
+      }
       .ai-generated-tag {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 10px;
-        border-radius: 9999px;
-        font-size: 11px;
-        font-weight: 600;
-        background-color: rgba(var(--c-primary), 0.1);
-        color: rgb(var(--c-primary));
+          display: inline-flex;
+          align-items: center;
+          background-color: rgba(var(--c-primary), 0.1);
+          color: rgb(var(--c-primary-dark));
+          font-size: 0.75rem;
+          font-weight: 600;
+          padding: 4px 8px;
+          border-radius: 9999px;
       }
       .dark .ai-generated-tag {
-        background-color: rgba(var(--c-primary), 0.2);
-        color: rgb(var(--c-primary));
+          background-color: rgba(var(--c-primary), 0.2);
+          color: rgb(var(--c-primary-light));
       }
       .difficulty-dots {
-        display: flex;
-        align-items: center;
-        gap: 4px;
+          display: flex;
+          gap: 4px;
       }
       .difficulty-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        transition: background-color 0.3s ease;
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
       }
-      .personalization-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 4px;
+      .activity-icon-bg {
+          padding: 0.75rem;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
       }
-      .personalization-tag {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 12px;
-        border-radius: 9999px;
-        font-size: 12px;
+      .activity-icon-bg-academic { background-color: rgba(var(--c-primary), 0.1); color: rgb(var(--c-primary-dark)); }
+      .activity-icon-bg-iq { background-color: rgba(168, 85, 247, 0.1); color: #9333ea; }
+      .activity-icon-bg-eq { background-color: rgba(236, 72, 153, 0.1); color: #db2777; }
+
+      /* NEW: Score badges for activity feed */
+      .activity-score {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 0.875rem; /* text-sm */
+          padding: 0.25rem 0.5rem;
+          min-width: 55px;
+          border-radius: var(--radius-button);
+          border: 1px solid;
+      }
+      .activity-score-high {
+          color: rgb(var(--c-success));
+          background-color: rgba(var(--c-success), 0.1);
+          border-color: rgba(var(--c-success), 0.2);
+      }
+      .activity-score-medium {
+          color: #D97706; /* amber-600 */
+          background-color: #FEF3C7; /* amber-100 */
+          border-color: #FDE68A; /* amber-200 */
+      }
+      .dark .activity-score-medium {
+          color: #FBBF24; /* amber-400 */
+          background-color: #45330E;
+          border-color: #78350F; /* amber-900 */
+      }
+      .activity-score-low {
+          color: rgb(var(--c-error));
+          background-color: rgba(var(--c-error), 0.1);
+          border-color: rgba(var(--c-error), 0.2);
+      }
+
+      .testimonial-card {
+        background-color: rgba(var(--c-primary-light), 0.3);
+        border: 1px solid rgba(var(--c-primary), 0.2);
+        border-radius: var(--radius-card);
+        padding: 2rem;
+        position: relative;
+        text-align: center;
+        overflow: hidden;
+      }
+      .dark .testimonial-card {
+        background-color: rgba(var(--c-bg-accent), 0.1);
+        border-color: rgba(var(--c-primary), 0.3);
+      }
+      .testimonial-card .quote-icon {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        width: 3rem;
+        height: 3rem;
+        color: rgba(var(--c-primary), 0.2);
+        opacity: 0.8;
+      }
+      .testimonial-quote {
+        font-size: 1.125rem; /* text-lg */
+        font-style: italic;
         font-weight: 500;
+        color: rgb(var(--c-text-primary));
+        line-height: 1.6;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+      }
+      .testimonial-cite {
+        display: block;
+        margin-top: 1rem;
+        font-style: normal;
+        font-weight: 600;
+        color: rgb(var(--c-text-secondary));
+      }
+      .testimonial-cite strong {
+        color: rgb(var(--c-text-primary));
       }
     </style>
   <script type="importmap">
 {
   "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
     "react": "https://aistudiocdn.com/react@^19.1.1",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "react/": "https://aistudiocdn.com/react@^19.1.1/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.19.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.20.0",
     "@heroicons/react/": "https://aistudiocdn.com/@heroicons/react@^2.2.0/"
   }
 }
-</script>
-<script>
-    // FOUC Prevention Script
-    (function() {
-      const theme = localStorage.getItem('alfanumrik-theme');
-      if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    })();
 </script>
 </head>
   <body>

@@ -1,3 +1,8 @@
+
+
+
+
+
 import React, { useState } from 'react';
 import { QuizQuestion, Concept, Student, Grade, Subject, Chapter, PerformanceRecord } from '../types';
 import { generatePracticeExercises } from '../services/geminiService';
@@ -14,9 +19,10 @@ interface PracticeExercisesProps {
   chapter: Chapter;
   language: string;
   onClose: () => void;
+  onMastered: () => void;
 }
 
-const PracticeExercises: React.FC<PracticeExercisesProps> = ({ concept, grade, subject, chapter, language, onClose }) => {
+const PracticeExercises: React.FC<PracticeExercisesProps> = ({ concept, grade, subject, chapter, language, onClose, onMastered }) => {
   const { t } = useLanguage();
   const { currentUser } = useAuth();
   const student = currentUser!;
@@ -64,7 +70,12 @@ const PracticeExercises: React.FC<PracticeExercisesProps> = ({ concept, grade, s
         context: concept.conceptTitle,
       };
       await savePerformanceRecord(student.id, newRecord);
+      
+      if (score >= 75) { 
+        onMastered();
+      }
       setIsFinished(true);
+
     } else {
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedOption(null);

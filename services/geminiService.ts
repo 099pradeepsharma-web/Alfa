@@ -1,5 +1,3 @@
-
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter } from '../types';
 
@@ -11,6 +9,71 @@ if (!process.env.API_KEY) {
 }
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+// --- Static Content for "The Great Transformation" Chapter ---
+const THE_GREAT_TRANSFORMATION_EN: LearningModule = {
+  chapterTitle: 'The Great Transformation: Navigating Your Journey from Teen to Adult',
+  introduction: "Hey there! Ever feel like you're on a roller coaster you didn't even buy a ticket for? One minute, you're a kid, and the next, your body and mind are doing all sorts of new, confusing things. Welcome to the **great transformation**, a journey every single one of us goes through. It's a time of immense change, not just physically, but emotionally and mentally too.\n\nThis phase, starting around Grade 7, is when you begin to shed your childhood skin and step into a new one. It can feel awkward and a little scary, but trust us, you're not alone. The goal of this section is to help you understand what's happening to you, so you can embrace these changes, stay focused on your dreams, and emerge stronger and more confident.",
+  learningObjectives: [
+    "Understand the key physical, emotional, and mental changes during adolescence.",
+    "Recognize that common struggles like distraction and mood swings are normal during this phase.",
+    "Identify healthy coping mechanisms and strategies for managing stress and emotions.",
+    "Develop a positive mindset towards personal growth and identity formation."
+  ],
+  keyConcepts: [
+    {
+      conceptTitle: 'The Science Behind the Changes',
+      explanation: "So, what's really going on? Your brain is undergoing a massive rewiring. The part of your brain responsible for **emotions and risk-taking** (the limbic system) is developing faster than the part that handles **reasoning and decision-making** (the prefrontal cortex).\n\nThis developmental mismatch is why you might feel more intense emotions, and why sometimes, a small thing can feel like a huge deal. At the same time, your body is buzzing with hormones that are causing you to grow, change, and develop physically. Understanding this science can help you be a little kinder to yourself when you feel overwhelmed.",
+      realWorldExample: "Think about why a sad song might suddenly make you feel extremely emotional, or why you might feel a sudden urge to do something risky with friends. It's often your developing emotional brain taking the lead before your reasoning brain has a chance to catch up.",
+      diagramDescription: "A simple diagram of a brain. One part, labeled 'Emotional Center (Limbic System)', is shown brightly lit and larger, with a label 'Developing Fast!'. Another part, labeled 'Reasoning Center (Prefrontal Cortex)', is shown dimmer and smaller, with a label 'Still Developing'."
+    },
+    {
+      conceptTitle: 'Case Study: A Tale of Two Students',
+      explanation: "Let's meet two students, Rohan and Priya, both in Grade 9, facing similar challenges.\n\n**Rohan's Story:** Rohan was a fantastic student, but lately, he's feeling easily distracted. He's more interested in spending time with his friends, and feels a lot of pressure to fit in. He finds himself procrastinating, and his grades are starting to slip. He feels guilty but doesn't know how to regain control.\n\n**Priya's Story:** Priya is experiencing mood swings. One minute she's happy and the next she's crying over something small. She feels a huge amount of pressure from her parents to do well in her exams, and is also navigating new friendships and peer groups. She feels exhausted and can't seem to focus on her studies like she used to.\n\nTheir feelings are completely normal. These aren't signs of weakness or a lack of focus; they are a direct result of the changes happening inside them. The key is to learn how to **manage these new feelings** and channel that energy in the right direction.",
+      realWorldExample: "This case study itself is a real-world example. Many students feel exactly like Rohan or Priya when they navigate school pressure, friendships, and internal changes all at once.",
+      diagramDescription: "An illustration showing two students, Rohan and Priya, looking confused. Arrows point from them to icons representing 'procrastination' (a clock), 'peer pressure' (a group of people), 'mood swings' (a happy and a sad mask), and 'exam stress' (a book with a low grade). A separate arrow points towards a toolkit icon, representing the solution."
+    },
+    {
+      conceptTitle: 'Your Toolkit for Success',
+      explanation: "So, how do you navigate this? Here are four powerful tools you can use:\n\n1.  **Talk it Out:** Find a trusted adult—a parent, a teacher, a counselor—and talk to them. You'd be surprised how much better you'll feel just by sharing your thoughts.\n\n2.  **Stay Active:** Physical activity is a powerful tool to manage stress and anxiety. Whether it's playing a sport, dancing, or even just going for a walk, it helps clear your mind and boosts your mood.\n\n3.  **Find Your Anchor:** This is a time of exploration, but it helps to have things that ground you. This could be a hobby you love, a goal you're passionate about, or simply your personal values. When you feel overwhelmed, connect with your anchor. Take a deep breath and remind yourself of what's truly important to you.\n\n4.  **Embrace Your Identity:** This journey is about discovering who you are. Embrace your unique interests, strengths, and even your weaknesses. Your value isn't defined by what others think of you.",
+      realWorldExample: "For example, dedicating time to a hobby like music or art ('Find Your Anchor') can be a great way to express yourself and de-stress. Or, talking to a school counselor ('Talk it Out') can give you strategies to manage the pressures you're feeling.",
+      diagramDescription: "A visual toolkit with four icons inside: one for talking (two speech bubbles), one for physical activity (a person running), one for an anchor (a literal anchor), and one for identity (a simple mirror)."
+    }
+  ],
+  summary: "This transformational journey is one of the most exciting and significant parts of your life. By understanding what's happening and using the right tools, you can not only survive it but truly thrive. Remember, every challenge you overcome now will prepare you for the even bigger goals you'll achieve in the future."
+};
+
+const THE_GREAT_TRANSFORMATION_HI: LearningModule = {
+  chapterTitle: 'महान परिवर्तन: किशोर से वयस्क तक की आपकी यात्रा',
+  introduction: "नमस्ते! क्या आपको कभी ऐसा महसूस होता है कि आप एक ऐसी रोलर कोस्टर पर हैं जिसका टिकट भी आपने नहीं खरीदा? एक पल आप बच्चे होते हैं, और अगले ही पल, आपका शरीर और दिमाग हर तरह की नई, भ्रमित करने वाली चीजें करने लगते हैं। **महान परिवर्तन** में आपका स्वागत है, एक ऐसी यात्रा जिससे हम में से हर एक गुजरता है। यह न केवल शारीरिक रूप से, बल्कि भावनात्मक और मानसिक रूप से भी भारी बदलाव का समय है।\n\nयह चरण, जो लगभग कक्षा 7 से शुरू होता है, वह समय है जब आप अपनी बचपन की त्वचा को उतारना शुरू करते हैं और एक नई त्वचा में कदम रखते हैं। यह अजीब और थोड़ा डरावना महसूस हो सकता है, लेकिन हम पर विश्वास करें, आप अकेले नहीं हैं। इस खंड का लक्ष्य आपको यह समझने में मदद करना है कि आपके साथ क्या हो रहा है, ताकि आप इन परिवर्तनों को अपना सकें, अपने सपनों पर ध्यान केंद्रित रख सकें, और मजबूत और अधिक आत्मविश्वासी बनकर उभर सकें।",
+  learningObjectives: [
+    "किशोरावस्था के दौरान होने वाले प्रमुख शारीरिक, भावनात्मक और मानसिक परिवर्तनों को समझना।",
+    "यह पहचानना कि ध्यान भटकना और मिजाज में बदलाव जैसी आम मुश्किलें इस चरण में सामान्य हैं।",
+    "तनाव और भावनाओं के प्रबंधन के लिए स्वस्थ मुकाबला तंत्र और रणनीतियों की पहचान करना।",
+    "व्यक्तिगत विकास और पहचान निर्माण के प्रति सकारात्मक मानसिकता विकसित करना।"
+  ],
+  keyConcepts: [
+    {
+      conceptTitle: 'परिवर्तनों के पीछे का विज्ञान',
+      explanation: "तो, वास्तव में क्या हो रहा है? आपके मस्तिष्क में एक बड़ा पुनर्विन्यास हो रहा है। आपके मस्तिष्क का वह हिस्सा जो **भावनाओं और जोखिम लेने** (लिम्बिक सिस्टम) के लिए जिम्मेदार है, वह उस हिस्से की तुलना में तेजी से विकसित हो रहा है जो **तर्क और निर्णय लेने** (प्रीफ्रंटल कॉर्टेक्स) का काम करता है।\n\nयह विकासात्मक असंतुलन ही कारण है कि आप अधिक तीव्र भावनाएं महसूस कर सकते हैं, और क्यों कभी-कभी, एक छोटी सी बात बहुत बड़ी बात महसूस हो सकती है। साथ ही, आपका शरीर भी हार्मोन से गुलजार है जो आपको शारीरिक रूप से बढ़ने, बदलने और विकसित होने का कारण बन रहे हैं। इस विज्ञान को समझने से आपको अभिभूत महसूस होने पर खुद के प्रति थोड़ा दयालु होने में मदद मिल सकती है।",
+      realWorldExample: "सोचिए कि कोई उदास गीत अचानक आपको बहुत भावुक क्यों कर सकता है, या दोस्तों के साथ कुछ जोखिम भरा करने की अचानक इच्छा क्यों होती है। यह अक्सर आपका विकसित हो रहा भावनात्मक मस्तिष्क होता है जो आपके तर्कसंगत मस्तिष्क को पकड़ने का मौका मिलने से पहले ही नेतृत्व कर लेता है।",
+      diagramDescription: "मस्तिष्क का एक सरल चित्र। एक भाग, जिसे 'भावनात्मक केंद्र (लिम्बिक सिस्टम)' कहा जाता है, को उज्ज्वल रूप से प्रकाशित और बड़ा दिखाया गया है, जिस पर 'तेजी से विकसित हो रहा है!' का लेबल लगा है। दूसरा भाग, जिसे 'तर्क केंद्र (प्रीफ्रंटल कॉर्टेक्स)' कहा जाता है, को धुंधला और छोटा दिखाया गया है, जिस पर 'अभी भी विकसित हो रहा है' का लेबल लगा है।"
+    },
+    {
+      conceptTitle: 'केस स्टडी: दो छात्रों की कहानी',
+      explanation: "आइए दो छात्रों, रोहन और प्रिया से मिलते हैं, दोनों कक्षा 9 में हैं, जो समान चुनौतियों का सामना कर रहे हैं।\n\n**रोहन की कहानी:** रोहन एक शानदार छात्र था, लेकिन हाल ही में, वह आसानी से विचलित महसूस कर रहा है। वह अपने दोस्तों के साथ समय बिताने में अधिक रुचि रखता है, और फिट होने के लिए बहुत दबाव महसूस करता है। वह खुद को टालमटोल करते हुए पाता है, और उसके ग्रेड गिरने लगे हैं। वह दोषी महसूस करता है लेकिन यह नहीं जानता कि नियंत्रण कैसे वापस पाया जाए।\n\n**प्रिया की कहानी:** प्रिया के मिजाज में उतार-चढ़ाव हो रहा है। एक पल वह खुश होती है और अगले ही पल वह किसी छोटी सी बात पर रोने लगती है। वह अपनी परीक्षाओं में अच्छा करने के लिए अपने माता-पिता से बहुत अधिक दबाव महसूस करती है, और नई दोस्ती और सहकर्मी समूहों को भी नेविगेट कर रही है। वह थका हुआ महसूस करती है और अपनी पढ़ाई पर पहले की तरह ध्यान केंद्रित नहीं कर पाती है।\n\nउनकी भावनाएं पूरी तरह से सामान्य हैं। ये कमजोरी या ध्यान की कमी के संकेत नहीं हैं; वे उनके अंदर हो रहे परिवर्तनों का प्रत्यक्ष परिणाम हैं। कुंजी यह सीखना है कि **इन नई भावनाओं को कैसे प्रबंधित किया जाए** और उस ऊर्जा को सही दिशा में कैसे लगाया जाए।",
+      realWorldExample: "यह केस स्टडी अपने आप में एक वास्तविक दुनिया का उदाहरण है। बहुत से छात्र स्कूल के दबाव, दोस्ती और आंतरिक परिवर्तनों को एक साथ नेविगेट करते समय बिल्कुल रोहन या प्रिया जैसा महसूस करते हैं।",
+      diagramDescription: "एक चित्रण जिसमें दो छात्र, रोहन और प्रिया, भ्रमित दिख रहे हैं। तीर उनसे 'टालमटोल' (एक घड़ी), 'सहकर्मी दबाव' (लोगों का एक समूह), 'मिजाज में बदलाव' (एक खुश और एक उदास मुखौटा), और 'परीक्षा तनाव' (कम ग्रेड वाली एक किताब) का प्रतिनिधित्व करने वाले आइकन की ओर इशारा करते हैं। एक अलग तीर समाधान का प्रतिनिधित्व करने वाले एक टूलकिट आइकन की ओर इशारा करता है।"
+    },
+    {
+      conceptTitle: 'आपकी सफलता की टूलकिट',
+      explanation: "तो, आप इसे कैसे संभालते हैं? यहाँ चार शक्तिशाली उपकरण दिए गए हैं जिनका आप उपयोग कर सकते हैं:\n\n1.  **बात करें:** किसी विश्वसनीय वयस्क से बात करें—एक माता-पिता, एक शिक्षक, एक परामर्शदाता। आप केवल अपने विचार साझा करके कितना बेहतर महसूस करेंगे, इस पर आपको आश्चर्य होगा।\n\n2.  **सक्रिय रहें:** शारीरिक गतिविधि तनाव और चिंता को प्रबंधित करने का एक शक्तिशाली उपकरण है। चाहे वह कोई खेल खेलना हो, नृत्य करना हो, या सिर्फ टहलने जाना हो, यह आपके दिमाग को साफ करने और आपके मूड को बेहतर बनाने में मदद करता है।\n\n3.  **अपना एंकर खोजें:** यह खोज का समय है, लेकिन ऐसी चीजें रखना मददगार होता है जो आपको स्थिर रखती हैं। यह आपका कोई पसंदीदा शौक हो सकता है, कोई ऐसा लक्ष्य जिसके प्रति आप जुनूनी हों, या बस आपके व्यक्तिगत मूल्य। जब आप अभिभूत महसूस करें, तो अपने एंकर से जुड़ें। एक गहरी सांस लें और खुद को याद दिलाएं कि आपके लिए वास्तव में क्या महत्वपूर्ण है।\n\n4.  **अपनी पहचान को अपनाएं:** यह यात्रा यह खोजने के बारे में है कि आप कौन हैं। अपनी अनूठी रुचियों, शक्तियों और यहां तक कि अपनी कमजोरियों को भी अपनाएं। आपका मूल्य इस बात से परिभाषित नहीं होता है कि दूसरे आपके बारे में क्या सोचते हैं।",
+      realWorldExample: "उदाहरण के लिए, संगीत या कला जैसे किसी शौक के लिए समय समर्पित करना ('अपना एंकर खोजें') खुद को अभिव्यक्त करने और तनाव दूर करने का एक शानदार तरीका हो सकता है। या, एक स्कूल परामर्शदाता से बात करना ('बात करें') आपको महसूस हो रहे दबावों को प्रबंधित करने के लिए रणनीतियाँ दे सकता है।",
+      diagramDescription: "एक दृश्य टूलकिट जिसके अंदर चार आइकन हैं: बात करने के लिए एक (दो भाषण बुलबुले), शारीरिक गतिविधि के लिए एक (एक दौड़ता हुआ व्यक्ति), एक एंकर के लिए एक (एक शाब्दिक एंकर), और पहचान के लिए एक (एक साधारण दर्पण)।"
+    }
+  ],
+  summary: "यह परिवर्तनकारी यात्रा आपके जीवन के सबसे रोमांचक और महत्वपूर्ण हिस्सों में से एक है। क्या हो रहा है, यह समझकर और सही उपकरणों का उपयोग करके, आप न केवल इससे बच सकते हैं, बल्कि वास्तव में फल-फूल सकते हैं। याद रखें, अब आप जिस भी चुनौती को पार करते हैं, वह आपको भविष्य में प्राप्त होने वाले और भी बड़े लक्ष्यों के लिए तैयार करेगी।"
+};
 
 // --- Schemas for Learning Module ---
 
@@ -199,6 +262,16 @@ const vocabularyDeepDiveSchema = {
     required: ['term', 'definition', 'usageInSentence']
 };
 
+const interactiveVideoSimulationSchema = {
+    type: Type.OBJECT,
+    properties: {
+        title: { type: Type.STRING },
+        description: { type: Type.STRING, description: "Explains what the simulation will show and why it's useful." },
+        videoPrompt: { type: Type.STRING, description: "The detailed prompt for the VEO model." },
+    },
+    required: ['title', 'description', 'videoPrompt']
+};
+
 
 const learningModuleSchema = {
     type: Type.OBJECT,
@@ -212,6 +285,7 @@ const learningModuleSchema = {
         learningTricksAndMnemonics: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
         higherOrderThinkingQuestions: { type: Type.ARRAY, items: hotQuestionSchema, nullable: true },
         competitiveExamMapping: { type: Type.STRING, nullable: true },
+        interactiveVideoSimulation: { ...interactiveVideoSimulationSchema, nullable: true },
 
         // New fields
         prerequisitesCheck: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
@@ -368,115 +442,43 @@ const curriculumOutlineSchema = {
 
 export const getChapterContent = async (gradeLevel: string, subject: string, chapter: string, studentName: string, language: string): Promise<LearningModule> => {
     
-    let subjectSpecificInstructions = '';
-    const lowerCaseSubject = subject.toLowerCase();
-
-    if (lowerCaseSubject.includes('mathematics')) {
-        subjectSpecificInstructions = `
-        **MATHEMATICS MASTERY FRAMEWORK (Apply these specific instructions for Mathematics content ONLY):**
-        -   **Content Structure**: Ensure the response includes fields like \`keyTheoremsAndProofs\`, \`formulaDerivations\`, etc., where relevant.
-        -   **Real-World Connection First**: Begin EVERY key concept explanation with a "Why is this important?" section, connecting it to a tangible, real-world Indian application (e.g., GST calculations for Percentages, rocket trajectories for Conic Sections).
-        -   **Multiple Solution Methods**: For \`problemSolvingTemplates\` and \`categorizedProblems\`, provide at least three distinct methods for solving each major problem type where applicable. Label them clearly (e.g., "Method 1: Traditional," "Method 2: Logical Reasoning," "Method 3: Shortcut").
-        -   **Vedic Mathematics Integration**: Within the \`learningTricksAndMnemonics\` section, include specific mental calculation shortcuts inspired by Vedic Mathematics relevant to the chapter.
-        -   **Pattern Recognition & Logic**: Include a subsection in \`categorizedProblems\` or as an \`extensionActivity\` specifically designed for pattern recognition or logical reasoning related to the mathematical concepts.
-        -   **Career & Heritage Connection**: Ensure the \`careerConnections\` section is robust, linking the chapter's concepts to modern Indian STEM careers (ISRO, data science, etc.). Also, explicitly mention contributions of Indian mathematicians like Aryabhata, Ramanujan, etc., in the relevant \`introduction\` or concept explanations.
-        -   **Financial Literacy**: Where relevant (e.g., Percentages, Simple/Compound Interest, Linear Equations), add examples in the \`realWorldExample\` field that relate to an Indian financial contexts like banking (loans, interest rates), or taxes.
-        `;
-    } else if (['science', 'physics', 'chemistry', 'biology', 'evs'].some(s => lowerCaseSubject.includes(s))) {
-        subjectSpecificInstructions = `
-        **SCIENCE EXCELLENCE PROTOCOL (Apply these specific instructions for Science/Physics/Chemistry/Biology content ONLY):**
-        -   **Content Structure**: Ensure the response includes fields like \`experiments\`, \`keyLawsAndPrinciples\`, \`scientificMethodApplications\`, \`currentDiscoveries\`, and \`environmentalAwareness\`.
-        -   **Start with Observation**: Begin EVERY key concept explanation with an "Observe at Home" section, posing a simple question that an Indian student can explore using everyday materials (e.g., "Why does a steel spoon get hot when left in a cup of chai?").
-        -   **Safety First**: For every experiment in the \`experiments\` section, the \`safetyGuidelines\` field MUST be detailed and practical, mentioning the need for adult supervision where necessary.
-        -   **Connect to Indian Research**: Within the \`explanation\` of relevant concepts, explicitly reference achievements from Indian scientific bodies like ISRO (e.g., Chandrayaan, Mangalyaan), DRDO, or research from IITs.
-        -   **Ecological Relevance**: The \`environmentalAwareness\` section MUST connect the chapter's topic to a specific Indian ecological challenge (e.g., water conservation in arid regions, air pollution in cities, Himalayan ecosystem preservation).
-        -   **Public Health Connection**: Include a "Health Connection" within the \`realWorldExample\` field where applicable, linking the scientific concept to a public health issue in India (e.g., nutrition, vaccination, water-borne diseases).
-        `;
-    } else {
-        // Fallback for other subjects.
-        subjectSpecificInstructions = `
-        -   **For Social Science, Commerce, Humanities**: Include \`timelineOfEvents\` and \`keyFigures\`. Connect to the Indian Constitution and current events.
-        -   **For Language Arts**: Include \`grammarSpotlight\` and \`literaryDeviceAnalysis\` with examples from Indian literature.
-        `;
-    }
-    
-    // New logic for dynamic question generation instructions based on grade level and CBSE patterns
-    const gradeNumber = parseInt(gradeLevel.replace(/[^0-9]/g, ''), 10) || 0;
-    let questionGenerationInstructions = '';
-
-    if (gradeNumber >= 11) {
-        questionGenerationInstructions = `
-        -   **categorizedProblems**: This is "PART 3 - PRACTICE & APPLICATION". Generate a comprehensive bank of at least 40 practice questions to ensure exhaustive coverage, making Alfanumrik the only resource a student needs. The questions must be meticulously designed based on the last 10 years of CBSE exam patterns for senior secondary classes. Distribute the questions across \`conceptual\`, \`application\`, and \`higherOrderThinking\` categories. Ensure a diverse mix of question types, including:
-            -   Multiple Choice Questions (MCQs)
-            -   Short Answer (SA-I, SA-II)
-            -   Long Answer (LA)
-            -   Case-Based/Source-Based Questions
-            -   Assertion-Reasoning Questions
-        A significant portion should be inspired by previous year board questions.
-        `;
-    } else if (gradeNumber >= 9) {
-        questionGenerationInstructions = `
-        -   **categorizedProblems**: This is "PART 3 - PRACTICE & APPLICATION". Generate a comprehensive bank of at least 35 practice questions to ensure students are fully prepared. The questions must be meticulously designed based on the last 10 years of CBSE exam patterns for high school. Distribute the questions across \`conceptual\`, \`application\`, and \`higherOrderThinking\` categories. Ensure a diverse mix of question types, including:
-            -   Multiple Choice Questions (MCQs)
-            -   Very Short Answer (VSA)
-            -   Short Answer (SA)
-            -   Long Answer (LA)
-            -   Case-Based Questions
-        Include variations of previous year CBSE board questions.
-        `;
-    } else if (gradeNumber >= 6) {
-        questionGenerationInstructions = `
-        -   **categorizedProblems**: This is "PART 3 - PRACTICE & APPLICATION". Generate a solid bank of at least 25 practice questions based on middle school examination patterns. Distribute the questions across \`conceptual\`, \`application\`, and \`higherOrderThinking\` categories. Ensure a mix of question types, including MCQs, Very Short Answer, and Short Answer questions.
-        `;
-    } else {
-        // For grades below 6, keep it simpler.
-        questionGenerationInstructions = `
-        -   **categorizedProblems**: This is "PART 3 - PRACTICE & APPLICATION". Generate a set of 15 practice questions. Distribute them evenly with 5 for \`conceptual\`, 5 for \`application\`, and 5 for \`higherOrderThinking\`. The questions should be simple, direct, and focused on reinforcing the core concepts.
-        `;
+    // Intercept for the static "Great Transformation" chapter
+    if (chapter === 'The Great Transformation: Navigating Your Journey from Teen to Adult') {
+        return language === 'hi' ? THE_GREAT_TRANSFORMATION_HI : THE_GREAT_TRANSFORMATION_EN;
     }
 
     const prompt = `
         **SYSTEM ROLE:**
-        You are an expert educational content creator specializing in the Indian K-12 CBSE curriculum. You have extensive experience in curriculum design, child psychology, and creating AI-powered learning materials. Your goal is to produce content that is NCERT-aligned, pedagogically sound, and engaging for students. Your entire response must be in the ${language} language.
+        You are an expert educational content creator for the Indian K-12 CBSE curriculum. Your goal is to produce the foundational content for a learning module. Your entire response must be in the ${language} language.
 
         **CONTENT MISSION:**
-        Create a world-class K-12 CBSE learning module for a ${gradeLevel} student on the chapter "${chapter}" in ${subject}. The content must exceed international standards while being perfectly aligned with Indian educational contexts and NEP 2020 guidelines. You are talking to the student, ${studentName}, but your content should be structured for a learning platform. The tone should be authoritative yet encouraging, like an expert mentor.
+        Create the core learning module for a ${gradeLevel} student named ${studentName} on the chapter "${chapter}" in ${subject}. The tone should be authoritative yet encouraging.
 
         **QUALITY STANDARDS (MANDATORY):**
-        1.  **Pedagogical Excellence:** Follow Bloom's Taxonomy progression. Use scaffolded learning.
-        2.  **CBSE Alignment:** Align with the latest CBSE syllabus (2024-25), NCERT textbooks, and NEP 2020 competency-based questions.
-        3.  **Content Depth & Accuracy:** Provide multi-level explanations, real-world Indian examples, and address common misconceptions.
-        4.  **Cultural Sensitivity:** Use Indian contexts, names, and examples.
-        5.  **Factual Accuracy:** All information, especially scientific laws, historical dates, and mathematical formulas, must be factually correct and verifiable.
+        1.  **Pedagogical Excellence & CBSE Alignment:** Align with the latest CBSE syllabus (2024-25) and NCERT textbooks.
+        2.  **Accuracy:** All information must be factually correct.
+        3.  **Cultural Sensitivity:** Use Indian contexts and examples where appropriate.
 
-        **SAFETY & GROUNDING INSTRUCTIONS (CRUCIAL):**
-        - If a topic is highly specialized, controversial, or not typically covered in the standard NCERT textbook for this grade, you MUST state that and provide a foundational, age-appropriate overview rather than inventing complex details.
-        - Prioritize accuracy and pedagogical soundness above all else. Do not fabricate content to fill a field if the information is not readily available or suitable for the student's level.
-
-        **CONTENT GENERATION GUIDE (Applying Principles to the JSON Schema):**
+        **CONTENT GENERATION GUIDE (Generate ONLY these core sections):**
         -   **chapterTitle**: Must be "${chapter}".
-        -   **introduction**: This is your "CONCEPT FOUNDATION". Start with a hook, introduce the concept with a familiar Indian scenario.
-        -   **learningObjectives**: These are the CBSE Learning Outcomes. Be specific and measurable.
-        -   **prerequisitesCheck**: A list of concepts the student MUST know before starting this chapter.
-        -   **keyConcepts**: This is your "DETAILED EXPLANATION". Each concept should have:
-            -   \`conceptTitle\`: A clear title for the concept.
-            -   \`explanation\`: A step-by-step breakdown.
-            -   \`realWorldExample\`: An application in an Indian context (e.g., technology, culture, economy).
+        -   **introduction**: Start with a hook to grab the student's attention.
+        -   **learningObjectives**: List the specific, measurable learning outcomes based on the CBSE syllabus.
+        -   **prerequisitesCheck**: A list of concepts the student should know before starting this chapter.
+        -   **keyConcepts**: This is the most critical part. For each concept, provide:
+            -   \`conceptTitle\`: A clear title.
+            -   \`explanation\`: A step-by-step, easy-to-understand breakdown.
+            -   \`realWorldExample\`: A relatable application, preferably in an Indian context.
             -   \`diagramDescription\`: A detailed description for a visual aid.
-        ${questionGenerationInstructions}
-        -   **commonMistakes**: This is for "ASSESSMENT & REMEDIATION". List common errors students make and their corrections.
-        -   **selfAssessmentChecklist**: A list of "I can..." statements for students to check their understanding.
-        -   **extensionActivities**: For advanced learners. Suggest projects or further reading.
-        -   **remedialActivities**: For struggling students. Suggest simpler problems or foundational concept reviews.
-        -   **interdisciplinaryConnections**: This is "PART 5". Explain how this chapter connects to other subjects.
-        -   **careerConnections**: List potential career paths related to this topic.
-        -   **technologyIntegration**: Suggest how technology (apps, simulations) can be used to learn this topic.
-        -   **summary**: A concise summary of the key takeaways from the chapter.
-        
-        ${subjectSpecificInstructions}
+        -   **formulaSheet**: For subjects like Mathematics, Physics, or Chemistry, generate a concise list of all relevant formulas. Each formula should have a brief, clear description. If the chapter has no formulas, this field can be null.
+        -   **summary**: A concise summary of the key takeaways.
+        -   **conceptMap**: If the chapter involves complex relationships (e.g., flowcharts, cycles), provide a detailed, descriptive prompt for an AI image generator (like Imagen) to create a concept map. For simple chapters, this can be null.
+        -   **interactiveVideoSimulation**: For one key concept that is highly visual or hard to explain with text, generate an engaging video simulation section. The \`videoPrompt\` should be a detailed prompt for a model like Google VEO. For other chapters, this can be null.
+
+        **DO NOT GENERATE THE FOLLOWING SECTIONS IN THIS REQUEST:**
+        - Do not generate \`categorizedProblems\`, \`experiments\`, \`commonMistakes\`, or any other deep pedagogical sections. These will be generated on-demand later.
 
         **FINAL INSTRUCTION:**
-        Your entire output MUST be a JSON object that strictly follows the 'LearningModule' schema. Ensure all text fields embody the expert, culturally-relevant, and pedagogically sound principles outlined above. No markdown, just plain text with newline characters (\\n) for breaks.
+        Your entire output MUST be a JSON object that strictly follows the 'LearningModule' schema, but only containing the core fields listed above. Ensure all text fields are complete. No markdown, just plain text with newline characters (\\n) for breaks.
     `;
 
     try {
@@ -497,6 +499,104 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
         throw new Error("Failed to generate learning content from AI. Please try again.");
     }
 };
+
+const sectionSchemaMap: { [key: string]: any } = {
+    keyTheoremsAndProofs: { type: Type.ARRAY, items: theoremSchema },
+    formulaDerivations: { type: Type.ARRAY, items: formulaDerivationSchema },
+    formulaSheet: { type: Type.ARRAY, items: formulaSchema },
+    problemSolvingTemplates: { type: Type.ARRAY, items: problemSolvingTemplateSchema },
+    categorizedProblems: categorizedProblemsSchema,
+    commonMistakes: { type: Type.ARRAY, items: commonMistakeSchema },
+    keyLawsAndPrinciples: { type: Type.ARRAY, items: keyLawOrPrincipleSchema },
+    solvedNumericalProblems: { type: Type.ARRAY, items: solvedNumericalProblemSchema },
+    experiments: { type: Type.ARRAY, items: experimentSchema },
+    timelineOfEvents: { type: Type.ARRAY, items: timelineEventSchema },
+    keyFigures: { type: Type.ARRAY, items: keyFigureSchema },
+    primarySourceAnalysis: { type: Type.ARRAY, items: primarySourceSnippetSchema },
+    inDepthCaseStudies: { type: Type.ARRAY, items: caseStudySchema },
+    grammarSpotlight: { type: Type.ARRAY, items: grammarRuleSchema },
+    literaryDeviceAnalysis: { type: Type.ARRAY, items: literaryDeviceSchema },
+    vocabularyDeepDive: { type: Type.ARRAY, items: vocabularyDeepDiveSchema },
+    higherOrderThinkingQuestions: { type: Type.ARRAY, items: hotQuestionSchema },
+    learningTricksAndMnemonics: { type: Type.ARRAY, items: { type: Type.STRING } },
+    scientificMethodApplications: { type: Type.STRING },
+    currentDiscoveries: { type: Type.STRING },
+    environmentalAwareness: { type: Type.STRING },
+    interdisciplinaryConnections: { type: Type.STRING },
+    selfAssessmentChecklist: { type: Type.ARRAY, items: { type: Type.STRING } },
+    extensionActivities: { type: Type.ARRAY, items: { type: Type.STRING } },
+    remedialActivities: { type: Type.ARRAY, items: { type: Type.STRING } },
+    careerConnections: { type: Type.STRING },
+    technologyIntegration: { type: Type.STRING },
+    competitiveExamMapping: { type: Type.STRING }
+};
+
+export const generateSectionContent = async (
+    gradeLevel: string, 
+    subject: string, 
+    chapter: string, 
+    language: string, 
+    sectionKey: keyof LearningModule,
+    chapterContext: string
+): Promise<Partial<LearningModule>> => {
+
+    const schemaForSection = sectionSchemaMap[sectionKey];
+    if (!schemaForSection) {
+        throw new Error(`No schema defined for section: ${sectionKey}`);
+    }
+
+    const prompt = `
+        **SYSTEM ROLE:**
+        You are an expert educational content creator for the Indian K-12 CBSE curriculum. Your task is to generate a specific, detailed pedagogical section for an existing learning module. Your entire response must be in the ${language} language.
+
+        **MISSION CONTEXT:**
+        -   **Grade:** ${gradeLevel}
+        -   **Subject:** ${subject}
+        -   **Chapter:** "${chapter}"
+        -   **Chapter Core Content:** ${chapterContext}
+
+        **TASK:**
+        Generate the content ONLY for the section named "${sectionKey}". Your output must be comprehensive, pedagogically sound, and aligned with the latest CBSE standards (2024-25).
+
+        **SPECIAL INSTRUCTIONS for 'categorizedProblems':**
+        If you are generating the "categorizedProblems" section, you MUST adhere to the following grade-specific guidelines for question generation:
+        -   **Grades 11-12:** Generate at least 40 practice questions. The questions must be meticulously designed based on the last 10 years of CBSE exam patterns, including MCQs, Short Answer (SA-I, SA-II), Long Answer (LA), Case-Based, and Assertion-Reasoning questions.
+        -   **Grades 9-10:** Generate at least 35 practice questions. The questions must be designed based on the last 10 years of CBSE exam patterns, including MCQs, VSA, SA, LA, and Case-Based questions.
+        -   **Grades 6-8:** Generate a solid bank of at least 25 practice questions based on middle school examination patterns, including MCQs, VSA, and SA questions.
+        -   **Below Grade 6:** Generate a set of 15 practice questions focused on reinforcing core concepts.
+        
+        For all other sections, provide rich, detailed, and accurate content appropriate for the grade level.
+
+        **FINAL INSTRUCTION:**
+        Your entire output MUST be a JSON object containing a single key: "${sectionKey}". The value of this key must strictly follow the provided schema for that section. Do not include any other keys or markdown.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        [sectionKey]: schemaForSection,
+                    },
+                    required: [sectionKey],
+                },
+                temperature: 0.8,
+            },
+        });
+
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText) as Partial<LearningModule>;
+
+    } catch (error) {
+        console.error(`Error generating section content for "${sectionKey}":`, error);
+        throw new Error(`Failed to generate the "${sectionKey}" section from AI. Please try again.`);
+    }
+};
+
 
 export const generateQuiz = async (keyConcepts: Concept[], language: string, count: number = 5): Promise<QuizQuestion[]> => {
     const conceptTitles = keyConcepts.map(c => c.conceptTitle);
@@ -687,6 +787,68 @@ export const generateDiagram = async (description: string, subject: string): Pro
     
     console.error("Error generating diagram after multiple retries:", lastError);
     throw new Error("Failed to generate diagram from AI after multiple attempts.");
+};
+
+export const generateConceptMapImage = async (description: string): Promise<string> => {
+    const prompt = `Create a visually appealing, K-12 friendly infographic-style concept map based on this description: "${description}". The map should be clean, with clear labels and connecting lines, on a plain white background. It should look like a modern educational illustration. Do not include any text that is not part of the described labels.`;
+    
+    try {
+        const response = await ai.models.generateImages({
+            model: 'imagen-4.0-generate-001',
+            prompt: prompt,
+            config: {
+              numberOfImages: 1,
+              outputMimeType: 'image/png',
+              aspectRatio: '16:9',
+            },
+        });
+
+        if (response.generatedImages && response.generatedImages.length > 0) {
+            const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
+            return `data:image/png;base64,${base64ImageBytes}`;
+        } else {
+            throw new Error("No concept map image was generated by the AI.");
+        }
+    } catch (error) {
+        console.error("Error generating concept map image:", error);
+        throw new Error("Failed to generate concept map image from AI.");
+    }
+};
+
+export const generateVideoFromPrompt = async (prompt: string): Promise<Blob> => {
+    try {
+        let operation = await ai.models.generateVideos({
+            model: 'veo-2.0-generate-001',
+            prompt: prompt,
+            config: {
+                numberOfVideos: 1
+            }
+        });
+
+        while (!operation.done) {
+            // Wait for 10 seconds before polling again.
+            await new Promise(resolve => setTimeout(resolve, 10000));
+            operation = await ai.operations.getVideosOperation({ operation: operation });
+        }
+
+        const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+        if (!downloadLink) {
+            throw new Error("Video generation completed, but no download link was provided.");
+        }
+
+        // The response.body contains the MP4 bytes. You must append an API key when fetching from the download link.
+        const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+        if (!response.ok) {
+            throw new Error(`Failed to download video: ${response.statusText}`);
+        }
+
+        const videoBlob = await response.blob();
+        return videoBlob;
+
+    } catch (error) {
+        console.error("Error generating video:", error);
+        throw new Error("Failed to generate video from AI. Please try again.");
+    }
 };
 
 export const generateNextStepRecommendation = async (grade: string, subject: string, chapter: string, score: number, totalQuestions: number, subjectChapters: {title: string}[], language: string): Promise<NextStepRecommendation> => {
