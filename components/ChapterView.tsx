@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Grade, Subject, Chapter, LearningModule, QuizQuestion, NextStepRecommendation, ChapterProgress, Student, CategorizedProblems, VocabularyDeepDive, Theorem, FormulaDerivation, SolvedNumericalProblem, Formula, ProblemSolvingTemplate, CommonMistake, Experiment, TimelineEvent, KeyFigure, PrimarySourceSnippet, CaseStudy, GrammarRule, LiteraryDevice, HOTQuestion } from '../types';
+import { Grade, Subject, Chapter, LearningModule, QuizQuestion, NextStepRecommendation, ChapterProgress, Student, CategorizedProblems, VocabularyDeepDive, Theorem, FormulaDerivation, SolvedNumericalProblem, Formula, ProblemSolvingTemplate, CommonMistake, Experiment, TimelineEvent, KeyFigure, PrimarySourceSnippet, CaseStudy, GrammarRule, LiteraryDevice, HOTQuestion, KeyLawOrPrinciple } from '../types';
 import * as contentService from '../services/contentService';
 import { generateQuiz, generateNextStepRecommendation, generateSectionContent } from '../services/geminiService';
 import { getChapterProgress, saveChapterProgress } from '../services/pineconeService';
@@ -15,6 +15,7 @@ import VideoSimulationPlayer from './VideoSimulationPlayer';
 import VirtualLabPlayer from './VirtualLabPlayer';
 import AdaptiveStoryPlayer from './AdaptiveStoryPlayer';
 import InteractiveExplainerPlayer from './InteractiveExplainerPlayer';
+import StructuredText from './StructuredText';
 
 declare const mermaid: any;
 
@@ -138,11 +139,15 @@ const getSectionsForSubject = (subjectName: string): SectionKey[] => {
 
 
 // --- START: Section Content Rendering Components ---
+const isSolvedProblem = (item: any): item is SolvedNumericalProblem => 'solution' in item;
+const isTheorem = (item: any): item is Theorem => 'proof' in item;
+const isKeyLawOrPrinciple = (item: any): item is KeyLawOrPrinciple => 'explanation' in item && 'name' in item;
+const isHOTQuestion = (item: any): item is HOTQuestion => 'hint' in item;
 
-const SimpleTextComponent: React.FC<{ text: string | undefined, renderText: (text: string) => React.ReactNode }> = ({ text, renderText }) => text ? <p>{renderText(text)}</p> : null;
+const SimpleTextComponent: React.FC<{ text: string | undefined, renderText: (text: string) => React.ReactNode }> = ({ text, renderText }) => text ? <StructuredText text={text} renderText={renderText} /> : null;
 
 const StringListComponent: React.FC<{ items: string[] | undefined, renderText: (text: string) => React.ReactNode }> = ({ items, renderText }) => (
-    <ul className="list-disc list-inside space-y-2">
+    <ul className="styled-list">
         {items?.map((item, index) => <li key={index}>{renderText(item)}</li>)}
     </ul>
 );
@@ -163,32 +168,55 @@ const VocabularyComponent: React.FC<{ items: VocabularyDeepDive[] | undefined, r
     );
 };
 
-const TheoremsComponent: React.FC<{ items: (Theorem[] | HOTQuestion[] | SolvedNumericalProblem[]) | undefined, renderText: (text: string) => React.ReactNode }> = ({ items, renderText }) => {
+const TheoremsComponent: React.FC<{ items: (Theorem[] | HOTQuestion[] | SolvedNumericalProblem[] | KeyLawOrPrinciple[]) | undefined, renderText: (text: string) => React.ReactNode }> = ({ items, renderText }) => {
     const { t } = useLanguage();
-    const isSolvedProblem = (item: any): item is SolvedNumericalProblem => 'solution' in item;
-    const isTheorem = (item: any): item is Theorem => 'proof' in item;
 
     return (
         <div className="space-y-4">
-            {items?.map((item, index) => (
-                <div key={index} className="p-4 bg-slate-100 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                    <h4 className="font-bold text-lg text-slate-800 dark:text-slate-100">{isTheorem(item) ? item.name : item.question}</h4>
-                     <div className="mt-2">
-                        <h5 className="font-semibold text-slate-600 dark:text-slate-300">
-                            {isSolvedProblem(item) ? t('solution') : (isTheorem(item) ? t('proof') : 'Hint')}:
-                        </h5>
-                        <div className="mt-1">
-                          {isSolvedProblem(item) ? (
-                            <MathSolutionComponent content={item.solution} renderText={renderText} />
-                          ) : (
-                            <div className="p-3 bg-slate-200 dark:bg-slate-700 rounded-md text-slate-700 dark:text-slate-200 font-mono text-sm">
-                                <p className="whitespace-pre-wrap">{renderText(isTheorem(item) ? item.proof : item.hint)}</p>
+            {items?.map((item, index) => {
+                const title = 'name' in item ? item.name : ('question' in item ? item.question : 'Untitled');
+                
+                let label = '';
+                let content = '';
+                let isMath = false;
+
+                if (isSolvedProblem(item)) {
+                    label = t('solution');
+                    content = item.solution;
+                    isMath = true;
+                } else if (isTheorem(item)) {
+                    label = t('proof');
+                    content = item.proof;
+                } else if (isKeyLawOrPrinciple(item)) {
+                    label = t('explanation');
+                    content = item.explanation;
+                } else if (isHOTQuestion(item)) {
+                    label = t('hint');
+                    content = item.hint;
+                } else {
+                    return null;
+                }
+
+                return (
+                    <div key={index} className="p-4 bg-slate-100 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <h4 className="font-bold text-lg text-slate-800 dark:text-slate-100">{title}</h4>
+                        {content && (
+                            <div className="mt-2">
+                                <h5 className="font-semibold text-slate-600 dark:text-slate-300">
+                                    {label}:
+                                </h5>
+                                <div className="mt-1">
+                                    {isMath ? (
+                                        <MathSolutionComponent content={content} renderText={renderText} />
+                                    ) : (
+                                        <StructuredText text={content} renderText={renderText} />
+                                    )}
+                                </div>
                             </div>
-                          )}
-                        </div>
+                        )}
                     </div>
-                </div>
-            ))}
+                );
+            })}
         </div>
     );
 };
@@ -245,11 +273,11 @@ const CommonMistakesComponent: React.FC<{ items: CommonMistake[] | undefined, re
                 <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-100 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
                     <div>
                         <h4 className="font-semibold text-red-600 dark:text-red-400">{t('mistake')}:</h4>
-                        <p className="text-slate-700 dark:text-slate-300">{renderText(item.mistake)}</p>
+                        <StructuredText text={item.mistake} renderText={renderText} />
                     </div>
                      <div>
                         <h4 className="font-semibold text-green-600 dark:text-green-400">{t('correction')}:</h4>
-                        <p className="text-slate-700 dark:text-slate-300">{renderText(item.correction)}</p>
+                        <StructuredText text={item.correction} renderText={renderText} />
                     </div>
                 </div>
             ))}
@@ -264,10 +292,10 @@ const ExperimentsComponent: React.FC<{ items: Experiment[] | undefined, renderTe
             {items?.map((item, index) => (
                  <div key={index} className="p-4 bg-slate-100 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
                     <h4 className="font-bold text-xl text-slate-800 dark:text-slate-100">{item.title}</h4>
-                    <p className="text-slate-600 dark:text-slate-300 mt-1">{renderText(item.description)}</p>
+                    <div className="mt-1"><StructuredText text={item.description} renderText={renderText} /></div>
                     <div className="mt-4">
                         <h5 className="font-semibold text-slate-700 dark:text-slate-200">{t('materials')}:</h5>
-                        <ul className="list-disc list-inside text-slate-600 dark:text-slate-300">
+                        <ul className="list-disc list-inside text-slate-600 dark:text-slate-300 styled-list">
                             {item.materials.map((mat, i) => <li key={i}>{mat}</li>)}
                         </ul>
                     </div>
@@ -279,7 +307,7 @@ const ExperimentsComponent: React.FC<{ items: Experiment[] | undefined, renderTe
                     </div>
                      <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/40 border-l-4 border-yellow-400 rounded-r-md">
                         <h5 className="font-semibold text-yellow-800 dark:text-yellow-200">{t('safetyGuidelines')}:</h5>
-                        <p className="text-yellow-700 dark:text-yellow-300">{renderText(item.safetyGuidelines)}</p>
+                        <StructuredText text={item.safetyGuidelines} renderText={renderText} />
                     </div>
                 </div>
             ))}
@@ -293,7 +321,7 @@ const TimelineComponent: React.FC<{ items: TimelineEvent[] | undefined, renderTe
             <div key={index} className="relative">
                  <div className="absolute -left-[35px] top-1 h-4 w-4 rounded-full bg-primary" style={{backgroundColor: 'rgb(var(--c-primary))'}}></div>
                  <p className="font-bold text-lg text-primary-dark dark:text-primary-light" style={{color: 'rgb(var(--c-primary-dark))'}}>{item.year}: {renderText(item.event)}</p>
-                 <p className="text-slate-600 dark:text-slate-300">{renderText(item.significance)}</p>
+                 <StructuredText text={item.significance} renderText={renderText} />
             </div>
         ))}
     </div>
@@ -304,7 +332,7 @@ const KeyFiguresComponent: React.FC<{ items: KeyFigure[] | undefined, renderText
         {items?.map((item, index) => (
              <div key={index} className="p-4 bg-slate-100 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
                 <h4 className="font-bold text-lg text-slate-800 dark:text-slate-100">{item.name}</h4>
-                <p className="text-slate-600 dark:text-slate-300 mt-1">{renderText(item.contribution)}</p>
+                <div className="mt-1"><StructuredText text={item.contribution} renderText={renderText} /></div>
             </div>
         ))}
     </div>
@@ -322,7 +350,7 @@ const PrimarySourceAnalysisComponent: React.FC<{ items: PrimarySourceSnippet[] |
                     </blockquote>
                     <div className="mt-3">
                         <h5 className="font-semibold text-slate-700 dark:text-slate-200">{t('analysis')}:</h5>
-                        <p className="text-slate-600 dark:text-slate-300">{renderText(item.analysis)}</p>
+                        <StructuredText text={item.analysis} renderText={renderText} />
                     </div>
                 </div>
             ))}
@@ -339,15 +367,15 @@ const CaseStudiesComponent: React.FC<{ items: CaseStudy[] | undefined, renderTex
                     <h4 className="font-bold text-xl text-slate-800 dark:text-slate-100">{item.title}</h4>
                     <div className="mt-3">
                         <h5 className="font-semibold text-slate-700 dark:text-slate-200">{t('background')}:</h5>
-                        <p className="text-slate-600 dark:text-slate-300">{renderText(item.background)}</p>
+                        <StructuredText text={item.background} renderText={renderText} />
                     </div>
                      <div className="mt-3">
                         <h5 className="font-semibold text-slate-700 dark:text-slate-200">{t('analysis')}:</h5>
-                        <p className="text-slate-600 dark:text-slate-300">{renderText(item.analysis)}</p>
+                        <StructuredText text={item.analysis} renderText={renderText} />
                     </div>
                      <div className="mt-3">
                         <h5 className="font-semibold text-slate-700 dark:text-slate-200">{t('conclusion')}:</h5>
-                        <p className="text-slate-600 dark:text-slate-300">{renderText(item.conclusion)}</p>
+                        <StructuredText text={item.conclusion} renderText={renderText} />
                     </div>
                 </div>
             ))}
@@ -360,8 +388,8 @@ const GrammarSpotlightComponent: React.FC<{ items: GrammarRule[] | undefined, re
         {items?.map((item, index) => (
             <div key={index} className="p-4 bg-slate-100 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
                 <h4 className="font-bold text-lg text-slate-800 dark:text-slate-100">{item.ruleName}</h4>
-                <p className="text-slate-600 dark:text-slate-300 mt-1">{renderText(item.explanation)}</p>
-                <ul className="list-disc list-inside mt-2 space-y-1 text-slate-600 dark:text-slate-300">
+                <div className="mt-1"><StructuredText text={item.explanation} renderText={renderText} /></div>
+                <ul className="list-disc list-inside mt-2 space-y-1 text-slate-600 dark:text-slate-300 styled-list">
                     {item.examples.map((ex, i) => <li key={i}><em>"{renderText(ex)}"</em></li>)}
                 </ul>
             </div>
@@ -374,7 +402,7 @@ const LiteraryDeviceAnalysisComponent: React.FC<{ items: LiteraryDevice[] | unde
         {items?.map((item, index) => (
             <div key={index} className="p-4 bg-slate-100 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
                 <h4 className="font-bold text-lg text-slate-800 dark:text-slate-100">{item.deviceName}</h4>
-                <p className="text-slate-600 dark:text-slate-300 mt-1">{renderText(item.explanation)}</p>
+                <div className="mt-1"><StructuredText text={item.explanation} renderText={renderText} /></div>
                  <p className="mt-2 text-slate-600 dark:text-slate-300"><strong>e.g.,</strong> <em>"{renderText(item.example)}"</em></p>
             </div>
         ))}
@@ -499,8 +527,8 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
         problemSolvingTemplates: { title: t('problemSolvingTemplates'), content: learningModule.problemSolvingTemplates, icon: PuzzlePieceIcon, type: 'templates' },
         categorizedProblems: { title: t('categorizedProblems'), content: learningModule.categorizedProblems, icon: QuestionMarkCircleIcon, type: 'problems' },
         commonMistakes: { title: t('commonMistakes'), content: learningModule.commonMistakes, icon: ExclamationTriangleSolid, type: 'mistakes' },
-        keyLawsAndPrinciples: { title: t('keyLawsAndPrinciples'), content: learningModule.keyLawsAndPrinciples, icon: ScaleIcon, type: 'theorems' }, // Re-using theorem component
-        solvedNumericalProblems: { title: t('solvedNumericalProblems'), content: learningModule.solvedNumericalProblems, icon: CalculatorIcon, type: 'theorems' }, // Re-using theorem component
+        keyLawsAndPrinciples: { title: t('keyLawsAndPrinciples'), content: learningModule.keyLawsAndPrinciples, icon: ScaleIcon, type: 'theorems' },
+        solvedNumericalProblems: { title: t('solvedNumericalProblems'), content: learningModule.solvedNumericalProblems, icon: CalculatorIcon, type: 'theorems' },
         experiments: { title: t('experiments'), content: learningModule.experiments, icon: BeakerIcon, type: 'experiments' },
         scientificMethodApplications: { title: t('scientificMethodApplications'), content: learningModule.scientificMethodApplications, icon: LightBulbIcon, type: 'simple-text', text: learningModule.scientificMethodApplications },
         currentDiscoveries: { title: t('currentDiscoveries'), content: learningModule.currentDiscoveries, icon: SparklesSolid, type: 'simple-text', text: learningModule.currentDiscoveries },
@@ -899,7 +927,7 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
   const learningObjectives = learningModule.learningObjectives;
 
   return (
-    <main className="animate-fade-in space-y-12 pb-24">
+    <main className="animate-fade-in space-y-16 pb-24">
        <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-sm font-semibold text-slate-500 dark:text-slate-400 mb-8">
         <button onClick={onBackToSubjects} className="breadcrumb-link transition-colors">
           {tCurriculum(grade.level)}
@@ -954,7 +982,7 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
 
       <header className="prose prose-lg max-w-none prose-indigo dark:prose-invert space-y-4">
         <h2 className="!mb-0 text-4xl md:text-5xl font-bold text-slate-800 dark:text-slate-100">{tCurriculum(learningModule.chapterTitle)}</h2>
-        <div className="introduction-text !mt-0">{renderTextWithTTS(learningModule.introduction)}</div>
+        <div className="introduction-text !mt-0"><StructuredText text={learningModule.introduction} renderText={renderTextWithTTS} /></div>
       </header>
       
        {isSupported && fullText && (

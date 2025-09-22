@@ -4,7 +4,7 @@ import { getPerformanceRecords, getLearningModule, saveLearningModule, getDiagra
 import { getAdaptiveNextStep, getChapterContent, generateDiagram } from '../services/geminiService';
 import { useLanguage } from '../contexts/Language-context';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowRightIcon, BookOpenIcon, SparklesIcon, RocketLaunchIcon, PuzzlePieceIcon, HeartIcon, TrophyIcon, MagnifyingGlassIcon, FireIcon } from '@heroicons/react/24/solid';
+import { ArrowRightIcon, BookOpenIcon, SparklesIcon, RocketLaunchIcon, PuzzlePieceIcon, HeartIcon, TrophyIcon, MagnifyingGlassIcon, FireIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/solid';
 import LoadingSpinner from '../components/LoadingSpinner';
 import FittoAvatar from '../components/FittoAvatar';
 import { CURRICULUM } from '../data/curriculum';
@@ -29,6 +29,7 @@ interface StudentDashboardProps {
   onStartMission: () => void;
   onBrowse: () => void;
   onStartWellbeing: () => void;
+  onStartTutorial: () => void;
 }
 
 const ActivityCard: React.FC<{ record: PerformanceRecord }> = React.memo(({ record }) => {
@@ -199,7 +200,7 @@ const FittoMessage: React.FC<{ message: string }> = ({ message }) => {
 };
 
 
-const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onBrowse, onStartWellbeing }) => {
+const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onBrowse, onStartWellbeing, onStartTutorial }) => {
     const { t, tCurriculum, language } = useLanguage();
     const { currentUser: student } = useAuth();
     const [activities, setActivities] = useState<PerformanceRecord[]>([]);
@@ -352,6 +353,16 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onB
                        </div>
                     </button>
                     
+                    <button onClick={onStartTutorial} className="dashboard-highlight-card w-full p-6 rounded-2xl flex items-center gap-4 text-left">
+                       <div className="p-3 bg-slate-100 dark:bg-slate-700 rounded-full">
+                           <QuestionMarkCircleIcon className="h-8 w-8 text-slate-500 dark:text-slate-400" />
+                       </div>
+                       <div>
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('takeTheTour')}</h3>
+                            <p className="text-slate-500 dark:text-slate-400">{t('tourDescription')}</p>
+                       </div>
+                    </button>
+
                     <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
                         <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4 border-b border-slate-200 dark:border-slate-700 pb-3">
                             {t('recentActivity')}

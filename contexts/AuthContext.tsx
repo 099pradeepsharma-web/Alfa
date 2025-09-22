@@ -16,7 +16,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+// FIX: Changed component definition to use React.FC for better prop type inference, including children.
+export const AuthProvider: React.FC = ({ children }) => {
     const [currentUser, setCurrentUser] = useState<Student | null>(null);
     const [loading, setLoading] = useState(true); // Start true to check session
     const [error, setError] = useState<string | null>(null);

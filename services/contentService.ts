@@ -52,13 +52,14 @@ export const getChapterContent = async (
         console.error(`Critical error: AI content generation failed for ${dbKey}.`, error);
         
         // Fallback to a minimal, offline-friendly content structure to ensure app doesn't crash
+        // This fallback is now more explicit about what might be missing.
         const fallbackContent: LearningModule = {
             chapterTitle: chapter,
-            introduction: "We're having trouble connecting to our AI to generate this lesson. Please check your internet connection and try again. The app will continue to work in offline mode if you have viewed this content before.",
+            introduction: "We're having trouble connecting to our AI to generate this lesson, including interactive elements like Virtual Labs, Video Explainers, and Adaptive Stories. Please check your internet connection and try again. The app will continue to work in offline mode if you have viewed this content before.",
             learningObjectives: ["Understand the key terms of this chapter.", "Practice related questions when online."],
             keyConcepts: [{
                 conceptTitle: "Core Concept",
-                explanation: "Content is temporarily unavailable. This may be due to a connection issue or high demand on our AI services. Please try again in a few moments.",
+                explanation: "Core content for this concept, including explanations and interactive elements, is temporarily unavailable. This may be due to a connection issue or high demand on our AI services. Please try again in a few moments.",
                 realWorldExample: "N/A",
                 diagramDescription: "N/A"
             }],

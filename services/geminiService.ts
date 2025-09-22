@@ -527,20 +527,21 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
         **QUALITY STANDARDS (MANDATORY):**
         1.  **Pedagogical Excellence & CBSE Alignment:** Align with the latest CBSE syllabus (2024-25) and NCERT textbooks.
         2.  **Accuracy:** All information must be factually correct.
-        3.  **Cultural Sensitivity:** Use Indian contexts and examples where appropriate.
+        3.  **Clarity and Structure:** All theoretical text (introductions, explanations, summaries, etc.) MUST be structured for maximum readability. Use markdown-style bullet points (e.g., "- Point 1\\n- Point 2") for lists and double newlines ("\\n\\n") to separate paragraphs.
+        4.  **Cultural Sensitivity:** Use Indian contexts and examples where appropriate.
 
         **CONTENT GENERATION GUIDE (Generate ONLY these core sections):**
         -   **chapterTitle**: Must be "${chapter}".
-        -   **introduction**: Start with a hook to grab the student's attention.
+        -   **introduction**: Start with a hook. Structure the content into short, digestible points or paragraphs using markdown-style lists ('- ') where appropriate.
         -   **learningObjectives**: List the specific, measurable learning outcomes based on the CBSE syllabus.
         -   **prerequisitesCheck**: A list of concepts the student should know before starting this chapter.
         -   **keyConcepts**: This is the most critical part. For each concept, provide:
             -   \`conceptTitle\`: A clear title.
-            -   \`explanation\`: A step-by-step, easy-to-understand breakdown.
-            -   \`realWorldExample\`: A relatable application, preferably in an Indian context.
+            -   \`explanation\`: A step-by-step, easy-to-understand breakdown. Structure with markdown lists ('- ') for clarity.
+            -   \`realWorldExample\`: A relatable application, preferably in an Indian context. Structure with markdown lists ('- ') if multiple examples are given.
             -   \`diagramDescription\`: A detailed description for a visual aid.
         -   **formulaSheet**: For subjects like Mathematics, Physics, or Chemistry, generate a concise list of all relevant formulas. Each formula should have a brief, clear description. If the chapter has no formulas, this field can be null.
-        -   **summary**: A concise summary of the key takeaways.
+        -   **summary**: A concise summary of the key takeaways. MUST be formatted as a list of bullet points using markdown ('- ').
         -   **conceptMap**: For complex chapters, generate a Mermaid.js graph definition (using 'graph TD' for Top-Down). This graph should visually connect the key concepts. Labels must be concise and in the ${language} language. The entire output for this field must be ONLY the Mermaid code string (e.g., "graph TD; A[Start] --> B(Process);"). For simple chapters or when a visual map is not relevant, this field must be null.
         -   **interactiveVideoSimulation**: For one key concept that is highly visual or hard to explain with text, generate an engaging video simulation section. The \`videoPrompt\` should be a detailed prompt for a model like Google VEO. For other chapters, this can be null.
         -   **interactiveExplainer**: For one highly abstract concept that is hard to visualize (e.g., the effect of gravity on different planets, how changing the 'a' coefficient affects a parabola's shape, visualizing electron orbitals), generate an "Interactive Explainer". The student will manipulate variables to see "what-if" scenarios in an animated video. The \`videoPromptTemplate\` must use placeholders matching the variable names, surrounded by double curly braces, e.g., {{variable_name}}. This is for conceptual explanation, not a lab experiment. For chapters without a suitable concept, this field MUST be null.
@@ -552,7 +553,7 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
         - Do not generate \`categorizedProblems\`, \`experiments\`, \`commonMistakes\`, or any other deep pedagogical sections. These will be generated on-demand later.
 
         **FINAL INSTRUCTION:**
-        Your entire output MUST be a JSON object that strictly follows the 'LearningModule' schema, but only containing the core fields listed above. Ensure all text fields are complete. No markdown, just plain text with newline characters (\\n) for breaks.
+        Your entire output MUST be a JSON object that strictly follows the 'LearningModule' schema, but only containing the core fields listed above. Ensure all text fields are complete. No markdown headers (like ##), just paragraphs and bullet points.
     `;
 
     try {
@@ -630,7 +631,7 @@ export const generateSectionContent = async (
         -   **Chapter Core Content:** ${chapterContext}
 
         **TASK:**
-        Generate the content ONLY for the section named "${sectionKey}". Your output must be comprehensive, pedagogically sound, and aligned with the latest CBSE standards (2024-25).
+        Generate the content ONLY for the section named "${sectionKey}". Your output must be comprehensive, pedagogically sound, and aligned with the latest CBSE standards (2024-25). For all theoretical content, structure your response as a series of clear, concise points using markdown-style bullet points ('- '). Use double newlines ('\\n\\n') to separate distinct ideas or paragraphs.
 
         **Mathematical Formatting (MANDATORY):**
         For any mathematical derivations, solved problems, or solutions (especially in 'formulaDerivations', 'solvedNumericalProblems', and 'categorizedProblems'), you MUST format them exactly as they would appear in a textbook or on an answer sheet. Adhere strictly to the following structure:

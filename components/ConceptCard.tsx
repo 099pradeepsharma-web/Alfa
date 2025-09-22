@@ -1,8 +1,3 @@
-
-
-
-
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Concept, Student, Grade, Subject, Chapter, StudentQuestion, FittoResponse } from '../types';
 import { BeakerIcon, ViewfinderCircleIcon, ExclamationTriangleIcon, ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
@@ -18,6 +13,7 @@ import { useLanguage } from '../contexts/Language-context';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useTTS } from '../hooks/useTTS';
 import { getIcon } from './IconMap';
+import StructuredText from './StructuredText';
 
 interface ConceptCardProps {
   concept: Concept;
@@ -303,7 +299,7 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
         <ProgressBadge status={progressStatus} />
       </div>
       
-      <div className="text-slate-600 dark:text-slate-300 mb-4 whitespace-pre-wrap">{renderText(concept.explanation)}</div>
+      <div className="prose prose-lg max-w-none prose-indigo dark:prose-invert text-slate-600 dark:text-slate-300 mb-4"><StructuredText text={concept.explanation} renderText={renderText} /></div>
       
        {progressStatus === 'not-started' && (
         <div className="text-right mb-4">
@@ -321,7 +317,7 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
             <BeakerIcon className="h-5 w-5 mr-2" />
             {t('stemConnection')}
         </h4>
-        <div className="text-primary-dark/80" style={{color: 'rgba(var(--c-primary-dark), 0.8)'}}>{renderText(concept.realWorldExample)}</div>
+        <div className="text-primary-dark/80 prose prose-lg max-w-none prose-indigo dark:prose-invert" style={{color: 'rgba(var(--c-primary-dark), 0.8)'}}><StructuredText text={concept.realWorldExample} renderText={renderText} /></div>
       </div>
 
       <div className="mt-4">

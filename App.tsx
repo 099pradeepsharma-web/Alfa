@@ -23,9 +23,10 @@ import MicrolearningScreen from './screens/MicrolearningScreen';
 import { useLanguage } from './contexts/Language-context';
 import { useAuth } from './contexts/AuthContext';
 import LoadingSpinner from './components/LoadingSpinner';
+import TutorialScreen from './screens/TutorialScreen';
 
 type UserRole = 'student' | 'teacher' | 'parent';
-type StudentView = 'dashboard' | 'path' | 'browse' | 'wellbeing' | 'tutor' | 'microlearning';
+type StudentView = 'dashboard' | 'path' | 'browse' | 'wellbeing' | 'tutor' | 'microlearning' | 'tutorial';
 type AppState = 'role_selection' | 'student_flow' | 'teacher_flow' | 'parent_flow' | 'privacy_policy' | 'faq';
 
 const App: React.FC = () => {
@@ -175,6 +176,19 @@ const App: React.FC = () => {
       setActiveMicrolearningModule(null);
       setStudentView('browse'); // Go back to the chapter view
   }, []);
+  
+  const handleStartTutorial = useCallback(() => {
+      setStudentView('tutorial');
+  }, []);
+
+  const handleFinishTutorial = useCallback(() => {
+      try {
+          localStorage.setItem('alfanumrik-tutorial-seen', 'true');
+      } catch (e) {
+          console.error("Failed to save tutorial status to localStorage:", e);
+      }
+      setStudentView('dashboard');
+  }, []);
 
 
   const renderStudentBrowseFlow = () => {
@@ -211,9 +225,21 @@ const App: React.FC = () => {
     if (!isLoggedIn || !currentUser) {
         return <LoginScreen grades={curriculum} onBack={() => setAppState('role_selection')} />;
     }
+
+    if (studentView === 'dashboard') {
+        const hasSeenTutorial = localStorage.getItem('alfanumrik-tutorial-seen') === 'true';
+        if (!hasSeenTutorial) {
+            // Use an effect to change state after render to avoid warnings
+            setTimeout(() => setStudentView('tutorial'), 0);
+            return <div className="flex justify-center items-center h-64"><LoadingSpinner /></div>; // Show loader briefly
+        }
+    }
+
     switch(studentView) {
+        case 'tutorial':
+            return <TutorialScreen onFinish={handleFinishTutorial} />;
         case 'dashboard':
-            return <StudentDashboard onStartMission={() => setStudentView('path')} onBrowse={handleStartBrowsing} onStartWellbeing={handleStartWellbeingModule} />;
+            return <StudentDashboard onStartMission={() => setStudentView('path')} onBrowse={handleStartBrowsing} onStartWellbeing={handleStartWellbeingModule} onStartTutorial={handleStartTutorial} />;
         case 'path':
             return <PersonalizedPathScreen onBack={handleBackToDashboard} />;
         case 'browse':
@@ -253,7 +279,7 @@ const App: React.FC = () => {
             />;
         }
         default:
-            return <StudentDashboard onStartMission={() => setStudentView('path')} onBrowse={handleStartBrowsing} onStartWellbeing={handleStartWellbeingModule} />;
+            return <StudentDashboard onStartMission={() => setStudentView('path')} onBrowse={handleStartBrowsing} onStartWellbeing={handleStartWellbeingModule} onStartTutorial={handleStartTutorial} />;
     }
   };
 

@@ -256,7 +256,7 @@
 
       /* NEW: Increased spacing for section headers for better readability */
       .chapter-view-section > h3 {
-          margin-bottom: 1.5rem !important;
+          margin-bottom: 2rem !important;
       }
 
       /* Visually hidden but accessible to screen readers */
@@ -839,6 +839,32 @@
         background-color: rgb(var(--c-success));
         transition: width 0.5s ease-in-out;
       }
+
+      /* 18. NEW: Structured Text & Styled Lists */
+      .styled-list {
+        list-style: none;
+        padding-left: 1rem;
+      }
+      .styled-list li {
+        position: relative;
+        padding-left: 1.75rem;
+        margin-bottom: 0.625rem; /* 10px */
+      }
+      .styled-list li::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0.4em; /* Adjust vertical alignment */
+        width: 0.6em;
+        height: 0.6em;
+        border-radius: 50%;
+        background-color: rgb(var(--c-primary));
+        box-shadow: 0 0 0 3px rgba(var(--c-primary), 0.2);
+      }
+      .prose p {
+          margin-bottom: 1em; /* Ensure paragraphs have space between them */
+      }
+
 
     </style>
   <script type="importmap">

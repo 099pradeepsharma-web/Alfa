@@ -14,7 +14,6 @@ interface TutorSessionScreenProps {
   onBack: () => void;
 }
 
-// Fix: Completed the component implementation, added JSX return, and default export.
 const TutorSessionScreen: React.FC<TutorSessionScreenProps> = ({ student, chat, onBack }) => {
     const { t } = useLanguage();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -101,8 +100,7 @@ const TutorSessionScreen: React.FC<TutorSessionScreenProps> = ({ student, chat, 
         if (chat) {
             fetchInitialMessage();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [chat]);
+    }, [chat, playFittoResponse]);
 
     useEffect(() => {
       setInputValue(transcript);
@@ -134,7 +132,6 @@ const TutorSessionScreen: React.FC<TutorSessionScreenProps> = ({ student, chat, 
                     <FittoAvatar state={isThinking ? 'thinking' : (isFittoSpeaking ? 'speaking' : 'idle')} size={48} />
                     <div>
                         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('tutorSessionWithFitto')}</h1>
-                        {/* Fix: Replace private property access `chat.model` with the hardcoded model name 'gemini-2.5-flash' as the property is no longer public in the SDK. */}
                         <p className="text-slate-500 dark:text-slate-400 text-sm">Model: gemini-2.5-flash</p>
                     </div>
                 </div>

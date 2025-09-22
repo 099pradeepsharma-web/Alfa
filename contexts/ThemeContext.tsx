@@ -9,7 +9,8 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const ThemeProvider = ({ children }: { children: ReactNode }) => {
+// FIX: Changed component definition to use React.FC for better prop type inference, including children.
+export const ThemeProvider: React.FC = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => {
     // Check for saved theme in localStorage, default to 'light'
     const savedTheme = localStorage.getItem('alfanumrik-theme');
