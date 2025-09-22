@@ -1,18 +1,21 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Grade, Subject, Chapter, LearningModule, QuizQuestion, NextStepRecommendation, ChapterProgress, Student, CategorizedProblems, VocabularyDeepDive, Theorem, FormulaDerivation, Formula, ProblemSolvingTemplate, CommonMistake, Experiment, TimelineEvent, KeyFigure, PrimarySourceSnippet, CaseStudy, GrammarRule, LiteraryDevice, HOTQuestion } from '../types';
+import { Grade, Subject, Chapter, LearningModule, QuizQuestion, NextStepRecommendation, ChapterProgress, Student, CategorizedProblems, VocabularyDeepDive, Theorem, FormulaDerivation, SolvedNumericalProblem, Formula, ProblemSolvingTemplate, CommonMistake, Experiment, TimelineEvent, KeyFigure, PrimarySourceSnippet, CaseStudy, GrammarRule, LiteraryDevice, HOTQuestion } from '../types';
 import * as contentService from '../services/contentService';
-import { generateQuiz, generateNextStepRecommendation, generateConceptMapImage, generateSectionContent } from '../services/geminiService';
-import { getChapterProgress, saveChapterProgress, getConceptMap, saveConceptMap } from '../services/pineconeService';
+import { generateQuiz, generateNextStepRecommendation, generateSectionContent } from '../services/geminiService';
+import { getChapterProgress, saveChapterProgress } from '../services/pineconeService';
 import LoadingSpinner from './LoadingSpinner';
 import ConceptCard from './ConceptCard';
 import Quiz from './Quiz';
 import Confetti from './Confetti';
-import { RocketLaunchIcon, ArchiveBoxIcon, LightBulbIcon, ArrowPathIcon, ForwardIcon, CheckCircleIcon, BookOpenIcon, VariableIcon, ClipboardDocumentListIcon, QuestionMarkCircleIcon, ExclamationTriangleIcon as ExclamationTriangleSolid, TrophyIcon as TrophySolid, BeakerIcon, GlobeAltIcon, LinkIcon, AcademicCapIcon, PlayCircleIcon, PauseCircleIcon, StopCircleIcon, ClockIcon, UserGroupIcon, DocumentTextIcon, LanguageIcon, SparklesIcon as SparklesSolid, MapIcon, PuzzlePieceIcon, CalculatorIcon, ScaleIcon, ShareIcon, CheckBadgeIcon, CpuChipIcon, SpeakerWaveIcon, FilmIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+import { RocketLaunchIcon, ArchiveBoxIcon, LightBulbIcon, ArrowPathIcon, ForwardIcon, CheckCircleIcon, BookOpenIcon, VariableIcon, ClipboardDocumentListIcon, QuestionMarkCircleIcon, ExclamationTriangleIcon as ExclamationTriangleSolid, TrophyIcon as TrophySolid, BeakerIcon, GlobeAltIcon, LinkIcon, AcademicCapIcon, PlayCircleIcon, PauseCircleIcon, StopCircleIcon, ClockIcon, UserGroupIcon, DocumentTextIcon, LanguageIcon, SparklesIcon as SparklesSolid, MapIcon, PuzzlePieceIcon, CalculatorIcon, ScaleIcon, ShareIcon, CheckBadgeIcon, CpuChipIcon, SpeakerWaveIcon, FilmIcon, ChevronRightIcon, WrenchScrewdriverIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from '../contexts/Language-context';
 import { useTTS } from '../hooks/useTTS';
 import { useAuth } from '../contexts/AuthContext';
 import VideoSimulationPlayer from './VideoSimulationPlayer';
+import VirtualLabPlayer from './VirtualLabPlayer';
+import AdaptiveStoryPlayer from './AdaptiveStoryPlayer';
 
+declare const mermaid: any;
 
 interface ChapterViewProps {
   grade: Grade;
@@ -23,6 +26,7 @@ interface ChapterViewProps {
   onBackToChapters: () => void;
   onBackToSubjects: () => void;
   onChapterSelect: (chapter: Chapter) => void;
+  onStartTutorSession: () => void;
 }
 
 // A more robust sentence tokenizer that handles abbreviations.
@@ -31,6 +35,62 @@ const getSentences = (text: string): string[] => {
     const sentences = text.replace(/([.!?])\s*(?=[A-Z])/g, "$1|").split("|");
     return sentences.map(s => s.trim()).filter(Boolean);
 };
+
+// --- START: New Math Solution Presentation Component ---
+
+const MathSolutionComponent: React.FC<{ content: string; renderText: (text: string) => React.ReactNode }> = ({ content, renderText }) => {
+    const lines = content.split('\n').filter(line => line.trim() !== '');
+
+    const isLabel = (line: string) => /^(Given:|Solution:|Answer:|Therefore:|To Find:)/i.test(line);
+    const isFinal = (line: string) => /^(Answer:|Therefore:)/i.test(line);
+
+    return (
+        <div className="math-solution-box">
+            {lines.map((line, index) => {
+                const trimmedLine = line.trim();
+                
+                if (isFinal(trimmedLine)) {
+                    return (
+                        <div key={index} className="math-solution-final-answer">
+                            {renderText(trimmedLine)}
+                        </div>
+                    );
+                }
+
+                if (isLabel(trimmedLine)) {
+                     return (
+                        <div key={index} className="math-solution-label">
+                            {renderText(trimmedLine)}
+                        </div>
+                    );
+                }
+
+                // Check for equation
+                const eqIndex = trimmedLine.indexOf('=');
+                if (eqIndex > 0 && !isLabel(trimmedLine)) {
+                    const lhs = trimmedLine.substring(0, eqIndex).trim();
+                    const rhs = trimmedLine.substring(eqIndex + 1).trim();
+                    return (
+                        <React.Fragment key={index}>
+                            <div className="math-solution-lhs">{renderText(lhs)}</div>
+                            <div className="math-solution-rhs">{renderText(`= ${rhs}`)}</div>
+                        </React.Fragment>
+                    );
+                }
+                
+                // Otherwise, it's an explanation line
+                return (
+                     <div key={index} className="math-solution-explanation">
+                        {renderText(trimmedLine)}
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
+// --- END: New Math Solution Presentation Component ---
+
 
 // --- START: Section Configuration for Subject-Specific Content ---
 
@@ -101,8 +161,9 @@ const VocabularyComponent: React.FC<{ items: VocabularyDeepDive[] | undefined, r
     );
 };
 
-const TheoremsComponent: React.FC<{ items: (Theorem[] | HOTQuestion[]) | undefined, renderText: (text: string) => React.ReactNode }> = ({ items, renderText }) => {
+const TheoremsComponent: React.FC<{ items: (Theorem[] | HOTQuestion[] | SolvedNumericalProblem[]) | undefined, renderText: (text: string) => React.ReactNode }> = ({ items, renderText }) => {
     const { t } = useLanguage();
+    const isSolvedProblem = (item: any): item is SolvedNumericalProblem => 'solution' in item;
     const isTheorem = (item: any): item is Theorem => 'proof' in item;
 
     return (
@@ -110,10 +171,18 @@ const TheoremsComponent: React.FC<{ items: (Theorem[] | HOTQuestion[]) | undefin
             {items?.map((item, index) => (
                 <div key={index} className="p-4 bg-slate-100 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
                     <h4 className="font-bold text-lg text-slate-800 dark:text-slate-100">{isTheorem(item) ? item.name : item.question}</h4>
-                    <div className="mt-2">
-                        <h5 className="font-semibold text-slate-600 dark:text-slate-300">{isTheorem(item) ? t('proof') : 'Hint'}:</h5>
-                        <div className="mt-1 p-3 bg-slate-200 dark:bg-slate-700 rounded-md text-slate-700 dark:text-slate-200 font-mono text-sm">
-                            <p className="whitespace-pre-wrap">{renderText(isTheorem(item) ? item.proof : item.hint)}</p>
+                     <div className="mt-2">
+                        <h5 className="font-semibold text-slate-600 dark:text-slate-300">
+                            {isSolvedProblem(item) ? t('solution') : (isTheorem(item) ? t('proof') : 'Hint')}:
+                        </h5>
+                        <div className="mt-1">
+                          {isSolvedProblem(item) ? (
+                            <MathSolutionComponent content={item.solution} renderText={renderText} />
+                          ) : (
+                            <div className="p-3 bg-slate-200 dark:bg-slate-700 rounded-md text-slate-700 dark:text-slate-200 font-mono text-sm">
+                                <p className="whitespace-pre-wrap">{renderText(isTheorem(item) ? item.proof : item.hint)}</p>
+                            </div>
+                          )}
                         </div>
                     </div>
                 </div>
@@ -121,6 +190,7 @@ const TheoremsComponent: React.FC<{ items: (Theorem[] | HOTQuestion[]) | undefin
         </div>
     );
 };
+
 
 const FormulaDerivationsComponent: React.FC<{ items: FormulaDerivation[] | undefined, renderText: (text: string) => React.ReactNode }> = ({ items, renderText }) => {
     const { t } = useLanguage();
@@ -131,8 +201,8 @@ const FormulaDerivationsComponent: React.FC<{ items: FormulaDerivation[] | undef
                     <h4 className="font-bold text-lg text-slate-800 dark:text-slate-100 font-mono">{item.formula}</h4>
                      <div className="mt-2">
                         <h5 className="font-semibold text-slate-600 dark:text-slate-300">{t('derivation')}:</h5>
-                        <div className="mt-1 p-3 bg-slate-200 dark:bg-slate-700 rounded-md text-slate-700 dark:text-slate-200 font-mono text-sm">
-                            <p className="whitespace-pre-wrap">{renderText(item.derivation)}</p>
+                        <div className="mt-1">
+                           <MathSolutionComponent content={item.derivation} renderText={renderText} />
                         </div>
                     </div>
                 </div>
@@ -311,8 +381,11 @@ const LiteraryDeviceAnalysisComponent: React.FC<{ items: LiteraryDevice[] | unde
 
 // --- END: Section Content Rendering Components ---
 
-
-const CategorizedProblemsComponent: React.FC<{ problems: CategorizedProblems }> = ({ problems }) => {
+interface CategorizedProblemsComponentProps {
+    problems: CategorizedProblems;
+    renderText: (text: string) => React.ReactNode;
+}
+const CategorizedProblemsComponent: React.FC<CategorizedProblemsComponentProps> = ({ problems, renderText }) => {
     const { t } = useLanguage();
     const [activeTab, setActiveTab] = useState<'conceptual' | 'application' | 'higherOrderThinking'>('conceptual');
 
@@ -350,8 +423,8 @@ const CategorizedProblemsComponent: React.FC<{ problems: CategorizedProblems }> 
                         <p className="font-semibold text-slate-800 dark:text-slate-100">Q: {problem.question}</p>
                         <details className="mt-2 text-sm">
                             <summary className="cursor-pointer font-semibold text-primary hover:text-primary-dark" style={{color: 'rgb(var(--c-primary))'}}>{t('viewSolution')}</summary>
-                            <div className="mt-2 p-3 bg-slate-100 dark:bg-slate-700 rounded-md text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
-                                <p>{problem.solution}</p>
+                            <div className="mt-2">
+                                <MathSolutionComponent content={problem.solution} renderText={renderText} />
                             </div>
                         </details>
                     </div>
@@ -363,7 +436,7 @@ const CategorizedProblemsComponent: React.FC<{ problems: CategorizedProblems }> 
 };
 
 
-const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, student, language, onBackToChapters, onBackToSubjects, onChapterSelect }) => {
+const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, student, language, onBackToChapters, onBackToSubjects, onChapterSelect, onStartTutorSession }) => {
   const [learningModule, setLearningModule] = useState<LearningModule | null>(null);
   const [quiz, setQuiz] = useState<QuizQuestion[] | null>(null);
   const [isLoadingModule, setIsLoadingModule] = useState(true);
@@ -381,10 +454,6 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
   const [recommendation, setRecommendation] = useState<NextStepRecommendation | null>(null);
   const [isGeneratingRecommendation, setIsGeneratingRecommendation] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-
-  const [conceptMapUrl, setConceptMapUrl] = useState<string | null>(null);
-  const [isGeneratingMap, setIsGeneratingMap] = useState(false);
-  const [mapError, setMapError] = useState<string | null>(null);
 
   const [loadingSections, setLoadingSections] = useState<Record<string, boolean>>({});
 
@@ -407,8 +476,6 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
     setShowQuiz(false);
     setShowPostQuizAnalysis(false);
     setRecommendation(null);
-    setConceptMapUrl(null);
-    setMapError(null);
     setProgress({});
     setShowConfetti(false);
     setLoadingSections({});
@@ -495,37 +562,24 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
   }, [grade.level, subject.name, chapter.title, student, progressDbKey, language, t]);
 
     useEffect(() => {
-        const generateAndCacheMap = async () => {
-            if (!learningModule || !learningModule.conceptMap) {
-                setConceptMapUrl(null);
-                setMapError(null);
-                return;
-            }
-
-            setIsGeneratingMap(true);
-            setMapError(null);
-            const mapDbKey = `concept-map-${grade.level}-${subject.name}-${chapter.title}-${language}`;
+        if (learningModule?.conceptMap) {
+            const containerId = `mermaid-graph-${chapter.title.replace(/\s/g, '-')}`;
+            const container = document.getElementById(containerId);
             
-            try {
-                const cachedMap = await getConceptMap(mapDbKey);
-                if (cachedMap) {
-                    setConceptMapUrl(cachedMap);
-                    return;
+            if (container) {
+                // Clear previous render to avoid duplicates on re-render
+                container.removeAttribute('data-processed');
+                container.innerHTML = learningModule.conceptMap;
+                
+                try {
+                    mermaid.run({ nodes: [container] });
+                } catch (e) {
+                    console.error("Mermaid rendering error:", e);
+                    container.innerHTML = "Error rendering concept map.";
                 }
-                const generatedMapUrl = await generateConceptMapImage(learningModule.conceptMap);
-                await saveConceptMap(mapDbKey, generatedMapUrl);
-                setConceptMapUrl(generatedMapUrl);
-
-            } catch (err: any) {
-                console.error("Failed to generate concept map:", err);
-                setMapError(t('conceptMapError'));
-            } finally {
-                setIsGeneratingMap(false);
             }
-        };
-
-        generateAndCacheMap();
-    }, [learningModule, grade.level, subject.name, chapter.title, language, t]);
+        }
+    }, [learningModule, chapter.title]);
 
     useEffect(() => {
         if (!learningModule) return;
@@ -752,7 +806,7 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
         case 'derivations': return <FormulaDerivationsComponent items={section.content} renderText={renderTextWithTTS} />;
         case 'formulas': return <FormulaSheetComponent items={section.content} renderText={renderTextWithTTS} />;
         case 'templates': return <ProblemSolvingTemplatesComponent items={section.content} renderText={renderTextWithTTS} />;
-        case 'problems': return <CategorizedProblemsComponent problems={section.content!} />;
+        case 'problems': return <CategorizedProblemsComponent problems={section.content!} renderText={renderTextWithTTS} />;
         case 'mistakes': return <CommonMistakesComponent items={section.content} renderText={renderTextWithTTS} />;
         case 'experiments': return <ExperimentsComponent items={section.content} renderText={renderTextWithTTS} />;
         case 'timeline': return <TimelineComponent items={section.content} renderText={renderTextWithTTS} />;
@@ -843,13 +897,13 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
   const learningObjectives = learningModule.learningObjectives;
 
   return (
-    <div className="animate-fade-in relative pb-24">
-       <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-sm font-semibold text-slate-500 dark:text-slate-400 mb-6">
-        <button onClick={onBackToSubjects} className="hover:text-primary dark:hover:text-primary-light transition-colors">
+    <main className="animate-fade-in space-y-12 pb-24">
+       <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-sm font-semibold text-slate-500 dark:text-slate-400 mb-8">
+        <button onClick={onBackToSubjects} className="breadcrumb-link transition-colors">
           {tCurriculum(grade.level)}
         </button>
         <ChevronRightIcon className="h-4 w-4 flex-shrink-0 text-slate-400" />
-        <button onClick={onBackToChapters} className="hover:text-primary dark:hover:text-primary-light transition-colors">
+        <button onClick={onBackToChapters} className="breadcrumb-link transition-colors">
           {tCurriculum(subject.name)}
         </button>
         <ChevronRightIcon className="h-4 w-4 flex-shrink-0 text-slate-400" />
@@ -859,14 +913,14 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
       </nav>
 
       {isFromDB && (
-        <div role="status" className="flex items-center bg-teal-100 dark:bg-teal-900/50 text-teal-800 dark:text-teal-300 text-sm font-medium px-4 py-2 rounded-lg mb-6">
+        <div role="status" className="flex items-center bg-teal-100 dark:bg-teal-900/50 text-teal-800 dark:text-teal-300 text-sm font-medium px-4 py-2 rounded-lg">
           <ArchiveBoxIcon className="h-5 w-5 mr-2" />
           {t('loadedFromCache')}
         </div>
       )}
       
       {allConceptsMastered && (
-          <div className="mb-8 p-6 bg-gradient-to-r from-green-400 to-teal-500 rounded-2xl shadow-lg text-white animate-fade-in flex items-center gap-6">
+          <div className="p-6 bg-gradient-to-r from-green-400 to-teal-500 rounded-2xl shadow-lg text-white animate-fade-in flex items-center gap-6">
               {showConfetti && <Confetti />}
               <TrophySolid className="h-16 w-16 text-amber-300 flex-shrink-0" />
               <div>
@@ -876,7 +930,7 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
           </div>
       )}
 
-      <div className="mb-8 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
         <div className="flex justify-between items-center mb-2">
             <h3 className="text-xl font-bold text-slate-700 dark:text-slate-200">{t('chapterProgress')}</h3>
             <div className="flex items-center gap-2 font-bold text-amber-500">
@@ -896,9 +950,9 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
         </p>
       </div>
 
-      <header className="mb-8 prose prose-lg max-w-none prose-indigo dark:prose-invert">
-        <h2 className="text-4xl md:text-5xl font-bold text-slate-800 dark:text-slate-100">{tCurriculum(learningModule.chapterTitle)}</h2>
-        <div className="introduction-text">{renderTextWithTTS(learningModule.introduction)}</div>
+      <header className="prose prose-lg max-w-none prose-indigo dark:prose-invert space-y-4">
+        <h2 className="!mb-0 text-4xl md:text-5xl font-bold text-slate-800 dark:text-slate-100">{tCurriculum(learningModule.chapterTitle)}</h2>
+        <div className="introduction-text !mt-0">{renderTextWithTTS(learningModule.introduction)}</div>
       </header>
       
        {isSupported && fullText && (
@@ -942,11 +996,10 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
         </div>
     )}
 
-
-      <main className="space-y-12">
+      <>
         {learningObjectives && learningObjectives.length > 0 && (
-            <section>
-                <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center mb-6">
+            <section className="chapter-view-section">
+                <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
                     <CheckCircleIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
                     {t('learningObjectives')}
                 </h3>
@@ -955,8 +1008,25 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
                 </div>
             </section>
         )}
-        <section>
-          <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center mb-6">
+
+        <section className="chapter-view-section">
+          <div className="p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl shadow-lg text-white flex flex-col md:flex-row items-center gap-6">
+              <ChatBubbleLeftRightIcon className="h-16 w-16 text-white/80 flex-shrink-0"/>
+              <div className="text-center md:text-left">
+                  <h3 className="text-2xl font-bold">{t('deeperDiveTitle')}</h3>
+                  <p className="mt-1 opacity-90">{t('deeperDiveDescription')}</p>
+              </div>
+              <button 
+                  onClick={onStartTutorSession} 
+                  className="mt-4 md:mt-0 md:ml-auto flex-shrink-0 px-6 py-3 bg-white text-indigo-600 font-bold rounded-lg shadow-md hover:bg-indigo-50 transition-colors transform hover:scale-105"
+              >
+                  {t('startTutorSession')}
+              </button>
+          </div>
+        </section>
+
+        <section className="chapter-view-section">
+          <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
             <MapIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
             {t('keyConcepts')}
           </h3>
@@ -979,33 +1049,38 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
         </section>
 
         {learningModule.conceptMap && (
-            <section>
-                <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center mb-6">
+            <section className="chapter-view-section">
+                <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
                     <SparklesSolid className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
                     {t('conceptMapTitle')}
                 </h3>
-                <div className="mt-4 p-4 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg min-h-[200px] flex items-center justify-center bg-slate-50 dark:bg-slate-800/50">
-                    {isGeneratingMap && (
-                        <div className="flex flex-col items-center text-slate-500 dark:text-slate-400">
-                            <div className="text-primary h-8 w-8" style={{color: 'rgb(var(--c-primary))'}}><LoadingSpinner /></div>
-                            <p className="text-sm mt-2">{t('generatingConceptMap')}</p>
-                        </div>
-                    )}
-                    {mapError && (
-                         <div className="text-red-500 dark:text-red-400 text-center font-semibold">
-                            <p>{mapError}</p>
-                        </div>
-                    )}
-                    {conceptMapUrl && !isGeneratingMap && !mapError && (
-                        <img src={conceptMapUrl} alt={`${learningModule.chapterTitle} concept map`} className="rounded-md mx-auto max-h-[400px] w-auto bg-white"/>
-                    )}
+                <div className="mt-4 mermaid-container">
+                    {/* Mermaid.js will render the SVG inside this div */}
+                    <div className="mermaid" id={`mermaid-graph-${chapter.title.replace(/\s/g, '-')}`}>
+                        {learningModule.conceptMap}
+                    </div>
                 </div>
             </section>
         )}
 
+        {learningModule.virtualLab && (
+            <section className="chapter-view-section">
+                 <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
+                    <WrenchScrewdriverIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
+                    {t('virtualLab')}
+                </h3>
+                <VirtualLabPlayer
+                    labData={learningModule.virtualLab}
+                    grade={grade}
+                    subject={subject}
+                    chapter={chapter}
+                />
+            </section>
+        )}
+
         {learningModule.interactiveVideoSimulation && (
-            <section>
-                 <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center mb-6">
+            <section className="chapter-view-section">
+                 <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
                     <FilmIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
                     {t('interactiveSimulation')}
                 </h3>
@@ -1019,16 +1094,26 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
             </section>
         )}
         
+        {learningModule.adaptiveStory && (
+            <section className="chapter-view-section">
+                 <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
+                    <BookOpenIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
+                    {t('adaptiveStory')}
+                </h3>
+                <AdaptiveStoryPlayer storyData={learningModule.adaptiveStory} />
+            </section>
+        )}
+        
         {sections.map(section => {
             const sectionKey = section.key as keyof LearningModule;
             const sectionContent = learningModule[sectionKey];
             const isLoadingSection = loadingSections[section.key];
 
             return (
-                 <section key={section.key}>
+                 <section key={section.key} className="chapter-view-section">
                     {sectionContent ? (
                         <>
-                            <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center mb-6">
+                            <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
                                 <section.icon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
                                 {section.title}
                             </h3>
@@ -1058,25 +1143,30 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
         })}
 
 
-        <section className="text-center pt-8 border-t-2 border-dashed dark:border-slate-700">
-          <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200">{t('readyToTestKnowledge')}</h3>
-          <p className="text-slate-500 dark:text-slate-400 mt-2 mb-6 max-w-xl mx-auto">{t('quizPrompt')}</p>
-          <button
-            onClick={handleGenerateQuiz}
-            disabled={isGeneratingQuiz || !allConceptsMastered}
-            className="flex items-center justify-center mx-auto px-8 py-4 text-white font-bold rounded-lg btn-primary-gradient disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {isGeneratingQuiz ? (
-              <><LoadingSpinner /><span className="ml-3">{t('generatingQuiz')}</span></>
-            ) : (
-              <><RocketLaunchIcon className="h-6 w-6 mr-3" />{t('challengeMe')}</>
-            )}
-          </button>
-           {!allConceptsMastered && <p className="text-sm text-slate-500 dark:text-slate-400 font-semibold mt-3">You must master all concepts before taking the final quiz.</p>}
+        <section>
+          <div className="p-8 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 text-center transition hover:border-primary dark:hover:border-primary-light hover:bg-slate-200/50 dark:hover:bg-slate-700/80">
+              <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200">{t('readyToTestKnowledge')}</h3>
+              <p className="text-slate-500 dark:text-slate-400 mt-2 mb-6 max-w-xl mx-auto">{t('quizPrompt')}</p>
+              <button
+                onClick={handleGenerateQuiz}
+                disabled={isGeneratingQuiz || !allConceptsMastered}
+                className="flex items-center justify-center mx-auto px-8 py-4 text-white font-bold rounded-lg btn-primary-gradient disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isGeneratingQuiz ? (
+                  <><LoadingSpinner /><span className="ml-3">{t('generatingQuiz')}</span></>
+                ) : (
+                  <><RocketLaunchIcon className="h-6 w-6 mr-3" />{t('challengeMe')}</>
+                )}
+              </button>
+              {!allConceptsMastered && 
+                <div role="status" className="mt-4 max-w-md mx-auto p-3 bg-yellow-50 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 rounded-lg text-sm font-semibold">
+                  You must master all concepts before taking the final quiz.
+                </div>
+              }
+          </div>
         </section>
-      </main>
-
-    </div>
+      </>
+    </main>
   );
 };
 

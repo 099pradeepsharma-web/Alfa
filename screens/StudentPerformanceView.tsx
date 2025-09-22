@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Student, QuizQuestion, StudentQuestion, AIAnalysis, PerformanceRecord, AIFeedback } from '../types';
-import { ArrowLeftIcon, DocumentTextIcon, SparklesIcon, ClipboardDocumentListIcon, ArchiveBoxIcon, UserGroupIcon, ChatBubbleBottomCenterTextIcon, PencilSquareIcon, ChartBarIcon } from '@heroicons/react/24/solid';
+import { ChevronRightIcon, DocumentTextIcon, SparklesIcon, ClipboardDocumentListIcon, ArchiveBoxIcon, UserGroupIcon, ChatBubbleBottomCenterTextIcon, PencilSquareIcon, ChartBarIcon } from '@heroicons/react/24/solid';
 import { HandThumbUpIcon, HandThumbDownIcon } from '@heroicons/react/24/outline';
 import { HandThumbUpIcon as HandThumbUpSolid, HandThumbDownIcon as HandThumbDownSolid } from '@heroicons/react/24/solid';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -401,10 +401,16 @@ const StudentPerformanceView: React.FC<StudentPerformanceViewProps> = ({ userRol
 
     return (
         <div className="animate-fade-in">
-            <button onClick={onBack} className="flex items-center text-primary hover:text-primary-dark font-semibold transition mb-6" style={{color: 'rgb(var(--c-primary))'}}>
-                <ArrowLeftIcon className="h-5 w-5 mr-2" />
-                {t('backToDashboard')}
-            </button>
+            <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-sm font-semibold text-slate-500 dark:text-slate-400 mb-8">
+                <button onClick={onBack} className="breadcrumb-link transition-colors flex items-center">
+                    <UserGroupIcon className="h-4 w-4 mr-1.5" />
+                    {userRole === 'teacher' ? t('teacherDashboard') : t('parentDashboard')}
+                </button>
+                <ChevronRightIcon className="h-4 w-4 flex-shrink-0 text-slate-400" />
+                <span className="text-slate-700 dark:text-slate-200 truncate" aria-current="page">
+                    {student.name}
+                </span>
+            </nav>
             <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
                 <div className="flex items-center border-b border-slate-200 dark:border-slate-700 pb-4 mb-6">
                     <img src={student.avatarUrl} alt={student.name} className="h-16 w-16 rounded-full mr-5" />

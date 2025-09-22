@@ -1,5 +1,5 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter } from '../types';
+import { GoogleGenAI, Type, Chat } from "@google/genai";
+import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, AdaptiveStory } from '../types';
 
 // The API key is sourced from the `process.env.API_KEY` environment variable.
 // To use a new key (e.g., from Vertex AI Studio), set this variable in your deployment environment.
@@ -272,6 +272,61 @@ const interactiveVideoSimulationSchema = {
     required: ['title', 'description', 'videoPrompt']
 };
 
+const virtualLabVariableSchema = {
+    type: Type.OBJECT,
+    properties: {
+        name: { type: Type.STRING },
+        options: { type: Type.ARRAY, items: { type: Type.STRING } }
+    },
+    required: ['name', 'options']
+};
+
+const virtualLabSchema = {
+    type: Type.OBJECT,
+    properties: {
+        title: { type: Type.STRING },
+        description: { type: Type.STRING },
+        baseScenarioPrompt: { type: Type.STRING },
+        variables: { type: Type.ARRAY, items: virtualLabVariableSchema },
+        outcomePromptTemplate: { type: Type.STRING }
+    },
+    required: ['title', 'description', 'baseScenarioPrompt', 'variables', 'outcomePromptTemplate']
+};
+
+// --- New Schemas for Adaptive Story ---
+const storyNodeChoiceSchema = {
+    type: Type.OBJECT,
+    properties: {
+        text: { type: Type.STRING },
+        nextNodeId: { type: Type.STRING },
+        feedback: { type: Type.STRING, description: "Feedback to the student for making this choice." }
+    },
+    required: ['text', 'nextNodeId', 'feedback']
+};
+
+const storyNodeSchema = {
+    type: Type.OBJECT,
+    properties: {
+        id: { type: Type.STRING },
+        text: { type: Type.STRING },
+        choices: { type: Type.ARRAY, items: storyNodeChoiceSchema },
+        isEnding: { type: Type.BOOLEAN, description: "Is this a concluding node?" }
+    },
+    required: ['id', 'text', 'choices', 'isEnding']
+};
+
+const adaptiveStorySchema = {
+    type: Type.OBJECT,
+    properties: {
+        title: { type: Type.STRING },
+        introduction: { type: Type.STRING },
+        startNodeId: { type: Type.STRING },
+        nodes: { type: Type.ARRAY, items: storyNodeSchema }
+    },
+    required: ['title', 'introduction', 'startNodeId', 'nodes'],
+    nullable: true
+};
+
 
 const learningModuleSchema = {
     type: Type.OBJECT,
@@ -286,6 +341,8 @@ const learningModuleSchema = {
         higherOrderThinkingQuestions: { type: Type.ARRAY, items: hotQuestionSchema, nullable: true },
         competitiveExamMapping: { type: Type.STRING, nullable: true },
         interactiveVideoSimulation: { ...interactiveVideoSimulationSchema, nullable: true },
+        virtualLab: { ...virtualLabSchema, nullable: true },
+        adaptiveStory: adaptiveStorySchema,
 
         // New fields
         prerequisitesCheck: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
@@ -471,8 +528,11 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
             -   \`diagramDescription\`: A detailed description for a visual aid.
         -   **formulaSheet**: For subjects like Mathematics, Physics, or Chemistry, generate a concise list of all relevant formulas. Each formula should have a brief, clear description. If the chapter has no formulas, this field can be null.
         -   **summary**: A concise summary of the key takeaways.
-        -   **conceptMap**: If the chapter involves complex relationships (e.g., flowcharts, cycles), provide a detailed, descriptive prompt for an AI image generator (like Imagen) to create a concept map. For simple chapters, this can be null.
+        -   **conceptMap**: For complex chapters, generate a Mermaid.js graph definition (using 'graph TD' for Top-Down). This graph should visually connect the key concepts. Labels must be concise and in the ${language} language. The entire output for this field must be ONLY the Mermaid code string (e.g., "graph TD; A[Start] --> B(Process);"). For simple chapters or when a visual map is not relevant, this field must be null.
         -   **interactiveVideoSimulation**: For one key concept that is highly visual or hard to explain with text, generate an engaging video simulation section. The \`videoPrompt\` should be a detailed prompt for a model like Google VEO. For other chapters, this can be null.
+        -   **virtualLab**: For one key concept that is best explained through experimentation (e.g., projectile motion in Physics, chemical reactions in Chemistry, OR historical what-if scenarios, OR exploring mathematical concepts), generate an engaging "Virtual Lab". The \`outcomePromptTemplate\` must be a detailed prompt for a model like Google VEO and MUST use placeholders matching the variable names, e.g., "Show the result of mixing {{chemical_A}} with {{chemical_B}}". For chapters without a suitable experimental concept, this field must be null.
+        -   **adaptiveStory**: For subjects that benefit from narrative learning (like History, Social Studies, Literature, or even explaining a scientific discovery), generate an engaging branching narrative. The story should have at least 3-4 decision points and multiple endings. The choices a student makes should be tied to their understanding of the chapter's concepts. For other chapters, this field MUST be null.
+
 
         **DO NOT GENERATE THE FOLLOWING SECTIONS IN THIS REQUEST:**
         - Do not generate \`categorizedProblems\`, \`experiments\`, \`commonMistakes\`, or any other deep pedagogical sections. These will be generated on-demand later.
@@ -557,6 +617,19 @@ export const generateSectionContent = async (
 
         **TASK:**
         Generate the content ONLY for the section named "${sectionKey}". Your output must be comprehensive, pedagogically sound, and aligned with the latest CBSE standards (2024-25).
+
+        **Mathematical Formatting (MANDATORY):**
+        For any mathematical derivations, solved problems, or solutions (especially in 'formulaDerivations', 'solvedNumericalProblems', and 'categorizedProblems'), you MUST format them exactly as they would appear in a textbook or on an answer sheet. Adhere strictly to the following structure:
+        - Start with a 'Given:' label for the initial problem statement.
+        - Follow with a 'Solution:' label.
+        - Break down the entire working process into numbered steps (e.g., 'Step 1:', 'Step 2:'). Each step must be on a new line.
+        - For equations, the equals sign (=) must be the separator.
+        - Use proper mathematical symbols (e.g., ÷ for division, × for multiplication).
+        - Conclude with an 'Answer:' or 'Therefore:' label followed by the final result.
+        - Use newline characters (\\n) to separate each part.
+        
+        Example Format:
+        Given: Solve for x in the equation 3x + 5 = 17.\\nSolution:\\nStep 1: 3x + 5 = 17\\nStep 2: 3x = 17 - 5\\nStep 3: 3x = 12\\nStep 4: x = 12 ÷ 3\\nStep 5: x = 4\\nAnswer: x = 4
 
         **SPECIAL INSTRUCTIONS for 'categorizedProblems':**
         If you are generating the "categorizedProblems" section, you MUST adhere to the following grade-specific guidelines for question generation:
@@ -789,32 +862,6 @@ export const generateDiagram = async (description: string, subject: string): Pro
     throw new Error("Failed to generate diagram from AI after multiple attempts.");
 };
 
-export const generateConceptMapImage = async (description: string): Promise<string> => {
-    const prompt = `Create a visually appealing, K-12 friendly infographic-style concept map based on this description: "${description}". The map should be clean, with clear labels and connecting lines, on a plain white background. It should look like a modern educational illustration. Do not include any text that is not part of the described labels.`;
-    
-    try {
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt: prompt,
-            config: {
-              numberOfImages: 1,
-              outputMimeType: 'image/png',
-              aspectRatio: '16:9',
-            },
-        });
-
-        if (response.generatedImages && response.generatedImages.length > 0) {
-            const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
-            return `data:image/png;base64,${base64ImageBytes}`;
-        } else {
-            throw new Error("No concept map image was generated by the AI.");
-        }
-    } catch (error) {
-        console.error("Error generating concept map image:", error);
-        throw new Error("Failed to generate concept map image from AI.");
-    }
-};
-
 export const generateVideoFromPrompt = async (prompt: string): Promise<Blob> => {
     try {
         let operation = await ai.models.generateVideos({
@@ -845,8 +892,20 @@ export const generateVideoFromPrompt = async (prompt: string): Promise<Blob> => 
         const videoBlob = await response.blob();
         return videoBlob;
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error generating video:", error);
+        
+        // Check for specific quota/rate limit errors from the Gemini API
+        const errorMessage = (error.message || '').toLowerCase();
+        // The Gemini SDK might also throw an error object with a status field
+        const errorStatus = (error.status || '');
+
+        if (errorMessage.includes('quota') || errorStatus === 'RESOURCE_EXHAUSTED') {
+            console.error("Gemini API daily quota exceeded for video generation.");
+            // Throw a specific, simplified error message for the UI to catch
+            throw new Error("QUOTA_EXCEEDED");
+        }
+
         throw new Error("Failed to generate video from AI. Please try again.");
     }
 };
@@ -1005,6 +1064,16 @@ export const analyzeStudentQuestionForTeacher = async (question: StudentQuestion
           - Common misconceptions related to this concept for students at this grade level.
           - Key vocabulary or concepts to emphasize when explaining the answer.
           - A suggestion for a follow-up question or a simple activity to check for understanding.
+
+      **Mathematical Formatting (MANDATORY):**
+      If the 'modelAnswer' involves a mathematical calculation, you MUST format it exactly as it would appear in a textbook. Adhere strictly to the following structure:
+      - Start with a 'Given:' label for the initial problem statement.
+      - Follow with a 'Solution:' label.
+      - Break down the entire working process into numbered steps (e.g., 'Step 1:', 'Step 2:'). Each step must be on a new line.
+      - For equations, the equals sign (=) must be the separator.
+      - Use proper mathematical symbols (e.g., ÷ for division, × for multiplication).
+      - Conclude with an 'Answer:' or 'Therefore:' label followed by the final result.
+      - Use newline characters (\\n) to separate each part.
     `;
   
     try {
@@ -1275,4 +1344,17 @@ export const validateCurriculumOutline = async (
         console.error("Error validating curriculum outline:", error);
         throw new Error("Failed to get validation report from AI. Please try again.");
     }
+};
+
+// --- New Function for AI Tutor Chat ---
+export const createTutorChat = (grade: string, subject: string, chapter: string, language: string): Chat => {
+    const systemInstruction = `You are Fitto, an expert, friendly, and encouraging AI Tutor for a ${grade} student studying ${subject} in the ${language} language. Your current topic is "${chapter}". Your goal is to help the student deeply understand the concepts. You can explain topics, provide practice problems, and give step-by-step feedback on their solutions. Do not just give answers; guide the student to discover the answers themselves. Start the conversation by greeting the student warmly, mentioning the chapter topic, and asking if they'd like to review a key concept or try a practice problem to begin.`;
+
+    const chat: Chat = ai.chats.create({
+        model: 'gemini-2.5-flash',
+        config: {
+            systemInstruction: systemInstruction,
+        },
+    });
+    return chat;
 };

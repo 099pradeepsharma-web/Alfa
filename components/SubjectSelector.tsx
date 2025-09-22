@@ -30,8 +30,8 @@ const SubjectSelector: React.FC<SubjectSelectorProps> = ({ grade, selectedSubjec
         </button>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
-        <h2 className="text-3xl font-bold text-slate-700 dark:text-slate-200 mb-6">
+      <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+        <h2 className="text-3xl font-bold text-slate-700 dark:text-slate-200 mb-8">
           {tCurriculum(grade.level)}: <span className="text-primary-dark" style={{color: 'rgb(var(--c-primary-dark))'}}>{selectedSubject ? tCurriculum(selectedSubject.name) : t('chooseSubject')}</span>
         </h2>
 

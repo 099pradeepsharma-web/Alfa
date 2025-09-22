@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Grade, Subject, Chapter, Student } from './types';
 import { getCurriculum } from './services/curriculumService';
 import { MOCK_STUDENTS } from './data/mockData';
+import { createTutorChat } from './services/geminiService';
+import { Chat } from '@google/genai';
 
 import Header from './components/Header';
 import GradeSelector from './components/GradeSelector';
@@ -16,12 +18,13 @@ import LoginScreen from './screens/LoginScreen';
 import PersonalizedPathScreen from './screens/PersonalizedPathScreen';
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 import FAQScreen from './screens/FAQScreen';
+import TutorSessionScreen from './screens/TutorSessionScreen';
 import { useLanguage } from './contexts/Language-context';
 import { useAuth } from './contexts/AuthContext';
 import LoadingSpinner from './components/LoadingSpinner';
 
 type UserRole = 'student' | 'teacher' | 'parent';
-type StudentView = 'dashboard' | 'path' | 'browse' | 'wellbeing';
+type StudentView = 'dashboard' | 'path' | 'browse' | 'wellbeing' | 'tutor';
 type AppState = 'role_selection' | 'student_flow' | 'teacher_flow' | 'parent_flow' | 'privacy_policy' | 'faq';
 
 const App: React.FC = () => {
@@ -40,6 +43,8 @@ const App: React.FC = () => {
   const [selectedGrade, setSelectedGrade] = useState<Grade | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
+  const [tutorChat, setTutorChat] = useState<Chat | null>(null);
+
 
   useEffect(() => {
     const loadCurriculum = async () => {
@@ -144,6 +149,19 @@ const App: React.FC = () => {
   const handleStartWellbeingModule = useCallback(() => {
     setStudentView('wellbeing');
   }, []);
+  
+  const handleStartTutorSession = useCallback(() => {
+    if (!selectedGrade || !selectedSubject || !selectedChapter) return;
+    const chatSession = createTutorChat(selectedGrade.level, selectedSubject.name, selectedChapter.title, language);
+    setTutorChat(chatSession);
+    setStudentView('tutor');
+}, [selectedGrade, selectedSubject, selectedChapter, language]);
+
+  const handleEndTutorSession = useCallback(() => {
+      setTutorChat(null);
+      setStudentView('browse'); // Go back to the chapter view
+  }, []);
+
 
   const renderStudentBrowseFlow = () => {
     if (!selectedGrade) {
@@ -165,6 +183,7 @@ const App: React.FC = () => {
             onBackToChapters={handleBackToChapters}
             onBackToSubjects={handleBackToSubjects}
             onChapterSelect={handleChapterSelect}
+            onStartTutorSession={handleStartTutorSession}
         />;
     }
     return null; // Should not happen if currentUser is checked
@@ -184,6 +203,8 @@ const App: React.FC = () => {
             return <PersonalizedPathScreen onBack={handleBackToDashboard} />;
         case 'browse':
             return renderStudentBrowseFlow();
+        case 'tutor':
+            return <TutorSessionScreen student={currentUser} chat={tutorChat!} onBack={handleEndTutorSession} />;
         case 'wellbeing': {
             if (!currentUser) return null;
             const wellbeingChapter: Chapter = { title: 'The Great Transformation: Navigating Your Journey from Teen to Adult' };
@@ -206,6 +227,7 @@ const App: React.FC = () => {
                 onBackToChapters={handleBackToDashboard}
                 onBackToSubjects={handleBackToDashboard}
                 onChapterSelect={() => {}}
+                onStartTutorSession={() => {}} // Tutor not available for this module
             />;
         }
         default:

@@ -248,6 +248,17 @@
         border-radius: var(--radius-button) !important;
       }
 
+      /* NEW: Breadcrumb link hover for better affordance */
+      .breadcrumb-link:hover {
+        text-decoration: underline;
+        color: rgb(var(--c-primary));
+      }
+
+      /* NEW: Increased spacing for section headers for better readability */
+      .chapter-view-section > h3 {
+          margin-bottom: 1.5rem !important;
+      }
+
       /* Visually hidden but accessible to screen readers */
       .sr-only {
         position: absolute;
@@ -540,7 +551,7 @@
         background-color: rgba(var(--c-primary-light), 0.3);
         border: 1px solid rgba(var(--c-primary), 0.2);
         border-radius: var(--radius-card);
-        padding: 2rem;
+        padding: 1.5rem;
         position: relative;
         text-align: center;
         overflow: hidden;
@@ -578,6 +589,230 @@
       .testimonial-cite strong {
         color: rgb(var(--c-text-primary));
       }
+
+      /* 13. NEW: Mathematical Content Presentation (Textbook Style) */
+      .math-solution-box {
+        background-color: rgba(var(--c-bg-secondary), 0.5);
+        border: 1px solid rgb(var(--c-border));
+        border-radius: var(--radius-button);
+        padding: 1.5rem;
+        font-family: var(--font-mono);
+        font-size: 1rem;
+        line-height: 2;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.25rem 1rem;
+        align-items: baseline;
+        overflow-x: auto;
+      }
+      .dark .math-solution-box {
+        background-color: rgba(var(--c-bg-primary), 0.8);
+      }
+      .math-solution-label {
+        grid-column: 1 / -1;
+        font-weight: 700;
+        color: rgb(var(--c-primary-dark));
+        margin-top: 0.5rem;
+        margin-bottom: 0.25rem;
+      }
+      .math-solution-lhs {
+        grid-column: 1;
+        text-align: right;
+        color: rgb(var(--c-text-secondary));
+      }
+      .math-solution-rhs {
+        grid-column: 2;
+        text-align: left;
+        font-weight: 600;
+        color: rgb(var(--c-text-primary));
+      }
+      .math-solution-explanation {
+        grid-column: 1 / -1;
+        color: rgb(var(--c-text-secondary));
+        font-style: italic;
+        padding: 0.25rem 0;
+      }
+      .math-solution-final-answer {
+        grid-column: 1 / -1;
+        background-color: rgba(var(--c-success), 0.1);
+        border-left: 4px solid rgb(var(--c-success));
+        padding: 0.75rem 1.25rem;
+        margin-top: 1rem;
+        font-weight: 700;
+        color: rgb(var(--c-success));
+      }
+      .dark .math-solution-final-answer {
+        background-color: rgba(var(--c-success), 0.15);
+      }
+
+      /* 14. NEW: Mermaid.js Concept Map Styling */
+      .mermaid-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: rgb(var(--c-bg-secondary));
+        padding: 1rem;
+        border-radius: var(--radius-card);
+        overflow: auto;
+        min-height: 200px;
+      }
+      .dark .mermaid-container {
+        background-color: rgb(var(--c-bg-primary));
+      }
+      .mermaid svg {
+        max-width: 100%;
+        height: auto;
+      }
+
+      /* Light Theme Styles for Mermaid */
+      :root .mermaid .node rect,
+      :root .mermaid .node circle,
+      :root .mermaid .node ellipse,
+      :root .mermaid .node polygon {
+        fill: rgb(var(--c-bg-accent));
+        stroke: rgb(var(--c-text-accent));
+        stroke-width: 2px;
+      }
+      :root .mermaid .node .label {
+        font-family: var(--font-sans);
+        color: rgb(var(--c-text-primary)) !important;
+        font-weight: 600;
+      }
+      :root .mermaid .edgePath .path {
+        stroke: rgb(var(--c-text-secondary));
+        stroke-width: 1.5px;
+      }
+      :root .mermaid .arrowheadPath {
+        fill: rgb(var(--c-text-secondary));
+      }
+      :root .mermaid .edgeLabel {
+        background-color: rgb(var(--c-bg-secondary)) !important;
+        color: rgb(var(--c-text-primary)) !important;
+        font-family: var(--font-sans);
+      }
+
+      /* Dark Mode Styles for Mermaid */
+      .dark .mermaid .node rect,
+      .dark .mermaid .node circle,
+      .dark .mermaid .node ellipse,
+      .dark .mermaid .node polygon {
+        fill: rgb(var(--c-bg-accent));
+        stroke: rgb(var(--c-text-accent));
+      }
+      .dark .mermaid .node .label {
+        color: rgb(var(--c-text-primary)) !important;
+      }
+      .dark .mermaid .edgePath .path {
+        stroke: rgb(var(--c-text-secondary));
+      }
+      .dark .mermaid .arrowheadPath {
+        fill: rgb(var(--c-text-secondary));
+      }
+      .dark .mermaid .edgeLabel {
+        background-color: rgb(var(--c-bg-secondary)) !important;
+        color: rgb(var(--c-text-primary)) !important;
+      }
+
+      /* 15. NEW: AI Tutor Session Screen */
+      .tutor-session-container {
+          display: flex;
+          flex-direction: column;
+          height: calc(100vh - 150px); /* Adjust based on header height */
+          max-width: 800px;
+          margin: 0 auto;
+          background-color: rgb(var(--c-surface));
+          border-radius: var(--radius-card);
+          box-shadow: var(--shadow-card-hover);
+          overflow: hidden;
+          border: 1px solid rgb(var(--c-border));
+      }
+      .tutor-session-header {
+          flex-shrink: 0;
+          border-bottom: 1px solid rgb(var(--c-border));
+      }
+      .tutor-session-messages {
+          flex-grow: 1;
+          overflow-y: auto;
+          padding: 1.5rem;
+      }
+      .tutor-session-input-form {
+          flex-shrink: 0;
+          padding: 1rem;
+          background-color: rgb(var(--c-bg-secondary));
+          border-top: 1px solid rgb(var(--c-border));
+      }
+
+      /* 16. NEW: Adaptive Story Player */
+      .adaptive-story-container {
+          background-color: rgb(var(--c-bg-secondary));
+          border: 1px solid rgb(var(--c-border));
+          border-radius: var(--radius-card);
+          padding: 1.5rem;
+          font-family: var(--font-sans);
+      }
+      .dark .adaptive-story-container {
+          background-color: rgb(var(--c-bg-primary));
+      }
+      .adaptive-story-intro {
+          border-bottom: 1px solid rgb(var(--c-border));
+          padding-bottom: 1rem;
+          margin-bottom: 1rem;
+      }
+      .adaptive-story-text {
+          font-size: 1.125rem; /* text-lg */
+          line-height: 1.75;
+          color: rgb(var(--c-text-primary));
+          margin-bottom: 1.5rem;
+          min-height: 100px;
+      }
+      .adaptive-story-choices {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+      }
+      .adaptive-story-choice-btn {
+          display: block;
+          width: 100%;
+          text-align: left;
+          padding: 0.75rem 1rem;
+          font-weight: 600;
+          border-radius: var(--radius-button);
+          border: 2px solid rgb(var(--c-border));
+          background-color: rgb(var(--c-surface));
+          color: rgb(var(--c-text-accent));
+          transition: all 0.2s ease-in-out;
+      }
+      .adaptive-story-choice-btn:hover:not(:disabled) {
+          border-color: rgb(var(--c-text-accent));
+          background-color: rgba(var(--c-bg-accent), 0.5);
+          transform: translateY(-2px);
+          box-shadow: var(--shadow-card);
+      }
+      .adaptive-story-choice-btn:disabled {
+          cursor: not-allowed;
+          opacity: 0.7;
+      }
+      .adaptive-story-feedback {
+          margin-top: 1.5rem;
+          padding: 1rem;
+          border-radius: var(--radius-button);
+          border-left-width: 4px;
+          animation: fade-in 0.3s ease-out;
+      }
+      .adaptive-story-feedback-correct {
+          border-color: rgb(var(--c-success));
+          background-color: rgba(var(--c-success), 0.1);
+          color: rgb(var(--c-success));
+      }
+      .adaptive-story-feedback-neutral {
+          border-color: rgb(var(--c-border));
+          background-color: rgba(var(--c-bg-secondary), 0.8);
+          color: rgb(var(--c-text-secondary));
+      }
+      .adaptive-story-controls {
+          margin-top: 1.5rem;
+          text-align: right;
+      }
     </style>
   <script type="importmap">
 {
@@ -594,5 +829,11 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+      // Initialize Mermaid.js but don't start it automatically.
+      // We will call mermaid.run() manually from our components to render diagrams.
+      mermaid.initialize({ startOnLoad: false });
+    </script>
   </body>
 </html>

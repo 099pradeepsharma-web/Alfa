@@ -95,10 +95,14 @@ const VideoSimulationPlayer: React.FC<VideoSimulationPlayerProps> = ({ simulatio
             setStatus('ready');
         } catch (err: any) {
             console.error("Video generation failed:", err);
-            setError(err.message || "An unknown error occurred during video generation.");
+            if (err.message === "QUOTA_EXCEEDED") {
+                setError(t('videoQuotaError'));
+            } else {
+                setError(err.message || "An unknown error occurred during video generation.");
+            }
             setStatus('error');
         }
-    }, [simulationData.videoPrompt, dbKey]);
+    }, [simulationData.videoPrompt, dbKey, t]);
 
     const renderPlayer = () => {
         if (!videoUrl) return null;
@@ -141,7 +145,7 @@ const VideoSimulationPlayer: React.FC<VideoSimulationPlayerProps> = ({ simulatio
                      <div className="text-center p-4 bg-red-100 dark:bg-red-900/50 w-full h-full flex flex-col items-center justify-center rounded-lg">
                         <ExclamationTriangleIcon className="h-10 w-10 text-red-500" />
                         <p className="mt-3 font-semibold text-red-700 dark:text-red-300">{t('videoGenerationError')}</p>
-                        <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
+                        <p className="text-sm text-red-600 dark:text-red-400 max-w-sm">{error}</p>
                         <button onClick={handleGenerateClick} className="mt-4 px-4 py-2 text-sm bg-primary text-white font-semibold rounded-lg">
                             {t('retryButton')}
                         </button>

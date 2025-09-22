@@ -136,6 +136,40 @@ export interface InteractiveVideoSimulation {
     videoPrompt: string; // The detailed prompt for the VEO model.
 }
 
+// --- New Types for Virtual Labs ---
+export interface VirtualLabVariable {
+    name: string;
+    options: string[];
+}
+export interface VirtualLab {
+    title: string;
+    description: string;
+    baseScenarioPrompt: string;
+    variables: VirtualLabVariable[];
+    outcomePromptTemplate: string;
+}
+
+// --- New Types for Adaptive Storytelling ---
+export interface StoryNodeChoice {
+    text: string;
+    nextNodeId: string;
+    feedback: string; // Feedback to the student for making this choice
+}
+
+export interface StoryNode {
+    id: string;
+    text: string;
+    choices: StoryNodeChoice[];
+    isEnding: boolean; // Is this a concluding node?
+}
+
+export interface AdaptiveStory {
+    title: string;
+    introduction: string;
+    startNodeId: string;
+    nodes: StoryNode[];
+}
+
 
 export interface LearningModule {
   chapterTitle: string;
@@ -147,6 +181,8 @@ export interface LearningModule {
   learningTricksAndMnemonics?: string[];
   higherOrderThinkingQuestions?: HOTQuestion[];
   interactiveVideoSimulation?: InteractiveVideoSimulation;
+  virtualLab?: VirtualLab;
+  adaptiveStory?: AdaptiveStory;
 
   // New pedagogical fields
   prerequisitesCheck?: string[];
@@ -253,6 +289,15 @@ export interface StudentQuestion {
   analysis?: AIAnalysis; // To store the AI feedback for the teacher
   fittoResponse?: FittoResponse; // To store the AI mentor's direct response to the student
 }
+
+// New Type for AI Tutor Chat
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'model';
+  text: string;
+  state?: 'thinking' | 'error';
+}
+
 
 // --- New Types for Adaptive Learning Engine ---
 

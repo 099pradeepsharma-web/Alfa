@@ -206,21 +206,21 @@ export const saveVideo = async (key: string, blob: Blob): Promise<void> => {
 };
 
 /**
- * Retrieves a cached concept map URL from the database.
+ * Retrieves a cached concept map's Mermaid code from the database.
  * @param key The unique key for the concept map.
- * @returns A Promise that resolves to the concept map's data URL string or null.
+ * @returns A Promise that resolves to the concept map's Mermaid code string or null.
  */
-export const getConceptMap = async (key: string): Promise<string | null> => {
+export const getConceptMapData = async (key: string): Promise<string | null> => {
   return db.getDoc<string>('conceptMaps', key);
 };
 
 /**
- * Saves a generated concept map's data URL to the database.
+ * Saves a generated concept map's Mermaid code to the database.
  * @param key The unique key for the concept map.
- * @param dataUrl The base64 data URL of the concept map to save.
+ * @param mermaidCode The Mermaid code string of the concept map to save.
  */
-export const saveConceptMap = async (key: string, dataUrl: string): Promise<void> => {
-  await db.setDoc<string>('conceptMaps', key, dataUrl);
+export const saveConceptMapData = async (key: string, mermaidCode: string): Promise<void> => {
+  await db.setDoc<string>('conceptMaps', key, mermaidCode);
 };
 
 

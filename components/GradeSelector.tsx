@@ -57,9 +57,9 @@ const GradeSelector: React.FC<GradeSelectorProps> = ({ grades, onSelect, onBack 
         </button>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+      <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
         <h2 className="text-3xl lg:text-4xl font-bold text-center mb-2 text-slate-700 dark:text-slate-200">{t('welcomeLearner')}</h2>
-        <p className="text-lg text-center text-slate-500 dark:text-slate-400 mb-10">{t('selectGradePrompt')}</p>
+        <p className="text-lg text-center text-slate-500 dark:text-slate-400 mb-8">{t('selectGradePrompt')}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {grades.map((grade) => (
             <GradeCard

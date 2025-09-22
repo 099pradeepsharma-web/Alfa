@@ -120,7 +120,7 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onSelectRole, onShowPrivacy
     <div className="animate-fade-in flex flex-col min-h-[calc(100vh-150px)]">
       <div className="flex-grow">
         <h2 className="text-3xl lg:text-4xl font-bold text-center mb-2 text-slate-800 dark:text-slate-100">{t('welcomeToPlatformModern')}</h2>
-        <p className="text-lg text-center text-slate-500 dark:text-slate-400 mb-10">{t('selectRolePromptModern')}</p>
+        <p className="text-lg text-center text-slate-500 dark:text-slate-400 mb-8">{t('selectRolePromptModern')}</p>
         
         <div className="text-center mb-10 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <h3 className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-green-500" style={{ backgroundImage: 'linear-gradient(to right, rgb(var(--c-primary)), rgb(var(--c-success)))'}}>
