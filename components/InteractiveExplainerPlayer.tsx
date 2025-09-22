@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { VirtualLab, Grade, Subject, Chapter, InteractiveVariable } from '../types';
+import { InteractiveExplainer, Grade, Subject, Chapter } from '../types';
 import * as geminiService from '../services/geminiService';
 import * as pineconeService from '../services/pineconeService';
 import { useLanguage } from '../contexts/Language-context';
 import LoadingSpinner from './LoadingSpinner';
-import { PlayCircleIcon, ExclamationTriangleIcon, WrenchScrewdriverIcon, BeakerIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
+import { PlayCircleIcon, ExclamationTriangleIcon, ChevronDownIcon, FilmIcon } from '@heroicons/react/24/solid';
 
-interface VirtualLabPlayerProps {
-  labData: VirtualLab;
+interface InteractiveExplainerPlayerProps {
+  explainerData: InteractiveExplainer;
   grade: Grade;
   subject: Subject;
   chapter: Chapter;
@@ -16,17 +16,18 @@ interface VirtualLabPlayerProps {
 type Status = 'idle' | 'generating' | 'ready' | 'error';
 
 const loadingMessages = [
-    "Configuring the virtual instruments...",
-    "This is a unique, one-time simulation...",
-    "Your experiment will help others learn!",
-    "Setting up the initial conditions...",
-    "Calculating the physical interactions...",
-    "Rendering the simulation frames...",
-    "Compiling the final video output...",
-    "Almost ready to view the results!"
+    "Contacting the AI animation studio...",
+    "This is a special one-time process...",
+    "Your unique video will help other students learn!",
+    "Storyboarding the key concepts...",
+    "Setting up the digital scene for animation...",
+    "Rendering the first few frames...",
+    "Applying visual effects and explanations...",
+    "Polishing the final animated video...",
+    "Almost there, the explainer is loading!"
 ];
 
-const VirtualLabPlayer: React.FC<VirtualLabPlayerProps> = ({ labData, grade, subject, chapter }) => {
+const InteractiveExplainerPlayer: React.FC<InteractiveExplainerPlayerProps> = ({ explainerData, grade, subject, chapter }) => {
     const { t } = useLanguage();
     const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
     const [status, setStatus] = useState<Status>('idle');
@@ -35,8 +36,8 @@ const VirtualLabPlayer: React.FC<VirtualLabPlayerProps> = ({ labData, grade, sub
     const [loadingMessage, setLoadingMessage] = useState(loadingMessages[0]);
     
     const areAllOptionsSelected = useMemo(() => 
-        labData.variables.length > 0 && labData.variables.every(v => selectedOptions[v.name]),
-    [labData.variables, selectedOptions]);
+        explainerData.variables.length > 0 && explainerData.variables.every(v => selectedOptions[v.name]),
+    [explainerData.variables, selectedOptions]);
 
     useEffect(() => {
         let interval: number;
@@ -50,7 +51,6 @@ const VirtualLabPlayer: React.FC<VirtualLabPlayerProps> = ({ labData, grade, sub
         return () => clearInterval(interval);
     }, [status]);
     
-    // Cleanup blob URL on unmount
     useEffect(() => {
         return () => {
             if (videoUrl) {
@@ -59,15 +59,15 @@ const VirtualLabPlayer: React.FC<VirtualLabPlayerProps> = ({ labData, grade, sub
         };
     }, [videoUrl]);
     
-    const handleRunSimulation = useCallback(async () => {
+    const handleVisualizeScenario = useCallback(async () => {
         if (!areAllOptionsSelected) return;
 
-        let prompt = labData.outcomePromptTemplate;
-        let cacheKeyParts: (string | number)[] = [grade.level, subject.name, chapter.title, labData.title];
+        let prompt = explainerData.videoPromptTemplate;
+        let cacheKeyParts: (string | number)[] = ['explainer', grade.level, subject.name, chapter.title, explainerData.title];
 
-        for (const variable of labData.variables) {
+        for (const variable of explainerData.variables) {
             const selectedValue = selectedOptions[variable.name];
-            prompt = prompt.replace(new RegExp(`{{${variable.name.replace(/ /g, '_')}}}`, 'g'), selectedValue);
+            prompt = prompt.replace(new RegExp(`{{${variable.name}}}`, 'g'), selectedValue);
             cacheKeyParts.push(selectedValue);
         }
         const dbKey = cacheKeyParts.join('-').toLowerCase().replace(/\s+/g, '-');
@@ -92,7 +92,7 @@ const VirtualLabPlayer: React.FC<VirtualLabPlayerProps> = ({ labData, grade, sub
             setVideoUrl(URL.createObjectURL(videoBlob));
             setStatus('ready');
         } catch (e: any) {
-            console.error("Virtual lab video generation failed:", e);
+            console.error("Interactive explainer video generation failed:", e);
             if (e.message === "QUOTA_EXCEEDED") {
                 setError(t('videoQuotaError'));
             } else {
@@ -100,22 +100,22 @@ const VirtualLabPlayer: React.FC<VirtualLabPlayerProps> = ({ labData, grade, sub
             }
             setStatus('error');
         }
-    }, [selectedOptions, labData, areAllOptionsSelected, grade, subject, chapter, videoUrl, t]);
+    }, [selectedOptions, explainerData, areAllOptionsSelected, grade, subject, chapter, videoUrl, t]);
 
     return (
         <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-6 transition-shadow hover:shadow-md not-prose">
-            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{labData.title}</h3>
-            <p className="text-slate-600 dark:text-slate-300 mt-2">{labData.description}</p>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{explainerData.title}</h3>
+            <p className="text-slate-600 dark:text-slate-300 mt-2">{explainerData.description}</p>
             
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                {labData.variables.map(variable => (
+                {explainerData.variables.map(variable => (
                     <div key={variable.name}>
-                        <label htmlFor={`var-${variable.name}`} className="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">
+                        <label htmlFor={`var-explainer-${variable.name}`} className="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">
                             {variable.name}
                         </label>
                         <div className="relative">
                             <select
-                                id={`var-${variable.name}`}
+                                id={`var-explainer-${variable.name}`}
                                 value={selectedOptions[variable.name] || ''}
                                 onChange={e => setSelectedOptions(prev => ({ ...prev, [variable.name]: e.target.value }))}
                                 className="w-full pl-4 pr-10 py-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition appearance-none"
@@ -131,13 +131,13 @@ const VirtualLabPlayer: React.FC<VirtualLabPlayerProps> = ({ labData, grade, sub
                 ))}
                  <div className="md:col-span-3 lg:col-span-1">
                     <button
-                        onClick={handleRunSimulation}
+                        onClick={handleVisualizeScenario}
                         disabled={!areAllOptionsSelected || status === 'generating'}
                         className="w-full flex items-center justify-center px-6 py-3 bg-primary text-white font-bold rounded-lg shadow-md hover:bg-primary-dark transition-transform transform hover:scale-105 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed disabled:scale-100"
                         style={{backgroundColor: areAllOptionsSelected && status !== 'generating' ? 'rgb(var(--c-primary))' : ''}}
                     >
-                        {status === 'generating' ? <LoadingSpinner /> : <BeakerIcon className="h-6 w-6" />}
-                        <span className="ml-2">{t('runSimulation')}</span>
+                        {status === 'generating' ? <LoadingSpinner /> : <PlayCircleIcon className="h-6 w-6" />}
+                        <span className="ml-2">{t('visualizeScenario')}</span>
                     </button>
                 </div>
             </div>
@@ -161,8 +161,8 @@ const VirtualLabPlayer: React.FC<VirtualLabPlayerProps> = ({ labData, grade, sub
                 )}
                 {status === 'idle' && (
                     <div className="text-center p-4 text-slate-400 dark:text-slate-500">
-                        <WrenchScrewdriverIcon className="h-12 w-12 mx-auto" />
-                        <p className="mt-2 font-semibold">Configure your experiment and run the simulation.</p>
+                        <FilmIcon className="h-12 w-12 mx-auto" />
+                        <p className="mt-2 font-semibold">{t('configureExplainer')}</p>
                     </div>
                 )}
             </div>
@@ -170,4 +170,4 @@ const VirtualLabPlayer: React.FC<VirtualLabPlayerProps> = ({ labData, grade, sub
     );
 };
 
-export default VirtualLabPlayer;
+export default InteractiveExplainerPlayer;

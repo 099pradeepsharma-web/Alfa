@@ -813,6 +813,33 @@
           margin-top: 1.5rem;
           text-align: right;
       }
+
+      /* 17. NEW: Gamified Learning & Microlearning */
+      .achievement-toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 100;
+        animation: toast-in-right 0.5s ease-out forwards;
+      }
+      @keyframes toast-in-right {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      
+      .microlearning-screen-container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .microlearning-progress-bar-bg {
+        background-color: rgb(var(--c-bg-secondary));
+        border: 1px solid rgb(var(--c-border));
+      }
+      .microlearning-progress-bar-fg {
+        background-color: rgb(var(--c-success));
+        transition: width 0.5s ease-in-out;
+      }
+
     </style>
   <script type="importmap">
 {

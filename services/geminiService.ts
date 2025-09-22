@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, AdaptiveStory } from '../types';
+import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, AdaptiveStory, InteractiveExplainer } from '../types';
 
 // The API key is sourced from the `process.env.API_KEY` environment variable.
 // To use a new key (e.g., from Vertex AI Studio), set this variable in your deployment environment.
@@ -272,7 +272,7 @@ const interactiveVideoSimulationSchema = {
     required: ['title', 'description', 'videoPrompt']
 };
 
-const virtualLabVariableSchema = {
+const interactiveVariableSchema = {
     type: Type.OBJECT,
     properties: {
         name: { type: Type.STRING },
@@ -287,10 +287,22 @@ const virtualLabSchema = {
         title: { type: Type.STRING },
         description: { type: Type.STRING },
         baseScenarioPrompt: { type: Type.STRING },
-        variables: { type: Type.ARRAY, items: virtualLabVariableSchema },
+        variables: { type: Type.ARRAY, items: interactiveVariableSchema },
         outcomePromptTemplate: { type: Type.STRING }
     },
     required: ['title', 'description', 'baseScenarioPrompt', 'variables', 'outcomePromptTemplate']
+};
+
+const interactiveExplainerSchema = {
+    type: Type.OBJECT,
+    properties: {
+        title: { type: Type.STRING },
+        description: { type: Type.STRING },
+        variables: { type: Type.ARRAY, items: interactiveVariableSchema },
+        videoPromptTemplate: { type: Type.STRING, description: "A template for the VEO prompt. Must use placeholders matching variable names, e.g., 'An animated video explaining {{variable_name}}.'" },
+    },
+    required: ['title', 'description', 'variables', 'videoPromptTemplate'],
+    nullable: true,
 };
 
 // --- New Schemas for Adaptive Story ---
@@ -341,6 +353,7 @@ const learningModuleSchema = {
         higherOrderThinkingQuestions: { type: Type.ARRAY, items: hotQuestionSchema, nullable: true },
         competitiveExamMapping: { type: Type.STRING, nullable: true },
         interactiveVideoSimulation: { ...interactiveVideoSimulationSchema, nullable: true },
+        interactiveExplainer: interactiveExplainerSchema,
         virtualLab: { ...virtualLabSchema, nullable: true },
         adaptiveStory: adaptiveStorySchema,
 
@@ -530,6 +543,7 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
         -   **summary**: A concise summary of the key takeaways.
         -   **conceptMap**: For complex chapters, generate a Mermaid.js graph definition (using 'graph TD' for Top-Down). This graph should visually connect the key concepts. Labels must be concise and in the ${language} language. The entire output for this field must be ONLY the Mermaid code string (e.g., "graph TD; A[Start] --> B(Process);"). For simple chapters or when a visual map is not relevant, this field must be null.
         -   **interactiveVideoSimulation**: For one key concept that is highly visual or hard to explain with text, generate an engaging video simulation section. The \`videoPrompt\` should be a detailed prompt for a model like Google VEO. For other chapters, this can be null.
+        -   **interactiveExplainer**: For one highly abstract concept that is hard to visualize (e.g., the effect of gravity on different planets, how changing the 'a' coefficient affects a parabola's shape, visualizing electron orbitals), generate an "Interactive Explainer". The student will manipulate variables to see "what-if" scenarios in an animated video. The \`videoPromptTemplate\` must use placeholders matching the variable names, surrounded by double curly braces, e.g., {{variable_name}}. This is for conceptual explanation, not a lab experiment. For chapters without a suitable concept, this field MUST be null.
         -   **virtualLab**: For one key concept that is best explained through experimentation (e.g., projectile motion in Physics, chemical reactions in Chemistry, OR historical what-if scenarios, OR exploring mathematical concepts), generate an engaging "Virtual Lab". The \`outcomePromptTemplate\` must be a detailed prompt for a model like Google VEO and MUST use placeholders matching the variable names, e.g., "Show the result of mixing {{chemical_A}} with {{chemical_B}}". For chapters without a suitable experimental concept, this field must be null.
         -   **adaptiveStory**: For subjects that benefit from narrative learning (like History, Social Studies, Literature, or even explaining a scientific discovery), generate an engaging branching narrative. The story should have at least 3-4 decision points and multiple endings. The choices a student makes should be tied to their understanding of the chapter's concepts. For other chapters, this field MUST be null.
 

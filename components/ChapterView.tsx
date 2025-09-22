@@ -7,13 +7,14 @@ import LoadingSpinner from './LoadingSpinner';
 import ConceptCard from './ConceptCard';
 import Quiz from './Quiz';
 import Confetti from './Confetti';
-import { RocketLaunchIcon, ArchiveBoxIcon, LightBulbIcon, ArrowPathIcon, ForwardIcon, CheckCircleIcon, BookOpenIcon, VariableIcon, ClipboardDocumentListIcon, QuestionMarkCircleIcon, ExclamationTriangleIcon as ExclamationTriangleSolid, TrophyIcon as TrophySolid, BeakerIcon, GlobeAltIcon, LinkIcon, AcademicCapIcon, PlayCircleIcon, PauseCircleIcon, StopCircleIcon, ClockIcon, UserGroupIcon, DocumentTextIcon, LanguageIcon, SparklesIcon as SparklesSolid, MapIcon, PuzzlePieceIcon, CalculatorIcon, ScaleIcon, ShareIcon, CheckBadgeIcon, CpuChipIcon, SpeakerWaveIcon, FilmIcon, ChevronRightIcon, WrenchScrewdriverIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/solid';
+import { RocketLaunchIcon, ArchiveBoxIcon, LightBulbIcon, ArrowPathIcon, ForwardIcon, CheckCircleIcon, BookOpenIcon, VariableIcon, ClipboardDocumentListIcon, QuestionMarkCircleIcon, ExclamationTriangleIcon as ExclamationTriangleSolid, TrophyIcon as TrophySolid, BeakerIcon, GlobeAltIcon, LinkIcon, AcademicCapIcon, PlayCircleIcon, PauseCircleIcon, StopCircleIcon, ClockIcon, UserGroupIcon, DocumentTextIcon, LanguageIcon, SparklesIcon as SparklesSolid, MapIcon, PuzzlePieceIcon, CalculatorIcon, ScaleIcon, ShareIcon, CheckBadgeIcon, CpuChipIcon, SpeakerWaveIcon, FilmIcon, ChevronRightIcon, WrenchScrewdriverIcon, ChatBubbleLeftRightIcon, BoltIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from '../contexts/Language-context';
 import { useTTS } from '../hooks/useTTS';
 import { useAuth } from '../contexts/AuthContext';
 import VideoSimulationPlayer from './VideoSimulationPlayer';
 import VirtualLabPlayer from './VirtualLabPlayer';
 import AdaptiveStoryPlayer from './AdaptiveStoryPlayer';
+import InteractiveExplainerPlayer from './InteractiveExplainerPlayer';
 
 declare const mermaid: any;
 
@@ -27,6 +28,7 @@ interface ChapterViewProps {
   onBackToSubjects: () => void;
   onChapterSelect: (chapter: Chapter) => void;
   onStartTutorSession: () => void;
+  onStartMicrolearningSession: (module: LearningModule) => void;
 }
 
 // A more robust sentence tokenizer that handles abbreviations.
@@ -436,7 +438,7 @@ const CategorizedProblemsComponent: React.FC<CategorizedProblemsComponentProps> 
 };
 
 
-const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, student, language, onBackToChapters, onBackToSubjects, onChapterSelect, onStartTutorSession }) => {
+const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, student, language, onBackToChapters, onBackToSubjects, onChapterSelect, onStartTutorSession, onStartMicrolearningSession }) => {
   const [learningModule, setLearningModule] = useState<LearningModule | null>(null);
   const [quiz, setQuiz] = useState<QuizQuestion[] | null>(null);
   const [isLoadingModule, setIsLoadingModule] = useState(true);
@@ -1026,6 +1028,22 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
         </section>
 
         <section className="chapter-view-section">
+            <div className="p-6 bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl shadow-lg text-white flex flex-col md:flex-row items-center gap-6">
+                <BoltIcon className="h-16 w-16 text-white/80 flex-shrink-0"/>
+                <div className="text-center md:text-left">
+                    <h3 className="text-2xl font-bold">{t('focusedStudyTitle')}</h3>
+                    <p className="mt-1 opacity-90">{t('focusedStudyDescription')}</p>
+                </div>
+                <button 
+                    onClick={() => onStartMicrolearningSession(learningModule)} 
+                    className="mt-4 md:mt-0 md:ml-auto flex-shrink-0 px-6 py-3 bg-white text-amber-700 font-bold rounded-lg shadow-md hover:bg-amber-50 transition-colors transform hover:scale-105"
+                >
+                    {t('startFocusedStudy')}
+                </button>
+            </div>
+        </section>
+
+        <section className="chapter-view-section">
           <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
             <MapIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
             {t('keyConcepts')}
@@ -1060,6 +1078,21 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
                         {learningModule.conceptMap}
                     </div>
                 </div>
+            </section>
+        )}
+
+        {learningModule.interactiveExplainer && (
+            <section className="chapter-view-section">
+                 <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
+                    <PlayCircleIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
+                    {t('interactiveExplainer')}
+                </h3>
+                <InteractiveExplainerPlayer
+                    explainerData={learningModule.interactiveExplainer}
+                    grade={grade}
+                    subject={subject}
+                    chapter={chapter}
+                />
             </section>
         )}
 

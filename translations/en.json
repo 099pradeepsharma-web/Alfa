@@ -144,6 +144,9 @@
   "technologyIntegration": "Technology Integration",
   "summary": "Summary",
   "interactiveSimulation": "Interactive Video Simulation",
+  "interactiveExplainer": "Interactive Explainer",
+  "visualizeScenario": "Visualize Scenario",
+  "configureExplainer": "Set the variables to see how they affect the outcome.",
   "virtualLab": "Virtual Lab",
   "runSimulation": "Run Simulation",
   "selectAnOption": "Select an option",
@@ -336,5 +339,14 @@
   "tutorWelcomeMessage": "Hello! I'm Fitto, your personal AI tutor for this chapter. How can I help you get started?",
   "sendMessage": "Send",
   "adaptiveStory": "Adaptive Story",
-  "restartStory": "Restart Story"
+  "restartStory": "Restart Story",
+  "startFocusedStudy": "Start Focused Study Session",
+  "focusedStudyTitle": "Focused Study Session",
+  "focusedStudyDescription": "Master concepts one by one in this gamified learning quest to earn points and achievements.",
+  "progress": "Progress",
+  "nextConcept": "Next Concept",
+  "finishQuest": "Finish Quest",
+  "achievementUnlocked": "Achievement Unlocked!",
+  "achievement_chapter_champion_name": "Chapter Champion",
+  "achievement_chapter_champion_desc": "You've successfully mastered all the core concepts in this chapter!"
 }

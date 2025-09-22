@@ -1,4 +1,4 @@
-import { User, StudentQuestion, PerformanceRecord, AIFeedback } from '../types';
+import { User, StudentQuestion, PerformanceRecord, AIFeedback, Achievement } from '../types';
 
 const DB_NAME = 'AlfanumrikDB';
 const DB_VERSION = 1;
@@ -16,7 +16,8 @@ const STORES = [
     'feedback', 
     'cache',
     'videos',
-    'conceptMaps'
+    'conceptMaps',
+    'achievements'
 ];
 
 /**
@@ -63,6 +64,10 @@ const openDb = (): Promise<IDBDatabase> => {
                         case 'feedback':
                             tempDb.createObjectStore('feedback', { keyPath: 'id' });
                             break;
+                        case 'achievements':
+                             const achievementStore = tempDb.createObjectStore('achievements', { autoIncrement: true });
+                             achievementStore.createIndex('studentId', 'studentId', { unique: false });
+                             break;
                         default:
                             // For simple key-value stores like modules, reports, etc.
                             tempDb.createObjectStore(storeName);
@@ -85,7 +90,7 @@ const promisifyRequest = <T>(request: IDBRequest<T>): Promise<T> => {
 // --- API Implementation using IndexedDB ---
 
 type ObjectTables = 'modules' | 'reports' | 'progress' | 'diagrams' | 'cache' | 'videos' | 'conceptMaps';
-type ArrayTables = 'users' | 'questions' | 'performance' | 'feedback';
+type ArrayTables = 'users' | 'questions' | 'performance' | 'feedback' | 'achievements';
 
 /**
  * Gets a document from an object-based table by its ID.

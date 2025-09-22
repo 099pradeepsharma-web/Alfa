@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
-import { User, Student } from '../types';
+import { User, Student, Achievement } from '../types';
 import * as authService from '../services/authService';
 import * as pineconeService from '../services/pineconeService';
 import * as db from '../services/databaseService';
@@ -23,12 +23,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const handleLoginSuccess = useCallback(async (user: User) => {
         const performance = await pineconeService.getPerformanceRecords(user.id);
+        const achievements = await pineconeService.getAchievements(user.id);
         const studentProfile: Student = {
             id: user.id,
             name: user.name,
             grade: user.grade,
             avatarUrl: user.avatarUrl,
             performance: performance,
+            achievements: achievements,
         };
         setCurrentUser(studentProfile);
         sessionStorage.setItem('alfanumrik-userId', user.id.toString());

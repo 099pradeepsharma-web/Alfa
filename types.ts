@@ -136,8 +136,8 @@ export interface InteractiveVideoSimulation {
     videoPrompt: string; // The detailed prompt for the VEO model.
 }
 
-// --- New Types for Virtual Labs ---
-export interface VirtualLabVariable {
+// --- New Types for Virtual Labs & Interactive Explainers ---
+export interface InteractiveVariable { // Renamed from VirtualLabVariable to be more generic
     name: string;
     options: string[];
 }
@@ -145,9 +145,16 @@ export interface VirtualLab {
     title: string;
     description: string;
     baseScenarioPrompt: string;
-    variables: VirtualLabVariable[];
+    variables: InteractiveVariable[]; // Use renamed type
     outcomePromptTemplate: string;
 }
+export interface InteractiveExplainer {
+    title: string;
+    description: string;
+    variables: InteractiveVariable[];
+    videoPromptTemplate: string;
+}
+
 
 // --- New Types for Adaptive Storytelling ---
 export interface StoryNodeChoice {
@@ -181,6 +188,7 @@ export interface LearningModule {
   learningTricksAndMnemonics?: string[];
   higherOrderThinkingQuestions?: HOTQuestion[];
   interactiveVideoSimulation?: InteractiveVideoSimulation;
+  interactiveExplainer?: InteractiveExplainer;
   virtualLab?: VirtualLab;
   adaptiveStory?: AdaptiveStory;
 
@@ -252,12 +260,23 @@ export interface PerformanceRecord {
   context?: string; // e.g., concept title for exercises, or skill for IQ/EQ
 }
 
+// --- New Type for Gamified Learning ---
+export interface Achievement {
+  id: string; // e.g., 'chapter-champion'
+  name: string;
+  description: string;
+  icon: string; // Heroicon name or URL
+  timestamp: string; // ISO date string when it was earned
+}
+
+
 export interface Student {
   id: number;
   name: string;
   grade: string;
   avatarUrl: string;
   performance: PerformanceRecord[];
+  achievements: Achievement[];
 }
 
 // New type for progress tracking

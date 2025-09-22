@@ -1,7 +1,7 @@
 // This service acts as a data access layer for student-specific information,
 // persisting data to the local browser storage (IndexedDB).
 // The name 'pineconeService' is a legacy name.
-import { LearningModule, ChapterProgress, StudentQuestion, PerformanceRecord, AIFeedback, LearningStreak } from '../types';
+import { LearningModule, ChapterProgress, StudentQuestion, PerformanceRecord, AIFeedback, LearningStreak, Achievement } from '../types';
 import * as db from './databaseService';
 
 /**
@@ -251,4 +251,30 @@ export const getWellbeingModuleStatus = async (studentId: number): Promise<boole
 export const setWellbeingModuleStatus = async (studentId: number, isAssigned: boolean): Promise<void> => {
     const key = `wellbeing-assigned-${studentId}`;
     await db.setDoc('cache', key, isAssigned);
+};
+
+// --- New Functions for Achievements ---
+
+/**
+ * Retrieves all achievements for a specific student from the database.
+ * @param userId The ID of the student whose achievements to retrieve.
+ * @returns A promise that resolves to an array of achievements for that student.
+ */
+export const getAchievements = async (userId: number): Promise<Achievement[]> => {
+    type StoredAchievement = Achievement & { studentId: number };
+    return await db.queryCollection<StoredAchievement>('achievements', (ach) => ach.studentId === userId);
+};
+
+/**
+ * Adds a new achievement for a student to the database.
+ * @param userId The ID of the student.
+ * @param achievement The Achievement object to save.
+ */
+export const addAchievement = async (userId: number, achievement: Omit<Achievement, 'timestamp'>): Promise<void> => {
+    const achievementToSave = { 
+        ...achievement, 
+        studentId: userId,
+        timestamp: new Date().toISOString()
+    };
+    await db.addDocToCollection('achievements', achievementToSave);
 };

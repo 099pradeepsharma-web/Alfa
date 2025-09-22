@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Grade, Subject, Chapter, Student } from './types';
+import { Grade, Subject, Chapter, Student, LearningModule } from './types';
 import { getCurriculum } from './services/curriculumService';
 import { MOCK_STUDENTS } from './data/mockData';
 import { createTutorChat } from './services/geminiService';
@@ -19,12 +19,13 @@ import PersonalizedPathScreen from './screens/PersonalizedPathScreen';
 import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 import FAQScreen from './screens/FAQScreen';
 import TutorSessionScreen from './screens/TutorSessionScreen';
+import MicrolearningScreen from './screens/MicrolearningScreen';
 import { useLanguage } from './contexts/Language-context';
 import { useAuth } from './contexts/AuthContext';
 import LoadingSpinner from './components/LoadingSpinner';
 
 type UserRole = 'student' | 'teacher' | 'parent';
-type StudentView = 'dashboard' | 'path' | 'browse' | 'wellbeing' | 'tutor';
+type StudentView = 'dashboard' | 'path' | 'browse' | 'wellbeing' | 'tutor' | 'microlearning';
 type AppState = 'role_selection' | 'student_flow' | 'teacher_flow' | 'parent_flow' | 'privacy_policy' | 'faq';
 
 const App: React.FC = () => {
@@ -44,6 +45,7 @@ const App: React.FC = () => {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [tutorChat, setTutorChat] = useState<Chat | null>(null);
+  const [activeMicrolearningModule, setActiveMicrolearningModule] = useState<LearningModule | null>(null);
 
 
   useEffect(() => {
@@ -102,6 +104,7 @@ const App: React.FC = () => {
     setSelectedGrade(null);
     setSelectedSubject(null);
     setSelectedChapter(null);
+    setActiveMicrolearningModule(null);
   }, []);
 
   const handleStudentSelect = useCallback((student: Student) => {
@@ -134,6 +137,7 @@ const App: React.FC = () => {
 
   const handleBackToChapters = useCallback(() => {
     setSelectedChapter(null);
+    setActiveMicrolearningModule(null);
   }, []);
 
   const handleStartBrowsing = useCallback(() => {
@@ -161,6 +165,16 @@ const App: React.FC = () => {
       setTutorChat(null);
       setStudentView('browse'); // Go back to the chapter view
   }, []);
+  
+  const handleStartMicrolearningSession = useCallback((module: LearningModule) => {
+      setActiveMicrolearningModule(module);
+      setStudentView('microlearning');
+  }, []);
+  
+  const handleEndMicrolearningSession = useCallback(() => {
+      setActiveMicrolearningModule(null);
+      setStudentView('browse'); // Go back to the chapter view
+  }, []);
 
 
   const renderStudentBrowseFlow = () => {
@@ -184,6 +198,7 @@ const App: React.FC = () => {
             onBackToSubjects={handleBackToSubjects}
             onChapterSelect={handleChapterSelect}
             onStartTutorSession={handleStartTutorSession}
+            onStartMicrolearningSession={handleStartMicrolearningSession}
         />;
     }
     return null; // Should not happen if currentUser is checked
@@ -205,6 +220,12 @@ const App: React.FC = () => {
             return renderStudentBrowseFlow();
         case 'tutor':
             return <TutorSessionScreen student={currentUser} chat={tutorChat!} onBack={handleEndTutorSession} />;
+        case 'microlearning':
+            if (activeMicrolearningModule) {
+                return <MicrolearningScreen learningModule={activeMicrolearningModule} onFinish={handleEndMicrolearningSession} />;
+            }
+            // Fallback if module isn't set, though this shouldn't happen
+            return renderStudentBrowseFlow();
         case 'wellbeing': {
             if (!currentUser) return null;
             const wellbeingChapter: Chapter = { title: 'The Great Transformation: Navigating Your Journey from Teen to Adult' };
@@ -228,6 +249,7 @@ const App: React.FC = () => {
                 onBackToSubjects={handleBackToDashboard}
                 onChapterSelect={() => {}}
                 onStartTutorSession={() => {}} // Tutor not available for this module
+                onStartMicrolearningSession={() => {}} // Microlearning not available
             />;
         }
         default:
