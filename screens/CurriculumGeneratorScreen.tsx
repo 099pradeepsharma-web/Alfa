@@ -14,9 +14,9 @@ interface CurriculumGeneratorScreenProps {
 const formatReport = (text: string) => {
     // Split into lines and handle markdown-like syntax
     return text.split('\n').map((line, index) => {
-        // Match bolded headings like **Overall Summary:**
-        if (line.match(/^\s*\*\*(.+?):\*\*/)) {
-            const headingText = line.replace(/^\s*\*\*(.+?):\*\*/, '$1');
+        // Match HEADING: prefix
+        if (line.startsWith('HEADING: ')) {
+            const headingText = line.substring('HEADING: '.length).replace(/:$/, '');
             return <h4 key={index} className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-4 mb-2">{headingText}</h4>;
         }
         // Match list items like - or *

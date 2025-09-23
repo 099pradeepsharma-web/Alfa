@@ -234,8 +234,8 @@ const ReportsTab: React.FC<{ student: Student; userRole: 'teacher' | 'parent'; p
 
     const formatReportText = (text: string) => {
         return text.split('\n').map((line, index) => {
-            if (line.match(/^\s*\d*\.?\s*\*\*(.+?):\*\*/)) {
-                const headingText = line.replace(/^\s*\d*\.?\s*\*\*(.+?):\*\*/, '$1');
+            if (line.startsWith('HEADING: ')) {
+                const headingText = line.substring('HEADING: '.length).replace(/:$/, ''); // Remove prefix and trailing colon
                 return <h4 key={index} className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-4 mb-2">{headingText}</h4>;
             }
             if (line.match(/^\s*[-*]\s/)) return <li key={index} className="ml-5 list-disc text-slate-600 dark:text-slate-300 mb-1">{line.replace(/^\s*[-*]\s/, '')}</li>;

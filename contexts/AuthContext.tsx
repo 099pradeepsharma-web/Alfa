@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
-import { User, Student, Achievement } from '../types';
+import { User, Student, Achievement, PerformanceRecord } from '../types';
 import * as authService from '../services/authService';
 import * as pineconeService from '../services/pineconeService';
 import * as db from '../services/databaseService';
@@ -25,6 +25,10 @@ export const AuthProvider: React.FC = ({ children }) => {
     const handleLoginSuccess = useCallback(async (user: User) => {
         const performance = await pineconeService.getPerformanceRecords(user.id);
         const achievements = await pineconeService.getAchievements(user.id);
+        
+        // FIX: Calculate total points from performance records to satisfy the Student type, which requires a `points` property. A simple sum of scores is used as a placeholder for a more complex point system.
+        const totalPoints = performance.reduce((sum, record) => sum + record.score, 0);
+
         const studentProfile: Student = {
             id: user.id,
             name: user.name,
@@ -32,6 +36,7 @@ export const AuthProvider: React.FC = ({ children }) => {
             avatarUrl: user.avatarUrl,
             performance: performance,
             achievements: achievements,
+            points: totalPoints,
         };
         setCurrentUser(studentProfile);
         sessionStorage.setItem('alfanumrik-userId', user.id.toString());

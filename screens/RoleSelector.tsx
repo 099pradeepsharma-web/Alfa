@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRightIcon } from '@heroicons/react/24/solid';
+import { ArrowRightIcon, AcademicCapIcon, CheckBadgeIcon, TrophyIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from '../contexts/Language-context';
 
 interface RoleSelectorProps {
@@ -127,6 +127,33 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onSelectRole, onShowPrivacy
                 {studentCount.toLocaleString('en-IN')}+
             </h3>
             <p className="text-slate-600 dark:text-slate-300 font-semibold">{t('joinStudents')}</p>
+        </div>
+
+        <div className="max-w-4xl mx-auto text-center mb-12 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <h3 className="text-2xl font-bold text-slate-700 dark:text-slate-200">{t('alignedWithGoals')}</h3>
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+                    <CheckBadgeIcon className="h-8 w-8 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
+                    <div>
+                        <p className="font-bold text-slate-800 dark:text-slate-100">{t('cbseSyllabus')}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">2024-25 Syllabus</p>
+                    </div>
+                </div>
+                 <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+                    <AcademicCapIcon className="h-8 w-8 text-green-500"/>
+                    <div>
+                        <p className="font-bold text-slate-800 dark:text-slate-100">{t('nep2020')}</p>
+                         <p className="text-sm text-slate-500 dark:text-slate-400">Skill-based Learning</p>
+                    </div>
+                </div>
+                 <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+                    <TrophyIcon className="h-8 w-8 text-amber-500"/>
+                    <div>
+                        <p className="font-bold text-slate-800 dark:text-slate-100">{t('examPrep')}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t('boardsAndCompetitive')}</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div className="max-w-3xl mx-auto mb-12 animate-fade-in" style={{ animationDelay: '0.4s' }}>

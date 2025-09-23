@@ -177,6 +177,24 @@ export interface AdaptiveStory {
     nodes: StoryNode[];
 }
 
+// --- New Types for Offline & Printable Content ---
+export interface PrintableResource {
+    title: string;
+    content: string; // HTML content
+}
+
+// --- New Types for Cultural & Value-Based Learning ---
+export interface CulturalContext {
+    title: string;
+    content: string;
+}
+
+export interface MoralScienceCorner {
+    title: string;
+    story: string;
+    moral: string;
+}
+
 
 export interface LearningModule {
   chapterTitle: string;
@@ -191,6 +209,8 @@ export interface LearningModule {
   interactiveExplainer?: InteractiveExplainer;
   virtualLab?: VirtualLab;
   adaptiveStory?: AdaptiveStory;
+  culturalContext?: CulturalContext;
+  moralScienceCorner?: MoralScienceCorner;
 
   // New pedagogical fields
   prerequisitesCheck?: string[];
@@ -230,6 +250,10 @@ export interface LearningModule {
   // Shared across subjects
   vocabularyDeepDive?: VocabularyDeepDive[];
   competitiveExamMapping?: string;
+
+  // New offline/printable content (generated on-demand)
+  printableWorksheet?: PrintableResource;
+  printableStudyNotes?: PrintableResource;
 }
 
 
@@ -277,6 +301,7 @@ export interface Student {
   avatarUrl: string;
   performance: PerformanceRecord[];
   achievements: Achievement[];
+  points: number;
 }
 
 // New type for progress tracking
@@ -419,4 +444,65 @@ export interface FAQSection {
   role: 'student' | 'teacher' | 'parent';
   titleKey: string;
   items: FAQItem[];
+}
+
+// --- New Types for Project-Based Learning ---
+export interface ProjectSubmission {
+  studentId: number;
+  studentName: string;
+  studentAvatarUrl: string;
+  solutionText: string;
+  solutionUrl?: string; // Optional link to a presentation, video, etc.
+  submittedDate: string;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  subject: string;
+  grade: string;
+  problemStatement: string;
+  objectives: string[];
+  guidingQuestions: string[];
+  submissions: ProjectSubmission[];
+}
+
+
+// --- New Types for Peer Teaching Network ---
+export interface PeerExplanation {
+  id: string;
+  studentId: number;
+  studentName: string;
+  studentAvatarUrl: string;
+  subject: string;
+  chapter: string;
+  concept: string;
+  explanationText: string;
+  submittedDate: string;
+}
+
+// --- New Types for Competitive Features ---
+export interface LeaderboardEntry {
+  studentId: number;
+  name: string;
+  avatarUrl: string;
+  points: number;
+  rank: number;
+}
+
+export interface Competition {
+  id: string;
+  title: string;
+  subject: string;
+  grade: string;
+  description: string;
+  prize: string;
+  status: 'Ongoing' | 'Upcoming' | 'Completed';
+}
+
+export interface HallOfFameEntry {
+    studentName: string;
+    achievement: string;
+    year: number;
+    avatarUrl: string;
 }

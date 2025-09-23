@@ -4,7 +4,7 @@ import { getPerformanceRecords, getLearningModule, saveLearningModule, getDiagra
 import { getAdaptiveNextStep, getChapterContent, generateDiagram } from '../services/geminiService';
 import { useLanguage } from '../contexts/Language-context';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowRightIcon, BookOpenIcon, SparklesIcon, RocketLaunchIcon, PuzzlePieceIcon, HeartIcon, TrophyIcon, MagnifyingGlassIcon, FireIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/solid';
+import { ArrowRightIcon, BookOpenIcon, SparklesIcon, RocketLaunchIcon, PuzzlePieceIcon, HeartIcon, TrophyIcon, MagnifyingGlassIcon, FireIcon, QuestionMarkCircleIcon, CubeIcon, UsersIcon, TrophyIcon as TrophySolid } from '@heroicons/react/24/solid';
 import LoadingSpinner from '../components/LoadingSpinner';
 import FittoAvatar from '../components/FittoAvatar';
 import { CURRICULUM } from '../data/curriculum';
@@ -30,6 +30,9 @@ interface StudentDashboardProps {
   onBrowse: () => void;
   onStartWellbeing: () => void;
   onStartTutorial: () => void;
+  onStartPBL: () => void;
+  onStartPeerPedia: () => void;
+  onStartCompetitions: () => void;
 }
 
 const ActivityCard: React.FC<{ record: PerformanceRecord }> = React.memo(({ record }) => {
@@ -200,7 +203,7 @@ const FittoMessage: React.FC<{ message: string }> = ({ message }) => {
 };
 
 
-const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onBrowse, onStartWellbeing, onStartTutorial }) => {
+const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onBrowse, onStartWellbeing, onStartTutorial, onStartPBL, onStartPeerPedia, onStartCompetitions }) => {
     const { t, tCurriculum, language } = useLanguage();
     const { currentUser: student } = useAuth();
     const [activities, setActivities] = useState<PerformanceRecord[]>([]);
@@ -315,7 +318,17 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onB
 
                 {/* Side Panel */}
                 <div className="lg:col-span-2 space-y-8">
-                     <LearningStreakCard streak={learningStreak} />
+                     <button onClick={onStartCompetitions} className="dashboard-highlight-card w-full p-6 rounded-2xl flex items-center gap-4 text-left">
+                       <div className="p-3 bg-amber-100 dark:bg-amber-900/50 rounded-full">
+                           <TrophySolid className="h-8 w-8 text-amber-500 dark:text-amber-300" />
+                       </div>
+                       <div>
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('academicExcellence')}</h3>
+                            <p className="text-slate-500 dark:text-slate-400">{t('academicExcellenceDesc')}</p>
+                       </div>
+                    </button>
+                    
+                    <LearningStreakCard streak={learningStreak} />
 
                     {isLoadingWellbeingStatus ? (
                         <div className="dashboard-highlight-card p-6 rounded-2xl flex items-center justify-center min-h-[150px]">
@@ -342,6 +355,26 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onB
                             </button>
                         </div>
                     )}
+                    
+                    <button onClick={onStartPBL} className="dashboard-highlight-card w-full p-6 rounded-2xl flex items-center gap-4 text-left">
+                       <div className="p-3 bg-fuchsia-100 dark:bg-fuchsia-900/50 rounded-full">
+                           <CubeIcon className="h-8 w-8 text-fuchsia-600 dark:text-fuchsia-300" />
+                       </div>
+                       <div>
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('pblHubTitle')}</h3>
+                            <p className="text-slate-500 dark:text-slate-400">{t('pblHubDesc')}</p>
+                       </div>
+                    </button>
+
+                    <button onClick={onStartPeerPedia} className="dashboard-highlight-card w-full p-6 rounded-2xl flex items-center gap-4 text-left">
+                       <div className="p-3 bg-cyan-100 dark:bg-cyan-900/50 rounded-full">
+                           <UsersIcon className="h-8 w-8 text-cyan-600 dark:text-cyan-300" />
+                       </div>
+                       <div>
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('peerPediaTitle')}</h3>
+                            <p className="text-slate-500 dark:text-slate-400">{t('peerPediaDesc')}</p>
+                       </div>
+                    </button>
 
                     <button onClick={onBrowse} className="dashboard-highlight-card w-full p-6 rounded-2xl flex items-center gap-4 text-left">
                        <div className="p-3 bg-primary-light rounded-full" style={{backgroundColor: 'rgb(var(--c-primary-light))'}}>

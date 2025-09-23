@@ -8,6 +8,7 @@ export const MOCK_STUDENTS: Student[] = [
     name: 'Ananya Sharma',
     grade: 'Grade 10',
     avatarUrl: `https://i.pravatar.cc/150?u=ananya`,
+    points: 1250,
     performance: [
       { subject: 'Mathematics', chapter: 'Real Numbers', score: 92, completedDate: '2024-05-20' },
       { subject: 'Mathematics', chapter: 'Polynomials', score: 85, completedDate: '2024-05-22' },
@@ -23,6 +24,7 @@ export const MOCK_STUDENTS: Student[] = [
     name: 'Rohan Verma',
     grade: 'Grade 8',
     avatarUrl: `https://i.pravatar.cc/150?u=rohan`,
+    points: 980,
     performance: [
       { subject: 'Chemistry', chapter: 'Metals and Non-metals', score: 78, completedDate: '2024-05-23' },
       { subject: 'History', chapter: 'From Trade to Territory', score: 65, completedDate: '2024-05-22' },
@@ -36,6 +38,7 @@ export const MOCK_STUDENTS: Student[] = [
     name: 'Priya Singh',
     grade: 'Grade 10',
     avatarUrl: `https://i.pravatar.cc/150?u=priya`,
+    points: 1100,
     performance: [
       { subject: 'Geography', chapter: 'Resources and Development', score: 88, completedDate: '2024-05-20' },
       { subject: 'Chemistry', chapter: 'Carbon and its Compounds', score: 62, completedDate: '2024-05-24' },

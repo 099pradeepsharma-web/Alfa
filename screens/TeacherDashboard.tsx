@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Student } from '../types';
-import { ArrowLeftIcon, ChevronRightIcon, CircleStackIcon, SparklesIcon, CloudArrowUpIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon, ChevronRightIcon, CircleStackIcon, SparklesIcon, CloudArrowUpIcon, CheckBadgeIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from '../contexts/Language-context';
 import QuestionBankScreen from './QuestionBankScreen';
 import CurriculumGeneratorScreen from './CurriculumGeneratorScreen';
@@ -116,6 +116,18 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ students, onSelectS
               {t('curriculumGenerator')}
             </button>
           </div>
+        </div>
+
+        <div className="mb-6 bg-blue-50 dark:bg-blue-900/40 p-6 rounded-xl border border-blue-200 dark:border-blue-700">
+            <div className="flex items-center gap-4">
+                <div className="p-2 bg-white/50 dark:bg-slate-900/50 rounded-full">
+                    <CheckBadgeIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('curriculumAlignmentTitle')}</h3>
+                    <p className="text-slate-600 dark:text-slate-300 mt-1">{t('curriculumAlignmentDesc')}</p>
+                </div>
+            </div>
         </div>
         
         <div className="space-y-4">

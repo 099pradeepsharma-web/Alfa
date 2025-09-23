@@ -645,72 +645,120 @@
         background-color: rgba(var(--c-success), 0.15);
       }
 
-      /* 14. NEW: Mermaid.js Concept Map Styling */
+      /* 14. REFINED: Mermaid.js Concept Map Styling */
+      .mermaid-container-wrapper {
+        background-color: rgb(var(--c-bg-secondary));
+        border: 1px solid rgb(var(--c-border));
+        border-radius: var(--radius-card);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-card);
+      }
+      .dark .mermaid-container-wrapper {
+        background-color: rgb(var(--c-bg-primary));
+      }
+
       .mermaid-container {
         display: flex;
         justify-content: center;
         align-items: center;
-        background-color: rgb(var(--c-bg-secondary));
+        background-color: rgb(var(--c-surface));
         padding: 1rem;
-        border-radius: var(--radius-card);
+        border-radius: var(--radius-button); /* Inner container with smaller radius */
         overflow: auto;
-        min-height: 200px;
+        min-height: 300px;
+        cursor: grab;
+        /* Blueprint background */
+        background-image: 
+            linear-gradient(rgba(var(--c-primary), 0.1) 1px, transparent 1px),
+            linear-gradient(to right, rgba(var(--c-primary), 0.1) 1px, transparent 1px);
+        background-size: 2rem 2rem;
+        border: 1px solid rgba(var(--c-primary), 0.2);
       }
+      .mermaid-container:active {
+          cursor: grabbing;
+      }
+
       .dark .mermaid-container {
-        background-color: rgb(var(--c-bg-primary));
+          background-color: rgba(var(--c-bg-primary), 0.8);
+          background-image: 
+            linear-gradient(rgba(var(--c-primary), 0.08) 1px, transparent 1px),
+            linear-gradient(to right, rgba(var(--c-primary), 0.08) 1px, transparent 1px);
+          border-color: rgba(var(--c-primary), 0.3);
       }
+
+      .mermaid-error {
+          font-family: var(--font-mono);
+          color: rgb(var(--c-error));
+          text-align: center;
+          padding: 1rem;
+      }
+      .mermaid-error-title {
+          font-weight: bold;
+          font-size: 1.1em;
+      }
+
       .mermaid svg {
-        max-width: 100%;
+        max-width: none; /* Allow zooming beyond container */
         height: auto;
       }
 
-      /* Light Theme Styles for Mermaid */
+      /* REFINED: Light Theme Styles for Mermaid */
       :root .mermaid .node rect,
       :root .mermaid .node circle,
       :root .mermaid .node ellipse,
       :root .mermaid .node polygon {
-        fill: rgb(var(--c-bg-accent));
-        stroke: rgb(var(--c-text-accent));
-        stroke-width: 2px;
+        fill: rgb(var(--c-surface)); /* White nodes */
+        stroke: rgb(var(--c-primary-dark)); /* Dark blue border */
+        stroke-width: 2.5px;
+        rx: 8; /* Rounded corners */
+      }
+      :root .mermaid .node.clickable:hover {
+          filter: drop-shadow(0 0 5px rgba(var(--c-primary-dark), 0.5));
       }
       :root .mermaid .node .label {
         font-family: var(--font-sans);
         color: rgb(var(--c-text-primary)) !important;
         font-weight: 600;
+        font-size: 15px; /* Larger font */
       }
       :root .mermaid .edgePath .path {
-        stroke: rgb(var(--c-text-secondary));
-        stroke-width: 1.5px;
+        stroke: rgb(var(--c-primary-dark));
+        stroke-width: 2px;
       }
       :root .mermaid .arrowheadPath {
-        fill: rgb(var(--c-text-secondary));
+        fill: rgb(var(--c-primary-dark));
       }
       :root .mermaid .edgeLabel {
-        background-color: rgb(var(--c-bg-secondary)) !important;
-        color: rgb(var(--c-text-primary)) !important;
+        background-color: rgba(var(--c-surface), 0.8) !important;
+        color: rgb(var(--c-primary-dark)) !important;
         font-family: var(--font-sans);
+        padding: 2px 4px;
+        border-radius: 4px;
       }
 
-      /* Dark Mode Styles for Mermaid */
+      /* REFINED: Dark Mode Styles for Mermaid */
       .dark .mermaid .node rect,
       .dark .mermaid .node circle,
       .dark .mermaid .node ellipse,
       .dark .mermaid .node polygon {
-        fill: rgb(var(--c-bg-accent));
-        stroke: rgb(var(--c-text-accent));
+        fill: rgb(var(--c-surface)); /* Dark card color */
+        stroke: rgb(var(--c-primary)); /* Bright blue border */
+      }
+      .dark .mermaid .node.clickable:hover {
+          filter: drop-shadow(0 0 5px rgba(var(--c-primary), 0.6));
       }
       .dark .mermaid .node .label {
         color: rgb(var(--c-text-primary)) !important;
       }
       .dark .mermaid .edgePath .path {
-        stroke: rgb(var(--c-text-secondary));
+        stroke: rgb(var(--c-primary));
       }
       .dark .mermaid .arrowheadPath {
-        fill: rgb(var(--c-text-secondary));
+        fill: rgb(var(--c-primary));
       }
       .dark .mermaid .edgeLabel {
-        background-color: rgb(var(--c-bg-secondary)) !important;
-        color: rgb(var(--c-text-primary)) !important;
+        background-color: rgba(var(--c-surface), 0.8) !important;
+        color: rgb(var(--c-primary-light)) !important;
       }
 
       /* 15. NEW: AI Tutor Session Screen */

@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Grade, Subject, Chapter, LearningModule, QuizQuestion, NextStepRecommendation, ChapterProgress, Student, CategorizedProblems, VocabularyDeepDive, Theorem, FormulaDerivation, SolvedNumericalProblem, Formula, ProblemSolvingTemplate, CommonMistake, Experiment, TimelineEvent, KeyFigure, PrimarySourceSnippet, CaseStudy, GrammarRule, LiteraryDevice, HOTQuestion, KeyLawOrPrinciple } from '../types';
+import { Grade, Subject, Chapter, LearningModule, QuizQuestion, NextStepRecommendation, ChapterProgress, Student, CategorizedProblems, VocabularyDeepDive, Theorem, FormulaDerivation, SolvedNumericalProblem, Formula, ProblemSolvingTemplate, CommonMistake, Experiment, TimelineEvent, KeyFigure, PrimarySourceSnippet, CaseStudy, GrammarRule, LiteraryDevice, HOTQuestion, KeyLawOrPrinciple, CulturalContext, MoralScienceCorner } from '../types';
 import * as contentService from '../services/contentService';
-import { generateQuiz, generateNextStepRecommendation, generateSectionContent } from '../services/geminiService';
+import { generateQuiz, generateNextStepRecommendation, generateSectionContent, generatePrintableResource } from '../services/geminiService';
 import { getChapterProgress, saveChapterProgress } from '../services/pineconeService';
 import LoadingSpinner from './LoadingSpinner';
 import ConceptCard from './ConceptCard';
 import Quiz from './Quiz';
 import Confetti from './Confetti';
-import { RocketLaunchIcon, ArchiveBoxIcon, LightBulbIcon, ArrowPathIcon, ForwardIcon, CheckCircleIcon, BookOpenIcon, VariableIcon, ClipboardDocumentListIcon, QuestionMarkCircleIcon, ExclamationTriangleIcon as ExclamationTriangleSolid, TrophyIcon as TrophySolid, BeakerIcon, GlobeAltIcon, LinkIcon, AcademicCapIcon, PlayCircleIcon, PauseCircleIcon, StopCircleIcon, ClockIcon, UserGroupIcon, DocumentTextIcon, LanguageIcon, SparklesIcon as SparklesSolid, MapIcon, PuzzlePieceIcon, CalculatorIcon, ScaleIcon, ShareIcon, CheckBadgeIcon, CpuChipIcon, SpeakerWaveIcon, FilmIcon, ChevronRightIcon, WrenchScrewdriverIcon, ChatBubbleLeftRightIcon, BoltIcon } from '@heroicons/react/24/solid';
+import { RocketLaunchIcon, ArchiveBoxIcon, LightBulbIcon, ArrowPathIcon, ForwardIcon, CheckCircleIcon, BookOpenIcon, VariableIcon, ClipboardDocumentListIcon, QuestionMarkCircleIcon, ExclamationTriangleIcon as ExclamationTriangleSolid, TrophyIcon as TrophySolid, BeakerIcon, GlobeAltIcon, LinkIcon, AcademicCapIcon, PlayCircleIcon, PauseCircleIcon, StopCircleIcon, ClockIcon, UserGroupIcon, DocumentTextIcon, LanguageIcon, SparklesIcon as SparklesSolid, MapIcon, PuzzlePieceIcon, CalculatorIcon, ScaleIcon, ShareIcon, CheckBadgeIcon, CpuChipIcon, SpeakerWaveIcon, FilmIcon, ChevronRightIcon, WrenchScrewdriverIcon, ChatBubbleLeftRightIcon, BoltIcon, ArrowDownTrayIcon, HeartIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from '../contexts/Language-context';
 import { useTTS } from '../hooks/useTTS';
 import { useAuth } from '../contexts/AuthContext';
@@ -94,13 +94,39 @@ const MathSolutionComponent: React.FC<{ content: string; renderText: (text: stri
 
 // --- END: New Math Solution Presentation Component ---
 
+const CulturalContextComponent: React.FC<{ context: CulturalContext, renderText: (text: string) => React.ReactNode }> = ({ context, renderText }) => {
+    return (
+        <div className="p-4 bg-amber-50 dark:bg-amber-900/40 border-l-4 border-amber-400 rounded-r-md">
+            <h4 className="font-bold text-lg text-amber-800 dark:text-amber-200">{context.title}</h4>
+            <div className="mt-2 prose prose-lg max-w-none prose-indigo dark:prose-invert text-slate-600 dark:text-slate-300">
+                <StructuredText text={context.content} renderText={renderText} />
+            </div>
+        </div>
+    );
+};
+
+const MoralScienceCornerComponent: React.FC<{ corner: MoralScienceCorner, renderText: (text: string) => React.ReactNode }> = ({ corner, renderText }) => {
+    const { t } = useLanguage();
+    return (
+        <div className="p-4 bg-sky-50 dark:bg-sky-900/40 border-l-4 border-sky-400 rounded-r-md">
+            <h4 className="font-bold text-lg text-sky-800 dark:text-sky-200">{corner.title}</h4>
+            <div className="mt-2 text-slate-600 dark:text-slate-300 italic">
+                <StructuredText text={corner.story} renderText={renderText} />
+            </div>
+            <div className="mt-4 font-bold text-sky-700 dark:text-sky-300">
+                <p>{t('moralOfTheStory')}: {renderText(corner.moral)}</p>
+            </div>
+        </div>
+    );
+};
+
 
 // --- START: Section Configuration for Subject-Specific Content ---
 
 type SectionKey = keyof LearningModule;
 
 const commonSections: SectionKey[] = [
-    'prerequisitesCheck', 'vocabularyDeepDive', 'higherOrderThinkingQuestions',
+    'culturalContext', 'moralScienceCorner', 'prerequisitesCheck', 'interactiveExplainer', 'vocabularyDeepDive', 'higherOrderThinkingQuestions',
     'learningTricksAndMnemonics', 'competitiveExamMapping', 'selfAssessmentChecklist',
     'extensionActivities', 'remedialActivities', 'careerConnections', 'technologyIntegration'
 ];
@@ -486,6 +512,8 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
   const [showConfetti, setShowConfetti] = useState(false);
 
   const [loadingSections, setLoadingSections] = useState<Record<string, boolean>>({});
+  const [generatingResourceType, setGeneratingResourceType] = useState<'worksheet' | 'study-notes' | null>(null);
+
 
   const { isSupported, isSpeaking, isPaused, currentSentenceIndex, play, pause, resume, stop } = useTTS();
   const [fullText, setFullText] = useState('');
@@ -520,7 +548,10 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
     
     // Defines all possible sections and their rendering configurations.
     const allSectionsMap: { [K in SectionKey]?: { title: string; content: LearningModule[K]; icon: React.ElementType; type: string; text?: string; } } = {
+        culturalContext: { title: t('culturalContext'), content: learningModule.culturalContext, icon: SparklesSolid, type: 'cultural' },
+        moralScienceCorner: { title: t('moralScienceCorner'), content: learningModule.moralScienceCorner, icon: HeartIcon, type: 'moral' },
         prerequisitesCheck: { title: t('prerequisitesCheck'), content: learningModule.prerequisitesCheck, icon: LinkIcon, type: 'string-list' },
+        interactiveExplainer: { title: t('interactiveExplainer'), content: learningModule.interactiveExplainer, icon: PlayCircleIcon, type: 'explainer' },
         keyTheoremsAndProofs: { title: t('keyTheoremsAndProofs'), content: learningModule.keyTheoremsAndProofs, icon: VariableIcon, type: 'theorems' },
         formulaDerivations: { title: t('formulaDerivations'), content: learningModule.formulaDerivations, icon: CalculatorIcon, type: 'derivations' },
         formulaSheet: { title: t('formulaSheet'), content: learningModule.formulaSheet, icon: ClipboardDocumentListIcon, type: 'formulas' },
@@ -591,25 +622,35 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
     }
   }, [grade.level, subject.name, chapter.title, student, progressDbKey, language, t]);
 
+    const mermaidContainerId = useMemo(() => `mermaid-graph-${chapter.title.replace(/\s/g, '-')}`, [chapter.title]);
+
     useEffect(() => {
         if (learningModule?.conceptMap) {
-            const containerId = `mermaid-graph-${chapter.title.replace(/\s/g, '-')}`;
-            const container = document.getElementById(containerId);
+            const container = document.getElementById(mermaidContainerId);
             
             if (container) {
                 // Clear previous render to avoid duplicates on re-render
                 container.removeAttribute('data-processed');
-                container.innerHTML = learningModule.conceptMap;
+                container.innerHTML = ''; // Clear previous content before attempting to parse/render
                 
                 try {
+                    // First, try to parse. This will throw an error on invalid syntax.
+                    mermaid.parse(learningModule.conceptMap);
+                    // If parsing is successful, set the content and run the renderer.
+                    container.innerHTML = learningModule.conceptMap;
                     mermaid.run({ nodes: [container] });
                 } catch (e) {
                     console.error("Mermaid rendering error:", e);
-                    container.innerHTML = "Error rendering concept map.";
+                    container.innerHTML = `
+                        <div class="mermaid-error">
+                            <div class="mermaid-error-title">Could not display concept map.</div>
+                            <p>There seems to be an issue with the diagram's data.</p>
+                        </div>
+                    `;
                 }
             }
         }
-    }, [learningModule, chapter.title]);
+    }, [learningModule?.conceptMap, mermaidContainerId]);
 
     useEffect(() => {
         if (!learningModule) return;
@@ -671,6 +712,15 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
                         textParts.push(item.analysis);
                         textParts.push(item.conclusion);
                     });
+                    break;
+                case 'cultural':
+                    textParts.push((section.content as CulturalContext).title);
+                    textParts.push((section.content as CulturalContext).content);
+                    break;
+                case 'moral':
+                    textParts.push((section.content as MoralScienceCorner).title);
+                    textParts.push((section.content as MoralScienceCorner).story);
+                    textParts.push((section.content as MoralScienceCorner).moral);
                     break;
              }
         });
@@ -829,7 +879,10 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
 
   const renderSectionComponent = useCallback((section: any) => {
     switch (section.type) {
+        case 'cultural': return <CulturalContextComponent context={section.content!} renderText={renderTextWithTTS} />;
+        case 'moral': return <MoralScienceCornerComponent corner={section.content!} renderText={renderTextWithTTS} />;
         case 'string-list': return <StringListComponent items={section.content} renderText={renderTextWithTTS} />;
+        case 'explainer': return <InteractiveExplainerPlayer explainerData={section.content!} grade={grade} subject={subject} chapter={chapter} />;
         case 'simple-text': return <SimpleTextComponent text={section.text} renderText={renderTextWithTTS} />;
         case 'vocab': return <VocabularyComponent items={section.content} renderText={renderTextWithTTS} />;
         case 'theorems': return <TheoremsComponent items={section.content} renderText={renderTextWithTTS} />;
@@ -847,7 +900,39 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
         case 'literary': return <LiteraryDeviceAnalysisComponent items={section.content} renderText={renderTextWithTTS} />;
         default: return null;
     }
-  }, [renderTextWithTTS]);
+  }, [renderTextWithTTS, grade, subject, chapter]);
+
+  const handleGenerateResource = async (type: 'worksheet' | 'study-notes') => {
+    if (!learningModule) return;
+    setGeneratingResourceType(type);
+    setError(null);
+    try {
+        const chapterContext = `Chapter Title: ${learningModule.chapterTitle}. Introduction: ${learningModule.introduction}. Key Concepts: ${learningModule.keyConcepts.map(c => `${c.conceptTitle}: ${c.explanation}`).join('; ')}.`;
+        
+        const htmlContent = await generatePrintableResource(
+            type,
+            grade.level,
+            subject.name,
+            chapter.title,
+            chapterContext,
+            language
+        );
+
+        const newWindow = window.open("", "_blank");
+        if (newWindow) {
+            newWindow.document.write(htmlContent);
+            newWindow.document.close();
+        } else {
+            alert("Please allow pop-ups for this site to download printable resources.");
+        }
+
+    } catch (err: any) {
+        setError(err.message || t('unknownError'));
+    } finally {
+        setGeneratingResourceType(null);
+    }
+};
+
 
   const masteredConcepts = useMemo(() => {
     if (!learningModule) return 0;
@@ -1060,25 +1145,25 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
                 <BoltIcon className="h-16 w-16 text-white/80 flex-shrink-0"/>
                 <div className="text-center md:text-left">
                     <h3 className="text-2xl font-bold">{t('focusedStudyTitle')}</h3>
-                    <p className="mt-1 opacity-90">{t('focusedStudyDescription')}</p>
+                    <p className="mt-1 opacity-90">{t('focusedStudyDesc')}</p>
                 </div>
-                <button 
-                    onClick={() => onStartMicrolearningSession(learningModule)} 
-                    className="mt-4 md:mt-0 md:ml-auto flex-shrink-0 px-6 py-3 bg-white text-amber-700 font-bold rounded-lg shadow-md hover:bg-amber-50 transition-colors transform hover:scale-105"
+                 <button 
+                    onClick={() => onStartMicrolearningSession(learningModule)}
+                    className="mt-4 md:mt-0 md:ml-auto flex-shrink-0 px-6 py-3 bg-white text-orange-600 font-bold rounded-lg shadow-md hover:bg-orange-50 transition-colors transform hover:scale-105"
                 >
-                    {t('startFocusedStudy')}
+                    {t('startQuest')}
                 </button>
             </div>
         </section>
 
         <section className="chapter-view-section">
           <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
-            <MapIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
+            <LightBulbIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
             {t('keyConcepts')}
           </h3>
-          <div className="space-y-8">
+          <div className="space-y-8 mt-6">
             {learningModule.keyConcepts.map(concept => (
-              <ConceptCard
+              <ConceptCard 
                 key={concept.conceptTitle}
                 concept={concept}
                 grade={grade}
@@ -1095,140 +1180,93 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
         </section>
 
         {learningModule.conceptMap && (
-            <section className="chapter-view-section">
+             <section className="chapter-view-section">
                 <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
-                    <SparklesSolid className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
-                    {t('conceptMapTitle')}
+                    <MapIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}} />
+                    {t('conceptMap')}
                 </h3>
-                <div className="mt-4 mermaid-container">
-                    {/* Mermaid.js will render the SVG inside this div */}
-                    <div className="mermaid" id={`mermaid-graph-${chapter.title.replace(/\s/g, '-')}`}>
-                        {learningModule.conceptMap}
-                    </div>
-                </div>
-            </section>
-        )}
-
-        {learningModule.interactiveExplainer && (
-            <section className="chapter-view-section">
-                 <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
-                    <PlayCircleIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
-                    {t('interactiveExplainer')}
-                </h3>
-                <InteractiveExplainerPlayer
-                    explainerData={learningModule.interactiveExplainer}
-                    grade={grade}
-                    subject={subject}
-                    chapter={chapter}
-                />
-            </section>
-        )}
-
-        {learningModule.virtualLab && (
-            <section className="chapter-view-section">
-                 <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
-                    <WrenchScrewdriverIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
-                    {t('virtualLab')}
-                </h3>
-                <VirtualLabPlayer
-                    labData={learningModule.virtualLab}
-                    grade={grade}
-                    subject={subject}
-                    chapter={chapter}
-                />
+                <div id={mermaidContainerId} className="mermaid p-4 bg-white dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 mt-6" />
             </section>
         )}
 
         {learningModule.interactiveVideoSimulation && (
-            <section className="chapter-view-section">
-                 <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
-                    <FilmIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
-                    {t('interactiveSimulation')}
-                </h3>
-                <VideoSimulationPlayer 
-                    simulationData={learningModule.interactiveVideoSimulation}
+             <section className="chapter-view-section">
+                 <VideoSimulationPlayer 
+                    simulationData={learningModule.interactiveVideoSimulation} 
                     dbKey={`video-${grade.level}-${subject.name}-${chapter.title}-${learningModule.interactiveVideoSimulation.title}`}
                     grade={grade}
                     subject={subject}
                     chapter={chapter}
-                />
+                 />
+             </section>
+        )}
+
+        {learningModule.virtualLab && (
+            <section className="chapter-view-section">
+                <VirtualLabPlayer labData={learningModule.virtualLab} grade={grade} subject={subject} chapter={chapter} />
             </section>
         )}
-        
+
         {learningModule.adaptiveStory && (
             <section className="chapter-view-section">
-                 <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
-                    <BookOpenIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
-                    {t('adaptiveStory')}
-                </h3>
                 <AdaptiveStoryPlayer storyData={learningModule.adaptiveStory} />
             </section>
         )}
         
-        {sections.map(section => {
-            const sectionKey = section.key as keyof LearningModule;
-            const sectionContent = learningModule[sectionKey];
-            const isLoadingSection = loadingSections[section.key];
-
-            return (
-                 <section key={section.key} className="chapter-view-section">
-                    {sectionContent ? (
-                        <>
-                            <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
-                                <section.icon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
-                                {section.title}
-                            </h3>
-                            <div className="prose prose-lg max-w-none prose-indigo dark:prose-invert text-slate-600 dark:text-slate-300">
-                                {renderSectionComponent(section)}
-                            </div>
-                        </>
-                    ) : (
-                        <div className="p-6 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 text-center transition hover:border-primary dark:hover:border-primary-light hover:bg-slate-200/50 dark:hover:bg-slate-700/80">
-                            <section.icon className="h-10 w-10 mx-auto text-slate-400 dark:text-slate-500" />
-                            <h3 className="text-xl font-bold text-slate-700 dark:text-slate-200 mt-3">{section.title}</h3>
-                            <button 
-                                onClick={() => handleLoadSection(sectionKey)}
-                                disabled={isLoadingSection}
-                                className="mt-4 flex items-center justify-center mx-auto px-6 py-2.5 text-white font-bold rounded-lg btn-primary-gradient disabled:opacity-70 disabled:cursor-not-allowed"
-                            >
-                                {isLoadingSection ? (
-                                    <><LoadingSpinner /><span className="ml-2">{t('loadingSection')}</span></>
-                                ) : (
-                                    t('loadSection')
-                                )}
-                            </button>
-                        </div>
-                    )}
-                </section>
-            )
-        })}
-
-
-        <section>
-          <div className="p-8 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 text-center transition hover:border-primary dark:hover:border-primary-light hover:bg-slate-200/50 dark:hover:bg-slate-700/80">
-              <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200">{t('readyToTestKnowledge')}</h3>
-              <p className="text-slate-500 dark:text-slate-400 mt-2 mb-6 max-w-xl mx-auto">{t('quizPrompt')}</p>
-              <button
-                onClick={handleGenerateQuiz}
-                disabled={isGeneratingQuiz || !allConceptsMastered}
-                className="flex items-center justify-center mx-auto px-8 py-4 text-white font-bold rounded-lg btn-primary-gradient disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {isGeneratingQuiz ? (
-                  <><LoadingSpinner /><span className="ml-3">{t('generatingQuiz')}</span></>
-                ) : (
-                  <><RocketLaunchIcon className="h-6 w-6 mr-3" />{t('challengeMe')}</>
-                )}
-              </button>
-              {!allConceptsMastered && 
-                <div role="status" className="mt-4 max-w-md mx-auto p-3 bg-yellow-50 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 rounded-lg text-sm font-semibold">
-                  You must master all concepts before taking the final quiz.
+        {sections.filter(s => s.content).map(section => (
+            <section key={section.key} className="chapter-view-section">
+                <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
+                    <section.icon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}} />
+                    {section.title}
+                </h3>
+                <div className="prose prose-lg max-w-none prose-indigo dark:prose-invert text-slate-600 dark:text-slate-300">
+                    {renderSectionComponent(section)}
                 </div>
-              }
-          </div>
-        </section>
+            </section>
+        ))}
       </>
+
+      <div className="p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 mt-12">
+        <h3 className="text-2xl font-bold text-slate-700 dark:text-slate-200 flex items-center mb-4">
+            <ArrowDownTrayIcon className="h-7 w-7 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}} />
+            {t('printableResources')}
+        </h3>
+        <p className="text-slate-500 dark:text-slate-400 mb-4">{t('printableResourcesDesc')}</p>
+        <div className="flex flex-col sm:flex-row gap-4">
+            <button 
+                onClick={() => handleGenerateResource('worksheet')} 
+                disabled={generatingResourceType === 'worksheet'}
+                className="flex-1 flex items-center justify-center px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold rounded-lg shadow-sm hover:bg-slate-200 dark:hover:bg-slate-600 transition disabled:opacity-70"
+            >
+                {generatingResourceType === 'worksheet' ? <LoadingSpinner /> : <WrenchScrewdriverIcon className="h-5 w-5 mr-2"/>}
+                {t('generateWorksheet')}
+            </button>
+            <button 
+                onClick={() => handleGenerateResource('study-notes')}
+                disabled={generatingResourceType === 'study-notes'}
+                className="flex-1 flex items-center justify-center px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold rounded-lg shadow-sm hover:bg-slate-200 dark:hover:bg-slate-600 transition disabled:opacity-70"
+            >
+                {generatingResourceType === 'study-notes' ? <LoadingSpinner /> : <DocumentTextIcon className="h-5 w-5 mr-2" />}
+                {t('generateStudyNotes')}
+            </button>
+        </div>
+    </div>
+
+
+      <div className="mt-16 text-center">
+        <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200">{t('readyForAChallenge')}</h3>
+        <p className="text-lg text-slate-500 dark:text-slate-400 mt-2">{t('readyForAChallengeDesc')}</p>
+        <button 
+          onClick={handleGenerateQuiz} 
+          disabled={isGeneratingQuiz || !allConceptsMastered}
+          className="mt-6 flex items-center justify-center mx-auto px-8 py-4 text-white font-bold rounded-lg btn-primary-gradient disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {isGeneratingQuiz ? <><LoadingSpinner /> <span className="ml-2">{t('generatingQuiz')}</span></> : <><LightBulbIcon className="h-6 w-6 mr-2" />{t('startChapterQuiz')}</>}
+        </button>
+        {!allConceptsMastered && <p className="text-sm text-slate-500 mt-2">{t('masterAllConceptsPrompt')}</p>}
+      </div>
     </main>
   );
 };
 
-export default ChapterView;
+export default React.memo(ChapterView);

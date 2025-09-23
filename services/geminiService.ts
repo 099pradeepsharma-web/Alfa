@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, AdaptiveStory, InteractiveExplainer } from '../types';
+import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, AdaptiveStory, InteractiveExplainer, PrintableResource, CulturalContext, MoralScienceCorner } from '../types';
 
 // The API key is sourced from the `process.env.API_KEY` environment variable.
 // To use a new key (e.g., from Vertex AI Studio), set this variable in your deployment environment.
@@ -13,7 +13,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 // --- Static Content for "The Great Transformation" Chapter ---
 const THE_GREAT_TRANSFORMATION_EN: LearningModule = {
   chapterTitle: 'The Great Transformation: Navigating Your Journey from Teen to Adult',
-  introduction: "Hey there! Ever feel like you're on a roller coaster you didn't even buy a ticket for? One minute, you're a kid, and the next, your body and mind are doing all sorts of new, confusing things. Welcome to the **great transformation**, a journey every single one of us goes through. It's a time of immense change, not just physically, but emotionally and mentally too.\n\nThis phase, starting around Grade 7, is when you begin to shed your childhood skin and step into a new one. It can feel awkward and a little scary, but trust us, you're not alone. The goal of this section is to help you understand what's happening to you, so you can embrace these changes, stay focused on your dreams, and emerge stronger and more confident.",
+  introduction: "Hey there! Ever feel like you're on a roller coaster you didn't even buy a ticket for? One minute, you're a kid, and the next, your body and mind are doing all sorts of new, confusing things. Welcome to the 'great transformation', a journey every single one of us goes through. It's a time of immense change, not just physically, but emotionally and mentally too.\n\nThis phase, starting around Grade 7, is when you begin to shed your childhood skin and step into a new one. It can feel awkward and a little scary, but trust us, you're not alone. The goal of this section is to help you understand what's happening to you, so you can embrace these changes, stay focused on your dreams, and emerge stronger and more confident.",
   learningObjectives: [
     "Understand the key physical, emotional, and mental changes during adolescence.",
     "Recognize that common struggles like distraction and mood swings are normal during this phase.",
@@ -23,29 +23,79 @@ const THE_GREAT_TRANSFORMATION_EN: LearningModule = {
   keyConcepts: [
     {
       conceptTitle: 'The Science Behind the Changes',
-      explanation: "So, what's really going on? Your brain is undergoing a massive rewiring. The part of your brain responsible for **emotions and risk-taking** (the limbic system) is developing faster than the part that handles **reasoning and decision-making** (the prefrontal cortex).\n\nThis developmental mismatch is why you might feel more intense emotions, and why sometimes, a small thing can feel like a huge deal. At the same time, your body is buzzing with hormones that are causing you to grow, change, and develop physically. Understanding this science can help you be a little kinder to yourself when you feel overwhelmed.",
+      explanation: "So, what's really going on? Your brain is undergoing a massive rewiring. The part of your brain responsible for 'emotions and risk-taking' (the limbic system) is developing faster than the part that handles 'reasoning and decision-making' (the prefrontal cortex).\n\nThis developmental mismatch is why you might feel more intense emotions, and why sometimes, a small thing can feel like a huge deal. At the same time, your body is buzzing with hormones that are causing you to grow, change, and develop physically. Understanding this science can help you be a little kinder to yourself when you feel overwhelmed.",
       realWorldExample: "Think about why a sad song might suddenly make you feel extremely emotional, or why you might feel a sudden urge to do something risky with friends. It's often your developing emotional brain taking the lead before your reasoning brain has a chance to catch up.",
       diagramDescription: "A simple diagram of a brain. One part, labeled 'Emotional Center (Limbic System)', is shown brightly lit and larger, with a label 'Developing Fast!'. Another part, labeled 'Reasoning Center (Prefrontal Cortex)', is shown dimmer and smaller, with a label 'Still Developing'."
     },
     {
       conceptTitle: 'Case Study: A Tale of Two Students',
-      explanation: "Let's meet two students, Rohan and Priya, both in Grade 9, facing similar challenges.\n\n**Rohan's Story:** Rohan was a fantastic student, but lately, he's feeling easily distracted. He's more interested in spending time with his friends, and feels a lot of pressure to fit in. He finds himself procrastinating, and his grades are starting to slip. He feels guilty but doesn't know how to regain control.\n\n**Priya's Story:** Priya is experiencing mood swings. One minute she's happy and the next she's crying over something small. She feels a huge amount of pressure from her parents to do well in her exams, and is also navigating new friendships and peer groups. She feels exhausted and can't seem to focus on her studies like she used to.\n\nTheir feelings are completely normal. These aren't signs of weakness or a lack of focus; they are a direct result of the changes happening inside them. The key is to learn how to **manage these new feelings** and channel that energy in the right direction.",
+      explanation: "Let's meet two students, Rohan and Priya, both in Grade 9, facing similar challenges.\n\nRohan's Story: Rohan was a fantastic student, but lately, he's feeling easily distracted. He's more interested in spending time with his friends, and feels a lot of pressure to fit in. He finds himself procrastinating, and his grades are starting to slip. He feels guilty but doesn't know how to regain control.\n\nPriya's Story: Priya is experiencing mood swings. One minute she's happy and the next she's crying over something small. She feels a huge amount of pressure from her parents to do well in her exams, and is also navigating new friendships and peer groups. She feels exhausted and can't seem to focus on her studies like she used to.\n\nTheir feelings are completely normal. These aren't signs of weakness or a lack of focus; they are a direct result of the changes happening inside them. The key is to learn how to 'manage these new feelings' and channel that energy in the right direction.",
       realWorldExample: "This case study itself is a real-world example. Many students feel exactly like Rohan or Priya when they navigate school pressure, friendships, and internal changes all at once.",
       diagramDescription: "An illustration showing two students, Rohan and Priya, looking confused. Arrows point from them to icons representing 'procrastination' (a clock), 'peer pressure' (a group of people), 'mood swings' (a happy and a sad mask), and 'exam stress' (a book with a low grade). A separate arrow points towards a toolkit icon, representing the solution."
     },
     {
       conceptTitle: 'Your Toolkit for Success',
-      explanation: "So, how do you navigate this? Here are four powerful tools you can use:\n\n1.  **Talk it Out:** Find a trusted adult—a parent, a teacher, a counselor—and talk to them. You'd be surprised how much better you'll feel just by sharing your thoughts.\n\n2.  **Stay Active:** Physical activity is a powerful tool to manage stress and anxiety. Whether it's playing a sport, dancing, or even just going for a walk, it helps clear your mind and boosts your mood.\n\n3.  **Find Your Anchor:** This is a time of exploration, but it helps to have things that ground you. This could be a hobby you love, a goal you're passionate about, or simply your personal values. When you feel overwhelmed, connect with your anchor. Take a deep breath and remind yourself of what's truly important to you.\n\n4.  **Embrace Your Identity:** This journey is about discovering who you are. Embrace your unique interests, strengths, and even your weaknesses. Your value isn't defined by what others think of you.",
+      explanation: "So, how do you navigate this? Here are four powerful tools you can use:\n\n1.  Talk it Out: Find a trusted adult—a parent, a teacher, a counselor—and talk to them. You'd be surprised how much better you'll feel just by sharing your thoughts.\n\n2.  Stay Active: Physical activity is a powerful tool to manage stress and anxiety. Whether it's playing a sport, dancing, or even just going for a walk, it helps clear your mind and boosts your mood.\n\n3.  Find Your Anchor: This is a time of exploration, but it helps to have things that ground you. This could be a hobby you love, a goal you're passionate about, or simply your personal values. When you feel overwhelmed, connect with your anchor. Take a deep breath and remind yourself of what's truly important to you.\n\n4.  Embrace Your Identity: This journey is about discovering who you are. Embrace your unique interests, strengths, and even your weaknesses. Your value isn't defined by what others think of you.",
       realWorldExample: "For example, dedicating time to a hobby like music or art ('Find Your Anchor') can be a great way to express yourself and de-stress. Or, talking to a school counselor ('Talk it Out') can give you strategies to manage the pressures you're feeling.",
       diagramDescription: "A visual toolkit with four icons inside: one for talking (two speech bubbles), one for physical activity (a person running), one for an anchor (a literal anchor), and one for identity (a simple mirror)."
     }
   ],
-  summary: "This transformational journey is one of the most exciting and significant parts of your life. By understanding what's happening and using the right tools, you can not only survive it but truly thrive. Remember, every challenge you overcome now will prepare you for the even bigger goals you'll achieve in the future."
+  summary: "This transformational journey is one of the most exciting and significant parts of your life. By understanding what's happening and using the right tools, you can not only survive it but truly thrive. Remember, every challenge you overcome now will prepare you for the even bigger goals you'll achieve in the future.",
+  adaptiveStory: {
+    title: "The Crossroads of Choice",
+    introduction: "Alex, a Grade 9 student, is feeling overwhelmed. A big math test is tomorrow, but friends are messaging about a movie tonight. Alex feels a mix of anxiety, excitement, and pressure.",
+    startNodeId: "start",
+    nodes: [
+        {
+            id: "start",
+            text: "You're staring at your math homework when your phone buzzes. It's your friends, inviting you to a movie that starts in an hour. The test is tomorrow and you haven't studied much. What do you do?",
+            isEnding: false,
+            choices: [
+                { text: "Go to the movie. I can cram for the test later tonight.", nextNodeId: "node_movie", feedback: "It's totally normal to want to hang out with friends! Socializing is important. However, sometimes our emotional brain (wanting fun now) wins over our reasoning brain (planning for the future). This can lead to stress later on. Recognizing this is a big step!" },
+                { text: "Stay home and study. I can't risk failing.", nextNodeId: "node_study_alone", feedback: "Discipline is a fantastic skill, and you should be proud of your focus! But it's also important to remember that mental well-being includes social connection. Completely isolating yourself can also lead to stress and burnout. It's all about finding a healthy balance." },
+                { text: "Maybe I can find a balance?", nextNodeId: "node_balance", feedback: "This is a great start! Recognizing the need for balance and communicating your needs is a huge part of navigating these years. It shows you're thinking with both your emotional and reasoning brain. This is a super-power!" }
+            ]
+        },
+        {
+            id: "node_movie",
+            text: "The movie was a blast! Laughing with friends felt great. But as the credits rolled, a wave of panic washed over you. 'The test!' you thought. You got home late, exhausted. You tried to study, but the words just blurred together. The next morning, you walked into the exam feeling unprepared and stressed.",
+            isEnding: true,
+            choices: []
+        },
+        {
+            id: "node_study_alone",
+            text: "You turned off your phone and forced yourself to focus. Hour after hour, you drilled math problems. You felt prepared for the test, but when you checked your phone later, you saw pictures of your friends having fun. A wave of sadness and FOMO (Fear Of Missing Out) hit you. You felt lonely and disconnected.",
+            isEnding: true,
+            choices: []
+        },
+        {
+            id: "node_balance",
+            text: "You took a deep breath. 'Okay,' you thought, 'there has to be a better way.' You decided to text your friends to see if there's a compromise.",
+            isEnding: false,
+            choices: [
+                { text: "Text: \"Hey, I have a big test. Can we hang out this weekend instead?\"", nextNodeId: "node_postpone", feedback: "Excellent choice! You communicated your priorities, respected your own needs (studying), and still made time for friends. This is a fantastic example of healthy boundary-setting and planning." },
+                { text: "Text: \"I can't go to the movie, but how about we all have a quick study session together?\"", nextNodeId: "node_study_group", feedback: "Amazing! You turned a stressful situation into a supportive and productive one. This shows great problem-solving and social skills. Using your friends as a support system for academics can be a powerful tool." }
+            ]
+        },
+        {
+            id: "node_postpone",
+            text: "Your friends replied, 'Totally understand! Good luck! Let's definitely do something Saturday.' A feeling of relief washed over you. You were able to focus on your studies without feeling like you were missing out. You aced the test and had an amazing time with your friends that weekend.",
+            isEnding: true,
+            choices: []
+        },
+        {
+            id: "node_study_group",
+            text: "A few of your friends thought it was a great idea! They came over, you all worked through the tough math problems for about an hour, and then rewarded yourselves with pizza. You felt connected, supported, and prepared for the test. It was the best of both worlds!",
+            isEnding: true,
+            choices: []
+        }
+    ]
+  }
 };
 
 const THE_GREAT_TRANSFORMATION_HI: LearningModule = {
   chapterTitle: 'महान परिवर्तन: किशोर से वयस्क तक की आपकी यात्रा',
-  introduction: "नमस्ते! क्या आपको कभी ऐसा महसूस होता है कि आप एक ऐसी रोलर कोस्टर पर हैं जिसका टिकट भी आपने नहीं खरीदा? एक पल आप बच्चे होते हैं, और अगले ही पल, आपका शरीर और दिमाग हर तरह की नई, भ्रमित करने वाली चीजें करने लगते हैं। **महान परिवर्तन** में आपका स्वागत है, एक ऐसी यात्रा जिससे हम में से हर एक गुजरता है। यह न केवल शारीरिक रूप से, बल्कि भावनात्मक और मानसिक रूप से भी भारी बदलाव का समय है।\n\nयह चरण, जो लगभग कक्षा 7 से शुरू होता है, वह समय है जब आप अपनी बचपन की त्वचा को उतारना शुरू करते हैं और एक नई त्वचा में कदम रखते हैं। यह अजीब और थोड़ा डरावना महसूस हो सकता है, लेकिन हम पर विश्वास करें, आप अकेले नहीं हैं। इस खंड का लक्ष्य आपको यह समझने में मदद करना है कि आपके साथ क्या हो रहा है, ताकि आप इन परिवर्तनों को अपना सकें, अपने सपनों पर ध्यान केंद्रित रख सकें, और मजबूत और अधिक आत्मविश्वासी बनकर उभर सकें।",
+  introduction: "नमस्ते! क्या आपको कभी ऐसा महसूस होता है कि आप एक ऐसी रोलर कोस्टर पर हैं जिसका टिकट भी आपने नहीं खरीदा? एक पल आप बच्चे होते हैं, और अगले ही पल, आपका शरीर और दिमाग हर तरह की नई, भ्रमित करने वाली चीजें करने लगते हैं। 'महान परिवर्तन' में आपका स्वागत है, एक ऐसी यात्रा जिससे हम में से हर एक गुजरता है। यह न केवल शारीरिक रूप से, बल्कि भावनात्मक और मानसिक रूप से भी भारी बदलाव का समय है।\n\nयह चरण, जो लगभग कक्षा 7 से शुरू होता है, वह समय है जब आप अपनी बचपन की त्वचा को उतारना शुरू करते हैं और एक नई त्वचा में कदम रखते हैं। यह अजीब और थोड़ा डरावना महसूस हो सकता है, लेकिन हम पर विश्वास करें, आप अकेले नहीं हैं। इस खंड का लक्ष्य आपको यह समझने में मदद करना है कि आपके साथ क्या हो रहा है, ताकि आप इन परिवर्तनों को अपना सकें, अपने सपनों पर ध्यान केंद्रित रख सकें, और मजबूत और अधिक आत्मविश्वासी बनकर उभर सकें।",
   learningObjectives: [
     "किशोरावस्था के दौरान होने वाले प्रमुख शारीरिक, भावनात्मक और मानसिक परिवर्तनों को समझना।",
     "यह पहचानना कि ध्यान भटकना और मिजाज में बदलाव जैसी आम मुश्किलें इस चरण में सामान्य हैं।",
@@ -55,24 +105,74 @@ const THE_GREAT_TRANSFORMATION_HI: LearningModule = {
   keyConcepts: [
     {
       conceptTitle: 'परिवर्तनों के पीछे का विज्ञान',
-      explanation: "तो, वास्तव में क्या हो रहा है? आपके मस्तिष्क में एक बड़ा पुनर्विन्यास हो रहा है। आपके मस्तिष्क का वह हिस्सा जो **भावनाओं और जोखिम लेने** (लिम्बिक सिस्टम) के लिए जिम्मेदार है, वह उस हिस्से की तुलना में तेजी से विकसित हो रहा है जो **तर्क और निर्णय लेने** (प्रीफ्रंटल कॉर्टेक्स) का काम करता है।\n\nयह विकासात्मक असंतुलन ही कारण है कि आप अधिक तीव्र भावनाएं महसूस कर सकते हैं, और क्यों कभी-कभी, एक छोटी सी बात बहुत बड़ी बात महसूस हो सकती है। साथ ही, आपका शरीर भी हार्मोन से गुलजार है जो आपको शारीरिक रूप से बढ़ने, बदलने और विकसित होने का कारण बन रहे हैं। इस विज्ञान को समझने से आपको अभिभूत महसूस होने पर खुद के प्रति थोड़ा दयालु होने में मदद मिल सकती है।",
+      explanation: "तो, वास्तव में क्या हो रहा है? आपके मस्तिष्क में एक बड़ा पुनर्विन्यास हो रहा है। आपके मस्तिष्क का वह हिस्सा जो 'भावनाओं और जोखिम लेने' (लिम्बिक सिस्टम) के लिए जिम्मेदार है, वह उस हिस्से की तुलना में तेजी से विकसित हो रहा है जो 'तर्क और निर्णय लेने' (प्रीफ्रंटल कॉर्टेक्स) का काम करता है।\n\nयह विकासात्मक असंतुलन ही कारण है कि आप अधिक तीव्र भावनाएं महसूस कर सकते हैं, और क्यों कभी-कभी, एक छोटी सी बात बहुत बड़ी बात महसूस हो सकती है। साथ ही, आपका शरीर भी हार्मोन से गुलजार है जो आपको शारीरिक रूप से बढ़ने, बदलने और विकसित होने का कारण बन रहे हैं। इस विज्ञान को समझने से आपको अभिभूत महसूस होने पर खुद के प्रति थोड़ा दयालु होने में मदद मिल सकती है।",
       realWorldExample: "सोचिए कि कोई उदास गीत अचानक आपको बहुत भावुक क्यों कर सकता है, या दोस्तों के साथ कुछ जोखिम भरा करने की अचानक इच्छा क्यों होती है। यह अक्सर आपका विकसित हो रहा भावनात्मक मस्तिष्क होता है जो आपके तर्कसंगत मस्तिष्क को पकड़ने का मौका मिलने से पहले ही नेतृत्व कर लेता है।",
       diagramDescription: "मस्तिष्क का एक सरल चित्र। एक भाग, जिसे 'भावनात्मक केंद्र (लिम्बिक सिस्टम)' कहा जाता है, को उज्ज्वल रूप से प्रकाशित और बड़ा दिखाया गया है, जिस पर 'तेजी से विकसित हो रहा है!' का लेबल लगा है। दूसरा भाग, जिसे 'तर्क केंद्र (प्रीफ्रंटल कॉर्टेक्स)' कहा जाता है, को धुंधला और छोटा दिखाया गया है, जिस पर 'अभी भी विकसित हो रहा है' का लेबल लगा है।"
     },
     {
       conceptTitle: 'केस स्टडी: दो छात्रों की कहानी',
-      explanation: "आइए दो छात्रों, रोहन और प्रिया से मिलते हैं, दोनों कक्षा 9 में हैं, जो समान चुनौतियों का सामना कर रहे हैं।\n\n**रोहन की कहानी:** रोहन एक शानदार छात्र था, लेकिन हाल ही में, वह आसानी से विचलित महसूस कर रहा है। वह अपने दोस्तों के साथ समय बिताने में अधिक रुचि रखता है, और फिट होने के लिए बहुत दबाव महसूस करता है। वह खुद को टालमटोल करते हुए पाता है, और उसके ग्रेड गिरने लगे हैं। वह दोषी महसूस करता है लेकिन यह नहीं जानता कि नियंत्रण कैसे वापस पाया जाए।\n\n**प्रिया की कहानी:** प्रिया के मिजाज में उतार-चढ़ाव हो रहा है। एक पल वह खुश होती है और अगले ही पल वह किसी छोटी सी बात पर रोने लगती है। वह अपनी परीक्षाओं में अच्छा करने के लिए अपने माता-पिता से बहुत अधिक दबाव महसूस करती है, और नई दोस्ती और सहकर्मी समूहों को भी नेविगेट कर रही है। वह थका हुआ महसूस करती है और अपनी पढ़ाई पर पहले की तरह ध्यान केंद्रित नहीं कर पाती है।\n\nउनकी भावनाएं पूरी तरह से सामान्य हैं। ये कमजोरी या ध्यान की कमी के संकेत नहीं हैं; वे उनके अंदर हो रहे परिवर्तनों का प्रत्यक्ष परिणाम हैं। कुंजी यह सीखना है कि **इन नई भावनाओं को कैसे प्रबंधित किया जाए** और उस ऊर्जा को सही दिशा में कैसे लगाया जाए।",
+      explanation: "आइए दो छात्रों, रोहन और प्रिया से मिलते हैं, दोनों कक्षा 9 में हैं, जो समान चुनौतियों का सामना कर रहे हैं।\n\nरोहन की कहानी: रोहन एक शानदार छात्र था, लेकिन हाल ही में, वह आसानी से विचलित महसूस कर रहा है। वह अपने दोस्तों के साथ समय बिताने में अधिक रुचि रखता है, और फिट होने के लिए बहुत दबाव महसूस करता है। वह खुद को टालमटोल करते हुए पाता है, और उसके ग्रेड गिरने लगे हैं। वह दोषी महसूस करता है लेकिन यह नहीं जानता कि नियंत्रण कैसे वापस पाया जाए।\n\nप्रिया की कहानी: प्रिया के मिजाज में उतार-चढ़ाव हो रहा है। एक पल वह खुश होती है और अगले ही पल वह किसी छोटी सी बात पर रोने लगती है। वह अपनी परीक्षाओं में अच्छा करने के लिए अपने माता-पिता से बहुत अधिक दबाव महसूस करती है, और नई दोस्ती और सहकर्मी समूहों को भी नेविगेट कर रही है। वह थका हुआ महसूस करती है और अपनी पढ़ाई पर पहले की तरह ध्यान केंद्रित नहीं कर पाती है।\n\nउनकी भावनाएं पूरी तरह से सामान्य हैं। ये कमजोरी या ध्यान की कमी के संकेत नहीं हैं; वे उनके अंदर हो रहे परिवर्तनों का प्रत्यक्ष परिणाम हैं। कुंजी यह सीखना है कि 'इन नई भावनाओं को कैसे प्रबंधित किया जाए' और उस ऊर्जा को सही दिशा में कैसे लगाया जाए।",
       realWorldExample: "यह केस स्टडी अपने आप में एक वास्तविक दुनिया का उदाहरण है। बहुत से छात्र स्कूल के दबाव, दोस्ती और आंतरिक परिवर्तनों को एक साथ नेविगेट करते समय बिल्कुल रोहन या प्रिया जैसा महसूस करते हैं।",
       diagramDescription: "एक चित्रण जिसमें दो छात्र, रोहन और प्रिया, भ्रमित दिख रहे हैं। तीर उनसे 'टालमटोल' (एक घड़ी), 'सहकर्मी दबाव' (लोगों का एक समूह), 'मिजाज में बदलाव' (एक खुश और एक उदास मुखौटा), और 'परीक्षा तनाव' (कम ग्रेड वाली एक किताब) का प्रतिनिधित्व करने वाले आइकन की ओर इशारा करते हैं। एक अलग तीर समाधान का प्रतिनिधित्व करने वाले एक टूलकिट आइकन की ओर इशारा करता है।"
     },
     {
       conceptTitle: 'आपकी सफलता की टूलकिट',
-      explanation: "तो, आप इसे कैसे संभालते हैं? यहाँ चार शक्तिशाली उपकरण दिए गए हैं जिनका आप उपयोग कर सकते हैं:\n\n1.  **बात करें:** किसी विश्वसनीय वयस्क से बात करें—एक माता-पिता, एक शिक्षक, एक परामर्शदाता। आप केवल अपने विचार साझा करके कितना बेहतर महसूस करेंगे, इस पर आपको आश्चर्य होगा।\n\n2.  **सक्रिय रहें:** शारीरिक गतिविधि तनाव और चिंता को प्रबंधित करने का एक शक्तिशाली उपकरण है। चाहे वह कोई खेल खेलना हो, नृत्य करना हो, या सिर्फ टहलने जाना हो, यह आपके दिमाग को साफ करने और आपके मूड को बेहतर बनाने में मदद करता है।\n\n3.  **अपना एंकर खोजें:** यह खोज का समय है, लेकिन ऐसी चीजें रखना मददगार होता है जो आपको स्थिर रखती हैं। यह आपका कोई पसंदीदा शौक हो सकता है, कोई ऐसा लक्ष्य जिसके प्रति आप जुनूनी हों, या बस आपके व्यक्तिगत मूल्य। जब आप अभिभूत महसूस करें, तो अपने एंकर से जुड़ें। एक गहरी सांस लें और खुद को याद दिलाएं कि आपके लिए वास्तव में क्या महत्वपूर्ण है।\n\n4.  **अपनी पहचान को अपनाएं:** यह यात्रा यह खोजने के बारे में है कि आप कौन हैं। अपनी अनूठी रुचियों, शक्तियों और यहां तक कि अपनी कमजोरियों को भी अपनाएं। आपका मूल्य इस बात से परिभाषित नहीं होता है कि दूसरे आपके बारे में क्या सोचते हैं।",
+      explanation: "तो, आप इसे कैसे संभालते हैं? यहाँ चार शक्तिशाली उपकरण दिए गए हैं जिनका आप उपयोग कर सकते हैं:\n\n1.  बात करें: किसी विश्वसनीय वयस्क से बात करें—एक माता-पिता, एक शिक्षक, एक परामर्शदाता। आप केवल अपने विचार साझा करके कितना बेहतर महसूस करेंगे, इस पर आपको आश्चर्य होगा।\n\n2.  सक्रिय रहें: शारीरिक गतिविधि तनाव और चिंता को प्रबंधित करने का एक शक्तिशाली उपकरण है। चाहे वह कोई खेल खेलना हो, नृत्य करना हो, या सिर्फ टहलने जाना हो, यह आपके दिमाग को साफ करने और आपके मूड को बेहतर बनाने में मदद करता है।\n\n3.  अपना एंकर खोजें: यह खोज का समय है, लेकिन ऐसी चीजें रखना मददगार होता है जो आपको स्थिर रखती हैं। यह आपका कोई पसंदीदा शौक हो सकता है, कोई ऐसा लक्ष्य जिसके प्रति आप जुनूनी हों, या बस आपके व्यक्तिगत मूल्य। जब आप अभिभूत महसूस करें, तो अपने एंकर से जुड़ें। एक गहरी सांस लें और खुद को याद दिलाएं कि आपके लिए वास्तव में क्या महत्वपूर्ण है।\n\n4.  अपनी पहचान को अपनाएं: यह यात्रा यह खोजने के बारे में है कि आप कौन हैं। अपनी अनूठी रुचियों, शक्तियों और यहां तक कि अपनी कमजोरियों को भी अपनाएं। आपका मूल्य इस बात से परिभाषित नहीं होता है कि दूसरे आपके बारे में क्या सोचते हैं।",
       realWorldExample: "उदाहरण के लिए, संगीत या कला जैसे किसी शौक के लिए समय समर्पित करना ('अपना एंकर खोजें') खुद को अभिव्यक्त करने और तनाव दूर करने का एक शानदार तरीका हो सकता है। या, एक स्कूल परामर्शदाता से बात करना ('बात करें') आपको महसूस हो रहे दबावों को प्रबंधित करने के लिए रणनीतियाँ दे सकता है।",
       diagramDescription: "एक दृश्य टूलकिट जिसके अंदर चार आइकन हैं: बात करने के लिए एक (दो भाषण बुलबुले), शारीरिक गतिविधि के लिए एक (एक दौड़ता हुआ व्यक्ति), एक एंकर के लिए एक (एक शाब्दिक एंकर), और पहचान के लिए एक (एक साधारण दर्पण)।"
     }
   ],
-  summary: "यह परिवर्तनकारी यात्रा आपके जीवन के सबसे रोमांचक और महत्वपूर्ण हिस्सों में से एक है। क्या हो रहा है, यह समझकर और सही उपकरणों का उपयोग करके, आप न केवल इससे बच सकते हैं, बल्कि वास्तव में फल-फूल सकते हैं। याद रखें, अब आप जिस भी चुनौती को पार करते हैं, वह आपको भविष्य में प्राप्त होने वाले और भी बड़े लक्ष्यों के लिए तैयार करेगी।"
+  summary: "यह परिवर्तनकारी यात्रा आपके जीवन के सबसे रोमांचक और महत्वपूर्ण हिस्सों में से एक है। क्या हो रहा है, यह समझकर और सही उपकरणों का उपयोग करके, आप न केवल इससे बच सकते हैं, बल्कि वास्तव में फल-फूल सकते हैं। याद रखें, अब आप जिस भी चुनौती को पार करते हैं, वह आपको भविष्य में प्राप्त होने वाले और भी बड़े लक्ष्यों के लिए तैयार करेगी।",
+  adaptiveStory: {
+    title: "चुनाव का चौराहा",
+    introduction: "आरव, एक 9वीं कक्षा का छात्र, अभिभूत महसूस कर रहा है। कल एक बड़ी गणित की परीक्षा है, लेकिन दोस्त आज रात एक फिल्म के बारे में संदेश भेज रहे हैं। आरव चिंता, उत्साह और दबाव का मिश्रण महसूस करता है।",
+    startNodeId: "start",
+    nodes: [
+        {
+            id: "start",
+            text: "आप अपने गणित के होमवर्क को घूर रहे हैं जब आपका फोन बजता है। यह आपके दोस्त हैं, जो आपको एक घंटे में शुरू होने वाली फिल्म के लिए आमंत्रित कर रहे हैं। परीक्षा कल है और आपने ज्यादा पढ़ाई नहीं की है। आप क्या करते हैं?",
+            isEnding: false,
+            choices: [
+                { text: "फिल्म देखने जाता हूँ। मैं आज रात बाद में परीक्षा के लिए रट्टा मार सकता हूँ।", nextNodeId: "node_movie", feedback: "दोस्तों के साथ घूमना पूरी तरह से सामान्य है! सामाजिक मेलजोल महत्वपूर्ण है। हालांकि, कभी-कभी हमारा भावनात्मक मस्तिष्क (अभी मज़ा करना चाहता है) हमारे तर्क मस्तिष्क (भविष्य के लिए योजना बनाना) पर जीत जाता है। इससे बाद में तनाव हो सकता है। इसे पहचानना एक बड़ा कदम है!" },
+                { text: "घर पर रहकर पढ़ाई करता हूँ। मैं फेल होने का जोखिम नहीं उठा सकता।", nextNodeId: "node_study_alone", feedback: "अनुशासन एक शानदार कौशल है, और आपको अपने ध्यान पर गर्व होना चाहिए! लेकिन यह याद रखना भी महत्वपूर्ण है कि मानसिक कल्याण में सामाजिक संबंध भी शामिल हैं। खुद को पूरी तरह से अलग करना भी तनाव और बर्नआउट का कारण बन सकता है। यह सब एक स्वस्थ संतुलन खोजने के बारे में है।" },
+                { text: "शायद मैं संतुलन बना सकता हूँ?", nextNodeId: "node_balance", feedback: "यह एक शानदार शुरुआत है! संतुलन की आवश्यकता को पहचानना और अपनी जरूरतों को संप्रेषित करना इन वर्षों को नेविगेट करने का एक बड़ा हिस्सा है। यह दर्शाता है कि आप अपने भावनात्मक और तर्क दोनों मस्तिष्क से सोच रहे हैं। यह एक सुपर-पावर है!" }
+            ]
+        },
+        {
+            id: "node_movie",
+            text: "फिल्म शानदार थी! दोस्तों के साथ हंसना बहुत अच्छा लगा। लेकिन जैसे ही क्रेडिट रोल हुए, आप पर घबराहट की एक लहर दौड़ गई। 'परीक्षा!' आपने सोचा। आप देर से घर पहुंचे, थके हुए। आपने पढ़ने की कोशिश की, लेकिन शब्द बस धुंधले हो गए। अगली सुबह, आप बिना तैयारी और तनाव महसूस करते हुए परीक्षा में गए।",
+            isEnding: true,
+            choices: []
+        },
+        {
+            id: "node_study_alone",
+            text: "आपने अपना फोन बंद कर दिया और खुद को ध्यान केंद्रित करने के लिए मजबूर किया। घंटे दर घंटे, आपने गणित की समस्याओं का अभ्यास किया। आपने परीक्षा के लिए तैयार महसूस किया, लेकिन जब आपने बाद में अपना फोन देखा, तो आपने अपने दोस्तों की मौज-मस्ती की तस्वीरें देखीं। आप पर उदासी और FOMO (कुछ छूट जाने का डर) की एक लहर दौड़ गई। आपने अकेला और अलग-थलग महसूस किया।",
+            isEnding: true,
+            choices: []
+        },
+        {
+            id: "node_balance",
+            text: "आपने एक गहरी साँस ली। 'ठीक है,' आपने सोचा, 'कोई बेहतर तरीका होना चाहिए।' आपने अपने दोस्तों को यह देखने के लिए टेक्स्ट करने का फैसला किया कि क्या कोई समझौता हो सकता है।",
+            isEnding: false,
+            choices: [
+                { text: "टेक्स्ट: \"अरे, मेरी एक बड़ी परीक्षा है। क्या हम इसके बजाय इस सप्ताह के अंत में मिल सकते हैं?\"", nextNodeId: "node_postpone", feedback: "उत्कृष्ट विकल्प! आपने अपनी प्राथमिकताओं को संप्रेषित किया, अपनी जरूरतों (पढ़ाई) का सम्मान किया, और फिर भी दोस्तों के लिए समय निकाला। यह स्वस्थ सीमा-निर्धारण और योजना का एक शानदार उदाहरण है।" },
+                { text: "टेक्स्ट: \"मैं फिल्म देखने नहीं जा सकता, लेकिन क्या हम सब मिलकर एक छोटा अध्ययन सत्र कर सकते हैं?\"", nextNodeId: "node_study_group", feedback: "अद्भुत! आपने एक तनावपूर्ण स्थिति को एक सहायक और उत्पादक स्थिति में बदल दिया। यह महान समस्या-समाधान और सामाजिक कौशल दिखाता है। शिक्षाविदों के लिए अपने दोस्तों को एक समर्थन प्रणाली के रूप में उपयोग करना एक शक्तिशाली उपकरण हो सकता है।" }
+            ]
+        },
+        {
+            id: "node_postpone",
+            text: "आपके दोस्तों ने जवाब दिया, 'पूरी तरह से समझते हैं! शुभकामनाएँ! चलो निश्चित रूप से शनिवार को कुछ करते हैं।' आप पर राहत की भावना छा गई। आप बिना यह महसूस किए कि आप कुछ खो रहे हैं, अपनी पढ़ाई पर ध्यान केंद्रित करने में सक्षम थे। आपने परीक्षा में उत्कृष्ट प्रदर्शन किया और उस सप्ताहांत अपने दोस्तों के साथ एक अद्भुत समय बिताया।",
+            isEnding: true,
+            choices: []
+        },
+        {
+            id: "node_study_group",
+            text: "आपके कुछ दोस्तों को यह एक अच्छा विचार लगा! वे घर आए, आप सभी ने लगभग एक घंटे तक कठिन गणित की समस्याओं पर काम किया, और फिर पिज्जा के साथ खुद को पुरस्कृत किया। आपने जुड़ा हुआ, समर्थित और परीक्षा के लिए तैयार महसूस किया। यह दोनों दुनिया का सबसे अच्छा था!",
+            isEnding: true,
+            choices: []
+        }
+    ]
+  }
 };
 
 // --- Schemas for Learning Module ---
@@ -339,6 +439,25 @@ const adaptiveStorySchema = {
     nullable: true
 };
 
+const culturalContextSchema = {
+    type: Type.OBJECT,
+    properties: {
+        title: { type: Type.STRING },
+        content: { type: Type.STRING }
+    },
+    required: ['title', 'content'],
+};
+
+const moralScienceCornerSchema = {
+    type: Type.OBJECT,
+    properties: {
+        title: { type: Type.STRING },
+        story: { type: Type.STRING },
+        moral: { type: Type.STRING }
+    },
+    required: ['title', 'story', 'moral'],
+};
+
 
 const learningModuleSchema = {
     type: Type.OBJECT,
@@ -356,6 +475,8 @@ const learningModuleSchema = {
         interactiveExplainer: interactiveExplainerSchema,
         virtualLab: { ...virtualLabSchema, nullable: true },
         adaptiveStory: adaptiveStorySchema,
+        culturalContext: { ...culturalContextSchema, nullable: true },
+        moralScienceCorner: { ...moralScienceCornerSchema, nullable: true },
 
         // New fields
         prerequisitesCheck: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
@@ -529,6 +650,7 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
         2.  **Accuracy:** All information must be factually correct.
         3.  **Clarity and Structure:** All theoretical text (introductions, explanations, summaries, etc.) MUST be structured for maximum readability. Use markdown-style bullet points (e.g., "- Point 1\\n- Point 2") for lists and double newlines ("\\n\\n") to separate paragraphs.
         4.  **Cultural Sensitivity:** Use Indian contexts and examples where appropriate.
+        5.  **Emphasis**: Do not use markdown for bolding (e.g., **text**). To emphasize a key term, enclose it in single quotes.
 
         **CONTENT GENERATION GUIDE (Generate ONLY these core sections):**
         -   **chapterTitle**: Must be "${chapter}".
@@ -547,6 +669,8 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
         -   **interactiveExplainer**: For one highly abstract concept that is hard to visualize (e.g., the effect of gravity on different planets, how changing the 'a' coefficient affects a parabola's shape, visualizing electron orbitals), generate an "Interactive Explainer". The student will manipulate variables to see "what-if" scenarios in an animated video. The \`videoPromptTemplate\` must use placeholders matching the variable names, surrounded by double curly braces, e.g., {{variable_name}}. This is for conceptual explanation, not a lab experiment. For chapters without a suitable concept, this field MUST be null.
         -   **virtualLab**: For one key concept that is best explained through experimentation (e.g., projectile motion in Physics, chemical reactions in Chemistry, OR historical what-if scenarios, OR exploring mathematical concepts), generate an engaging "Virtual Lab". The \`outcomePromptTemplate\` must be a detailed prompt for a model like Google VEO and MUST use placeholders matching the variable names, e.g., "Show the result of mixing {{chemical_A}} with {{chemical_B}}". For chapters without a suitable experimental concept, this field must be null.
         -   **adaptiveStory**: For subjects that benefit from narrative learning (like History, Social Studies, Literature, or even explaining a scientific discovery), generate an engaging branching narrative. The story should have at least 3-4 decision points and multiple endings. The choices a student makes should be tied to their understanding of the chapter's concepts. For other chapters, this field MUST be null.
+        -   **culturalContext**: Where relevant (especially for Science, Social Studies, History, and languages), generate a section that connects the chapter's concepts to Indian culture, festivals, historical events, or daily life. For example, connect 'Light and Reflection' in Physics to Diwali, or 'Geometry' to Rangoli patterns. If no strong connection exists, this field MUST be null.
+        -   **moralScienceCorner**: Where appropriate, generate a short, simple story with a clear moral that relates to the chapter's core theme (e.g., perseverance for a tough math chapter, curiosity for a science chapter, honesty for a history chapter). The story should be engaging for the student's grade level. If a story is not relevant, this field MUST be null.
 
 
         **DO NOT GENERATE THE FOLLOWING SECTIONS IN THIS REQUEST:**
@@ -603,7 +727,9 @@ const sectionSchemaMap: { [key: string]: any } = {
     remedialActivities: { type: Type.ARRAY, items: { type: Type.STRING } },
     careerConnections: { type: Type.STRING },
     technologyIntegration: { type: Type.STRING },
-    competitiveExamMapping: { type: Type.STRING }
+    competitiveExamMapping: { type: Type.STRING },
+    culturalContext: culturalContextSchema,
+    moralScienceCorner: moralScienceCornerSchema
 };
 
 export const generateSectionContent = async (
@@ -632,6 +758,7 @@ export const generateSectionContent = async (
 
         **TASK:**
         Generate the content ONLY for the section named "${sectionKey}". Your output must be comprehensive, pedagogically sound, and aligned with the latest CBSE standards (2024-25). For all theoretical content, structure your response as a series of clear, concise points using markdown-style bullet points ('- '). Use double newlines ('\\n\\n') to separate distinct ideas or paragraphs.
+        **Emphasis**: Do not use markdown for bolding (e.g., **text**). To emphasize a key term, enclose it in single quotes.
 
         **Mathematical Formatting (MANDATORY):**
         For any mathematical derivations, solved problems, or solutions (especially in 'formulaDerivations', 'solvedNumericalProblems', and 'categorizedProblems'), you MUST format them exactly as they would appear in a textbook or on an answer sheet. Adhere strictly to the following structure:
@@ -646,13 +773,19 @@ export const generateSectionContent = async (
         Example Format:
         Given: Solve for x in the equation 3x + 5 = 17.\\nSolution:\\nStep 1: 3x + 5 = 17\\nStep 2: 3x = 17 - 5\\nStep 3: 3x = 12\\nStep 4: x = 12 ÷ 3\\nStep 5: x = 4\\nAnswer: x = 4
 
-        **SPECIAL INSTRUCTIONS for 'categorizedProblems':**
-        If you are generating the "categorizedProblems" section, you MUST adhere to the following grade-specific guidelines for question generation:
-        -   **Grades 11-12:** Generate at least 40 practice questions. The questions must be meticulously designed based on the last 10 years of CBSE exam patterns, including MCQs, Short Answer (SA-I, SA-II), Long Answer (LA), Case-Based, and Assertion-Reasoning questions.
-        -   **Grades 9-10:** Generate at least 35 practice questions. The questions must be designed based on the last 10 years of CBSE exam patterns, including MCQs, VSA, SA, LA, and Case-Based questions.
-        -   **Grades 6-8:** Generate a solid bank of at least 25 practice questions based on middle school examination patterns, including MCQs, VSA, and SA questions.
-        -   **Below Grade 6:** Generate a set of 15 practice questions focused on reinforcing core concepts.
-        
+        **SPECIAL INSTRUCTIONS:**
+        -   **For 'categorizedProblems':** Adhere to grade-specific guidelines for question generation:
+            -   Grades 11-12: Generate 40+ questions based on the last 10 years of CBSE exam patterns (MCQs, SA, LA, Case-Based, Assertion-Reasoning).
+            -   Grades 9-10: Generate 35+ questions based on the last 10 years of CBSE exam patterns (MCQs, VSA, SA, LA, Case-Based).
+            -   Grades 6-8: Generate 25+ questions (MCQs, VSA, SA).
+            -   Below Grade 6: Generate 15 conceptual reinforcement questions.
+        -   **For 'competitiveExamMapping':** Provide a detailed mapping of the chapter's concepts to the syllabus of major competitive exams like JEE (Main & Advanced), NEET, CUET, and relevant Olympiads. The structure should be:
+            -   A brief introduction about the chapter's importance for these exams.
+            -   A markdown list where each item maps a specific 'concept' from the chapter to the 'exam(s)' it's relevant for.
+            -   A sub-section titled 'Previous Years Questions (Sample)' that includes 2-3 examples of previous years' questions (PYQs) from these exams. Provide the question and the year/exam it appeared in.
+        -   **For 'culturalContext'**: Generate a section that connects the chapter's concepts to Indian culture, festivals, historical events, or daily life. For example, connect 'Light and Reflection' in Physics to Diwali, or 'Geometry' to Rangoli patterns. It should be an insightful and engaging connection.
+        -   **For 'moralScienceCorner'**: Generate a short, simple story with a clear moral that relates to the chapter's core theme (e.g., perseverance for a tough math chapter, curiosity for a science chapter, honesty for a history chapter). The story should be engaging for the student's grade level.
+
         For all other sections, provide rich, detailed, and accurate content appropriate for the grade level.
 
         **FINAL INSTRUCTION:**
@@ -994,18 +1127,18 @@ export const generateTeacherReport = async (student: Student, language: string):
         generate a detailed academic performance analysis report. The entire report must be in the ${language} language.
 
         **VERY IMPORTANT FORMATTING RULES:**
-        - Each section heading MUST be enclosed in double asterisks and end with a colon. For example: **Overall Summary:**
+        - Each section heading MUST be on a new line, prefixed with "HEADING: ", and end with a colon. For example: "HEADING: Overall Summary:".
         - Under each heading, use bullet points for lists. Each bullet point MUST start with a hyphen (-).
 
         The report MUST be structured with the following sections:
-        1.  **Overall Summary:** A brief, holistic overview of the student's performance.
-        2.  **Identified Strengths:** A bulleted list of subjects or chapters where the student has excelled (scores > 85%). Be specific.
-        3.  **Areas for Improvement:** A bulleted list of subjects or chapters where the student is struggling (scores < 70%). Frame this constructively.
-        4.  **Study Patterns & Trends:** A detailed analysis using bullet points for specific observations. Analyze:
+        1.  HEADING: Overall Summary: A brief, holistic overview of the student's performance.
+        2.  HEADING: Identified Strengths: A bulleted list of subjects or chapters where the student has excelled (scores > 85%). Be specific.
+        3.  HEADING: Areas for Improvement: A bulleted list of subjects or chapters where the student is struggling (scores < 70%). Frame this constructively.
+        4.  HEADING: Study Patterns & Trends: A detailed analysis using bullet points for specific observations. Analyze:
             - Quiz vs. Practice Frequency.
             - Response to Difficulty (e.g., using exercises after a low quiz score).
             - Pacing and Consistency from timestamps.
-        5.  **Actionable Recommendations:** A bulleted list of concrete, pedagogical suggestions for the teacher.
+        5.  HEADING: Actionable Recommendations: A bulleted list of concrete, pedagogical suggestions for the teacher.
 
         Student Performance Data (includes quizzes and practice exercises):
         ---
@@ -1033,15 +1166,15 @@ export const generateParentReport = async (student: Student, language: string): 
         write a progress report for their parents. The entire report must be in the ${language} language.
 
         **VERY IMPORTANT FORMATTING RULES:**
-        - Section headings should be friendly and enclosed in double asterisks, ending with a colon. For example: **Where ${student.name} is Shining:**
+        - Section headings should be friendly, on a new line, prefixed with "HEADING: ", and end with a colon. For example: "HEADING: Where ${student.name} is Shining:".
         - Use bullet points for lists. Each bullet point MUST start with a hyphen (-).
 
         The report should be easy to understand, positive, and supportive. Structure it with the following sections:
-        1.  **A Quick Note on ${student.name}'s Progress:** A warm opening celebrating their effort.
-        2.  **Where ${student.name} is Shining:** A bulleted list of subjects where they are doing well.
-        3.  **Opportunities for Growth:** A bulleted list of areas to focus on, framed positively.
-        4.  **How ${student.name} is Learning:** Simple, encouraging observations about their study habits in a bulleted list (e.g., consistency, resilience).
-        5.  **Tips for Home Support:** A bulleted list of simple, actionable tips for parents.
+        1.  HEADING: A Quick Note on ${student.name}'s Progress: A warm opening celebrating their effort.
+        2.  HEADING: Where ${student.name} is Shining: A bulleted list of subjects where they are doing well.
+        3.  HEADING: Opportunities for Growth: A bulleted list of areas to focus on, framed positively.
+        4.  HEADING: How ${student.name} is Learning: Simple, encouraging observations about their study habits in a bulleted list (e.g., consistency, resilience).
+        5.  HEADING: Tips for Home Support: A bulleted list of simple, actionable tips for parents.
 
         Student Performance Data (includes quizzes and practice exercises):
         ---
@@ -1334,19 +1467,18 @@ export const validateCurriculumOutline = async (
         Please provide a detailed quality report that validates the curriculum against the following six critical standards. For each standard, provide a brief analysis and identify any potential gaps or necessary improvements.
 
         **Validation Criteria:**
-        1.  **Latest CBSE Syllabus (2024-25) Alignment:** Is the chapter structure and scope aligned with the most recent CBSE guidelines?
-        2.  **NCERT Textbook Alignment:** Do the chapters and learning objectives correspond to the content in the standard NCERT textbooks for this grade?
-        3.  **NEP 2020 Compliance:** Does the curriculum promote multidisciplinary learning, critical thinking, and conceptual understanding as mandated by the National Education Policy 2020?
-        4.  **Age-Appropriate Content Standards:** Is the complexity and depth of the topics suitable for the cognitive level of a ${grade} student?
-        5.  **Learning Outcome Achievements:** Are the learning objectives clear, measurable, and sufficient to ensure students achieve the required competencies for this subject at this level?
-        6.  **Assessment Criteria Alignment:** Does the outline provide a solid foundation for creating fair and comprehensive assessments (including formative and summative)?
+        1.  Latest CBSE Syllabus (2024-25) Alignment: Is the chapter structure and scope aligned with the most recent CBSE guidelines?
+        2.  NCERT Textbook Alignment: Do the chapters and learning objectives correspond to the content in the standard NCERT textbooks for this grade?
+        3.  NEP 2020 Compliance: Does the curriculum promote multidisciplinary learning, critical thinking, and conceptual understanding as mandated by the National Education Policy 2020?
+        4.  Age-Appropriate Content Standards: Is the complexity and depth of the topics suitable for the cognitive level of a ${grade} student?
+        5.  Learning Outcome Achievements: Are the learning objectives clear, measurable, and sufficient to ensure students achieve the required competencies for this subject at this level?
+        6.  Assessment Criteria Alignment: Does the outline provide a solid foundation for creating fair and comprehensive assessments (including formative and summative)?
 
         **Output Format:**
-        Your response MUST be a well-structured report. Use markdown-style headings for each section.
-        - Start with a main heading: **Quality Report:**
-        - Create a sub-heading for each of the 6 validation criteria (e.g., **1. CBSE Syllabus Alignment:**).
-        - Under each sub-heading, provide a concise analysis.
-        - Conclude with a final section: **Overall Summary & Recommendations:** where you summarize the findings and list actionable suggestions for improvement using bullet points.
+        Your response MUST be a well-structured report. Use headings for each section. Do not use any markdown formatting like asterisks.
+        - Start with a main heading: HEADING: Quality Report:
+        - Create a sub-heading for each of the 6 validation criteria (e.g., "HEADING: 1. CBSE Syllabus Alignment:").
+        - Conclude with a final section: HEADING: Overall Summary & Recommendations: where you summarize the findings and list actionable suggestions using bullet points.
     `;
 
     try {
@@ -1372,4 +1504,77 @@ export const createTutorChat = (grade: string, subject: string, chapter: string,
         },
     });
     return chat;
+};
+
+// --- New Function for Printable Resources ---
+export const generatePrintableResource = async (
+    type: 'worksheet' | 'study-notes', 
+    gradeLevel: string, 
+    subject: string, 
+    chapter: string, 
+    chapterContext: string,
+    language: string
+): Promise<string> => {
+    const resourceType = type === 'worksheet' 
+        ? (language === 'hi' ? 'वर्कशीट' : 'Worksheet') 
+        : (language === 'hi' ? 'अध्ययन नोट्स' : 'Study Notes');
+    
+    const prompt = type === 'worksheet'
+    ? `As an expert educator, create a printer-friendly HTML document for a worksheet. The worksheet is for a ${gradeLevel} student studying "${chapter}" in ${subject}. The content must be in ${language}. The worksheet should be based on these key concepts: ${chapterContext}. The HTML should include:
+- A main title (<h1>) for the worksheet.
+- At least 3 sections with subtitles (<h2>), each focusing on different concepts.
+- A mix of 10-15 questions in total: Multiple Choice (with non-functional radio button placeholders), Fill-in-the-blanks (using underlined spaces like '__________'), and Short Answer questions (with ample space for writing).
+- Do not include any JavaScript or complex CSS. Use basic HTML tags.
+- At the very end of the document, include a detailed answer key inside a <details> tag so it is hidden by default. The <summary> tag should contain "${language === 'hi' ? 'उत्तर कुंजी' : 'Answer Key'}".
+- The entire output should be ONLY the HTML content for the body, starting from the <h1>.`
+    : `As an expert educator, create a printer-friendly HTML document of study notes. The notes are for a ${gradeLevel} student studying "${chapter}" in ${subject}. The content must be in ${language}. The notes should be a concise but comprehensive summary of these key concepts: ${chapterContext}. The HTML should include:
+- A main title (<h1>).
+- Clear sections for each key concept using <h2> or <h3> tags.
+- Key points must be in bulleted lists (<ul> and <li>).
+- Important terms should be bolded using <strong> tags.
+- Do not include any JavaScript or complex CSS. Use basic HTML tags.
+- The entire output should be ONLY the HTML content for the body, starting from the <h1>.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+        });
+
+        let htmlContent = response.text.replace(/```html/g, '').replace(/```/g, '').trim();
+
+        return `
+            <!DOCTYPE html>
+            <html lang="${language}">
+            <head>
+                <meta charset="UTF-8">
+                <title>${chapter} - ${resourceType}</title>
+                <style>
+                    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #333; }
+                    h1, h2, h3 { color: #111; }
+                    h1 { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+                    .section { margin-bottom: 2rem; }
+                    .question { margin-bottom: 1.5rem; }
+                    .question-text { font-weight: bold; }
+                    .options { list-style-type: lower-alpha; padding-left: 25px; }
+                    details { background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-top: 2rem; }
+                    summary { font-weight: bold; cursor: pointer; }
+                    @media print {
+                        .print-button { display: none; }
+                        body { margin: 1in; font-size: 12pt; }
+                        details { page-break-inside: avoid; }
+                    }
+                </style>
+            </head>
+            <body>
+                <button class="print-button" onclick="window.print()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 5px; border: 1px solid #ccc; background: #f0f0f0; position: fixed; top: 10px; right: 10px;">Print / Save as PDF</button>
+                ${htmlContent}
+            </body>
+            </html>
+        `;
+
+    } catch (error) {
+        console.error(`Error generating printable resource of type ${type}:`, error);
+        throw new Error(`Failed to generate the ${resourceType} from AI. Please try again.`);
+    }
 };
