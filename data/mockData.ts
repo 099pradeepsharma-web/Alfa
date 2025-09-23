@@ -16,7 +16,6 @@ export const MOCK_STUDENTS: Student[] = [
       { subject: 'Physics', chapter: 'Magnetic Effects of Electric Current', score: 75, completedDate: '2024-05-24' },
       { subject: 'Biology', chapter: 'Life Processes', score: 95, completedDate: '2024-05-19' },
     ],
-    // FIX: Added missing 'achievements' property.
     achievements: [],
   },
   {
@@ -30,7 +29,6 @@ export const MOCK_STUDENTS: Student[] = [
       { subject: 'History', chapter: 'From Trade to Territory', score: 65, completedDate: '2024-05-22' },
       { subject: 'Mathematics', chapter: 'Linear Equations in One Variable', score: 95, completedDate: '2024-05-25' },
     ],
-    // FIX: Added missing 'achievements' property.
     achievements: [],
   },
   {
@@ -43,7 +41,6 @@ export const MOCK_STUDENTS: Student[] = [
       { subject: 'Geography', chapter: 'Resources and Development', score: 88, completedDate: '2024-05-20' },
       { subject: 'Chemistry', chapter: 'Carbon and its Compounds', score: 62, completedDate: '2024-05-24' },
     ],
-    // FIX: Added missing 'achievements' property.
     achievements: [],
   },
 ];

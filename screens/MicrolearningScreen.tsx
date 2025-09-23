@@ -15,7 +15,6 @@ interface MicrolearningScreenProps {
 }
 
 const MicrolearningScreen: React.FC<MicrolearningScreenProps> = ({ learningModule, onFinish }) => {
-    // FIX: Destructured 'language' from useLanguage hook to make it available.
     const { t, tCurriculum, language } = useLanguage();
     const { currentUser, isLoggedIn } = useAuth();
     const student = currentUser!; // This screen is only accessible when logged in.

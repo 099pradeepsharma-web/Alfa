@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useLanguage } from '../contexts/Language-context';
 import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeftIcon, SparklesIcon, DocumentTextIcon, LightBulbIcon, ChatBubbleLeftRightIcon, AcademicCapIcon, BriefcaseIcon, CheckCircleIcon, TrophyIcon, PaperAirplaneIcon, MicrophoneIcon, StopCircleIcon } from '@heroicons/react/24/solid';
-// FIX: Imported missing ChatMessage type.
 import { AptitudeQuestion, AptitudeTrait, CareerGuidance, Student, ChatMessage } from '../types';
 import * as geminiService from '../services/geminiService';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -28,7 +27,6 @@ const AptitudeTest: React.FC<{ student: Student, onFinish: (results: any) => voi
     useEffect(() => {
         const fetchTest = async () => {
             setIsLoading(true);
-            // FIX: Corrected function call to an existing service method.
             const testQuestions = await geminiService.generateAptitudeTest(student.grade, language);
             setQuestions(testQuestions);
             setIsLoading(false);
@@ -93,11 +91,10 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
     const { t, language } = useLanguage();
     const { currentUser: student } = useAuth();
     const [view, setView] = useState<ViewState>('idle');
-    const [aptitudeResults, setAptitudeResults] = useState<any | null>(null);
+    const [aptitudeResults, setAptitudeResults] = useState<{ scores: Record<string, { correct: number, total: number }>, summary: string } | null>(null);
     const [guidance, setGuidance] = useState<CareerGuidance | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [counselorChat, setCounselorChat] = useState<Chat | null>(null);
-    // FIX: Corrected type name.
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [isThinking, setIsThinking] = useState(false);
     const [chatInput, setChatInput] = useState('');
@@ -111,11 +108,9 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
     }, [chatMessages]);
 
 
-    const handleTestFinish = async (results: any) => {
+    const handleTestFinish = async (results: Record<string, { correct: number, total: number }>) => {
         setIsLoading(true);
-        // FIX: Corrected function call to an existing service method.
         const summary = await geminiService.generateAptitudeTestSummary(results, language);
-        // FIX: Updated state structure to match corrected AptitudeTestResult type.
         setAptitudeResults({ scores: results, summary });
         setIsLoading(false);
         setView('test_results');
@@ -125,7 +120,6 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
         if (!student) return;
         setView('viewing_guidance');
         setIsLoading(true);
-        // FIX: Corrected function call to an existing service method.
         const fetchedGuidance = await geminiService.generateStreamGuidance(student, aptitudeResults, language);
         setGuidance(fetchedGuidance);
         setIsLoading(false);
@@ -135,11 +129,9 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
         if (!student) return;
         setView('counseling');
         setIsThinking(true);
-        // FIX: Corrected function call to an existing service method.
         const chat = geminiService.createCareerCounselorChat(student, language);
         setCounselorChat(chat);
 
-        // FIX: Corrected type name.
         const welcomeMessage: ChatMessage = { id: 'counselor-welcome', role: 'model', text: t('counselorWelcome') };
         setChatMessages([welcomeMessage]);
         play(welcomeMessage.text);
@@ -152,7 +144,6 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
         setIsThinking(true);
         if (isSpeaking) stop();
 
-        // FIX: Corrected type name.
         const userMessage: ChatMessage = { id: `user-${Date.now()}`, role: 'user', text: trimmedText };
         setChatMessages(prev => [...prev, userMessage]);
         setChatInput('');
@@ -183,9 +174,8 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
     );
     
     const renderTestResults = () => {
-        // FIX: Updated logic to access scores from the corrected aptitudeResults structure.
+        if (!aptitudeResults) return null;
         const scores = aptitudeResults.scores;
-        // FIX: Corrected logic to calculate and compare percentages instead of comparing objects.
         const strongestTrait = Object.keys(scores).reduce((a, b) => (scores[a].correct / scores[a].total) > (scores[b].correct / scores[b].total) ? a : b);
         return (
             <div className="text-center p-6 bg-slate-50 dark:bg-slate-900/50 rounded-lg">

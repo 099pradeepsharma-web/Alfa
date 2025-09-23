@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, AdaptiveStory, InteractiveExplainer, PrintableResource, CulturalContext, MoralScienceCorner, AptitudeQuestion, CareerGuidance, QuestionBankItem } from '../types';
+import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, AdaptiveStory, InteractiveExplainer, PrintableResource, CulturalContext, MoralScienceCorner, AptitudeQuestion, CareerGuidance, QuestionBankItem, CategorizedProblems } from '../types';
 
 // The API key is sourced from the `process.env.API_KEY` environment variable.
 // To use a new key (e.g., from Vertex AI Studio), set this variable in your deployment environment.
@@ -614,21 +614,17 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
         -   **summary**: A concise summary of the key takeaways. MUST be formatted as a list of bullet points using markdown ('- ').
         -   **conceptMap**: For complex chapters, generate a Mermaid.js graph definition (using 'graph TD' for Top-Down). This graph should visually connect the key concepts. Labels must be concise and in the ${language} language. The entire output for this field must be ONLY the Mermaid code string (e.g., "graph TD; A[Start] --> B(Process);"). For simple chapters or when a visual map is not relevant, this field must be null.
         -   **interactiveVideoSimulation**: For one key concept that is highly visual or hard to explain with text, generate an engaging video simulation section. The \`videoPrompt\` should be a detailed prompt for a model like Google VEO. For other chapters, this can be null.
-        -   **interactiveExplainer**: For one highly abstract concept that is hard to visualize (e.g., the effect of gravity on different planets, how changing the 'a' coefficient affects a parabola's shape, visualizing electron orbitals), generate an "Interactive Explainer". The student will manipulate variables to see "what-if" scenarios in an animated video. The \`videoPromptTemplate\` must use placeholders matching the variable names, surrounded by double curly braces, e.g., {{variable_name}}. This is for conceptual explanation, not a lab experiment. For chapters without a suitable concept, this field MUST be null.
-        -   **virtualLab**: For one key concept that is best explained through experimentation (e.g., projectile motion in Physics, chemical reactions in Chemistry, OR historical what-if scenarios, OR exploring mathematical concepts), generate an engaging "Virtual Lab". The \`outcomePromptTemplate\` must be a detailed prompt for a model like Google VEO and MUST use placeholders matching the variable names, e.g., "Show the result of mixing {{chemical_A}} with {{chemical_B}}". For chapters without a suitable experimental concept, this field must be null.
-        -   **adaptiveStory**: For subjects that benefit from narrative learning (like History, Social Studies, Literature, or even explaining a scientific discovery), generate an engaging branching narrative. The story should have at least 3-4 decision points and multiple endings. The choices a student makes should be tied to their understanding of the chapter's concepts. For other chapters, this field MUST be null.
         -   **culturalContext**: Where relevant (especially for Science, Social Studies, History, and languages), generate a section that connects the chapter's concepts to Indian culture, festivals, historical events, or daily life. For example, connect 'Light and Reflection' in Physics to Diwali, or 'Geometry' to Rangoli patterns. If no strong connection exists, this field MUST be null.
         -   **moralScienceCorner**: Where appropriate, generate a short, simple story with a clear moral that relates to the chapter's core theme (e.g., perseverance for a tough math chapter, curiosity for a science chapter, honesty for a history chapter). The story should be engaging for the student's grade level. If a story is not relevant, this field MUST be null.
 
 
         **DO NOT GENERATE THE FOLLOWING SECTIONS IN THIS REQUEST:**
-        - Do not generate \`categorizedProblems\`, \`experiments\`, \`commonMistakes\`, or any other deep pedagogical sections. These will be generated on-demand later.
+        - Do not generate \`categorizedProblems\`, \`experiments\`, \`commonMistakes\`, \`interactiveExplainer\`, \`virtualLab\`, \`adaptiveStory\`, or any other deep pedagogical sections. These will be generated on-demand later.
 
         **FINAL INSTRUCTION:**
         Your entire output MUST be a JSON object that strictly follows the 'LearningModule' schema, but only containing the core fields listed above. Ensure all text fields are complete. No markdown headers (like ##), just paragraphs and bullet points.
     `;
 
-    // FIX: Created a smaller, dedicated schema for this API call to avoid complexity errors.
     const initialLearningModuleSchema = {
         type: Type.OBJECT,
         properties: {
@@ -640,9 +636,6 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
             summary: { type: Type.STRING },
             conceptMap: { type: Type.STRING, nullable: true },
             interactiveVideoSimulation: { ...interactiveVideoSimulationSchema, nullable: true },
-            interactiveExplainer: { ...interactiveExplainerSchema, nullable: true },
-            virtualLab: { ...virtualLabSchema, nullable: true },
-            adaptiveStory: { ...adaptiveStorySchema, nullable: true },
             culturalContext: { ...culturalContextSchema, nullable: true },
             moralScienceCorner: { ...moralScienceCornerSchema, nullable: true },
             formulaSheet: { type: Type.ARRAY, items: formulaSchema, nullable: true },
@@ -748,7 +741,7 @@ export const generateSectionContent = async (
             -   Grades 6-8: Generate 15-20 questions (MCQs, Short Answer, Long Answer).
             -   Grades 9-10: Generate 25-30 questions (MCQs, Short Answer, Long Answer, Case-Based).
             -   Grades 11-12: Generate 30-40+ questions based on the last 10 years of CBSE exam patterns (MCQs, Short Answer, Long Answer, Case-Based, Assertion-Reasoning).
-            -   **Crucially for Short and Long Answer questions:** You MUST provide a detailed 'modelAnswer', a 'markingScheme', AND a helpful 'answerWritingGuidance' section. The guidance should give students actionable tips on structuring their answer, keywords to include, and common mistakes to avoid, as per CBSE guidelines.
+            -   **Crucially for Short and Long Answer questions:** The 'answerWritingGuidance' field is MANDATORY. You MUST provide a detailed 'modelAnswer', a 'markingScheme', AND a helpful 'answerWritingGuidance' section. The guidance is the most important part; it must give students actionable, step-by-step tips on how to structure their answer to get full marks in CBSE exams, which keywords to include, and common mistakes to avoid.
         -   **For 'competitiveExamMapping':** Provide a detailed mapping of the chapter's concepts to the syllabus of major competitive exams like JEE (Main & Advanced), NEET, CUET, and relevant Olympiads. The structure should be:
             -   A brief introduction about the chapter's importance for these exams.
             -   A markdown list where each item maps a specific 'concept' from the chapter to the 'exam(s)' it's relevant for.
@@ -1567,7 +1560,6 @@ export const generatePrintableResource = async (
     }
 };
 
-// FIX: Added missing functions for Career Guidance feature.
 // --- New Functions for Career Guidance ---
 
 const aptitudeQuestionSchema = {

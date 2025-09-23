@@ -396,14 +396,14 @@ interface ShortAnswerDetails extends BaseQuestion {
     questionType: 'Short Answer';
     markingScheme: string;
     modelAnswer: string;
-    answerWritingGuidance?: string;
+    answerWritingGuidance: string;
 }
 
 interface LongAnswerDetails extends BaseQuestion {
     questionType: 'Long Answer';
     markingScheme: string;
     modelAnswer: string;
-    answerWritingGuidance?: string;
+    answerWritingGuidance: string;
 }
 
 export type QuestionBankItem = MCQDetails | ShortAnswerDetails | LongAnswerDetails;
@@ -516,8 +516,6 @@ export interface AptitudeQuestion {
 }
 
 export interface AptitudeTestResult {
-    // FIX: Changed structure to correctly type scores and summary separately.
-    // The previous index signature `[key: string]: number` conflicted with `summary: string`.
     scores: { [trait: string]: { correct: number; total: number } };
     summary: string; // AI-generated summary
 }

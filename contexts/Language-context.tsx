@@ -12,8 +12,7 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-// FIX: Changed component definition to use React.FC for better prop type inference, including children.
-export const LanguageProvider: React.FC = ({ children }) => {
+export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState(() => {
     return localStorage.getItem('alfanumrik-language') || 'en';
   });

@@ -16,8 +16,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// FIX: Changed component definition to use React.FC for better prop type inference, including children.
-export const AuthProvider: React.FC = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [currentUser, setCurrentUser] = useState<Student | null>(null);
     const [loading, setLoading] = useState(true); // Start true to check session
     const [error, setError] = useState<string | null>(null);
@@ -26,7 +25,6 @@ export const AuthProvider: React.FC = ({ children }) => {
         const performance = await pineconeService.getPerformanceRecords(user.id);
         const achievements = await pineconeService.getAchievements(user.id);
         
-        // FIX: Calculate total points from performance records to satisfy the Student type, which requires a `points` property. A simple sum of scores is used as a placeholder for a more complex point system.
         const totalPoints = performance.reduce((sum, record) => sum + record.score, 0);
 
         const studentProfile: Student = {
