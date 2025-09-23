@@ -23,13 +23,14 @@ import MicrolearningScreen from './screens/MicrolearningScreen';
 import ProjectHubScreen from './screens/ProjectHubScreen';
 import PeerPediaScreen from './screens/PeerPediaScreen';
 import CompetitionScreen from './screens/CompetitionScreen';
+import CareerGuidanceScreen from './screens/CareerGuidanceScreen';
 import { useLanguage } from './contexts/Language-context';
 import { useAuth } from './contexts/AuthContext';
 import LoadingSpinner from './components/LoadingSpinner';
 import TutorialScreen from './screens/TutorialScreen';
 
 type UserRole = 'student' | 'teacher' | 'parent';
-type StudentView = 'dashboard' | 'path' | 'browse' | 'wellbeing' | 'tutor' | 'microlearning' | 'tutorial' | 'pbl_hub' | 'peer_pedia' | 'competitions';
+type StudentView = 'dashboard' | 'path' | 'browse' | 'wellbeing' | 'tutor' | 'microlearning' | 'tutorial' | 'pbl_hub' | 'peer_pedia' | 'competitions' | 'career_guidance';
 type AppState = 'role_selection' | 'student_flow' | 'teacher_flow' | 'parent_flow' | 'privacy_policy' | 'faq';
 
 const App: React.FC = () => {
@@ -205,6 +206,10 @@ const App: React.FC = () => {
     setStudentView('competitions');
   }, []);
 
+  const handleStartCareerGuidance = useCallback(() => {
+    setStudentView('career_guidance');
+  }, []);
+
 
   const renderStudentBrowseFlow = () => {
     if (!selectedGrade) {
@@ -254,7 +259,7 @@ const App: React.FC = () => {
         case 'tutorial':
             return <TutorialScreen onFinish={handleFinishTutorial} />;
         case 'dashboard':
-            return <StudentDashboard onStartMission={() => setStudentView('path')} onBrowse={handleStartBrowsing} onStartWellbeing={handleStartWellbeingModule} onStartTutorial={handleStartTutorial} onStartPBL={handleStartPBL} onStartPeerPedia={handleStartPeerPedia} onStartCompetitions={handleStartCompetitions} />;
+            return <StudentDashboard onStartMission={() => setStudentView('path')} onBrowse={handleStartBrowsing} onStartWellbeing={handleStartWellbeingModule} onStartTutorial={handleStartTutorial} onStartPBL={handleStartPBL} onStartPeerPedia={handleStartPeerPedia} onStartCompetitions={handleStartCompetitions} onStartCareerGuidance={handleStartCareerGuidance} />;
         case 'path':
             return <PersonalizedPathScreen onBack={handleBackToDashboard} />;
         case 'browse':
@@ -273,6 +278,8 @@ const App: React.FC = () => {
             return <PeerPediaScreen onBack={handleBackToDashboard} />;
         case 'competitions':
             return <CompetitionScreen onBack={handleBackToDashboard} />;
+        case 'career_guidance':
+            return <CareerGuidanceScreen onBack={handleBackToDashboard} />;
         case 'wellbeing': {
             if (!currentUser) return null;
             const wellbeingChapter: Chapter = { title: 'The Great Transformation: Navigating Your Journey from Teen to Adult' };
@@ -300,7 +307,7 @@ const App: React.FC = () => {
             />;
         }
         default:
-            return <StudentDashboard onStartMission={() => setStudentView('path')} onBrowse={handleStartBrowsing} onStartWellbeing={handleStartWellbeingModule} onStartTutorial={handleStartTutorial} onStartPBL={handleStartPBL} onStartPeerPedia={handleStartPeerPedia} onStartCompetitions={handleStartCompetitions} />;
+            return <StudentDashboard onStartMission={() => setStudentView('path')} onBrowse={handleStartBrowsing} onStartWellbeing={handleStartWellbeingModule} onStartTutorial={handleStartTutorial} onStartPBL={handleStartPBL} onStartPeerPedia={handleStartPeerPedia} onStartCompetitions={handleStartCompetitions} onStartCareerGuidance={handleStartCareerGuidance} />;
     }
   };
 

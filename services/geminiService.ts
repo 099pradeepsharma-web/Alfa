@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, AdaptiveStory, InteractiveExplainer, PrintableResource, CulturalContext, MoralScienceCorner } from '../types';
+import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, AdaptiveStory, InteractiveExplainer, PrintableResource, CulturalContext, MoralScienceCorner, AptitudeQuestion, CareerGuidance } from '../types';
 
 // The API key is sourced from the `process.env.API_KEY` environment variable.
 // To use a new key (e.g., from Vertex AI Studio), set this variable in your deployment environment.
@@ -1577,4 +1577,135 @@ export const generatePrintableResource = async (
         console.error(`Error generating printable resource of type ${type}:`, error);
         throw new Error(`Failed to generate the ${resourceType} from AI. Please try again.`);
     }
+};
+
+// FIX: Added missing functions for Career Guidance feature.
+// --- New Functions for Career Guidance ---
+
+const aptitudeQuestionSchema = {
+    type: Type.OBJECT,
+    properties: {
+        question: { type: Type.STRING },
+        options: { type: Type.ARRAY, items: { type: Type.STRING } },
+        correctAnswer: { type: Type.STRING },
+        trait: { type: Type.STRING, enum: ['Logical Reasoning', 'Verbal Ability', 'Numerical Aptitude', 'Spatial Awareness'] },
+        explanation: { type: Type.STRING },
+    },
+    required: ['question', 'options', 'correctAnswer', 'trait', 'explanation']
+};
+
+const aptitudeTestSchema = {
+    type: Type.ARRAY,
+    items: aptitudeQuestionSchema,
+};
+
+export const generateAptitudeTest = async (grade: string, language: string): Promise<AptitudeQuestion[]> => {
+    const prompt = `
+        Generate a 10-question multiple-choice aptitude test suitable for a ${grade} student in India.
+        The test must cover a balanced mix of the following traits: 'Logical Reasoning', 'Verbal Ability', 'Numerical Aptitude', and 'Spatial Awareness'.
+        The entire response, including all fields, must be in the ${language} language and in the specified JSON format.
+    `;
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: aptitudeTestSchema,
+                temperature: 0.8,
+            },
+        });
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText) as AptitudeQuestion[];
+    } catch (error) {
+        console.error("Error generating aptitude test:", error);
+        throw new Error("Failed to generate aptitude test from AI.");
+    }
+};
+
+export const generateAptitudeTestSummary = async (results: Record<string, { correct: number, total: number }>, language: string): Promise<string> => {
+    const prompt = `
+        A student took an aptitude test. Here are their results, showing correct answers out of total questions for each trait: ${JSON.stringify(results)}.
+        Based on these results, write a brief, encouraging, one-paragraph summary of their strengths and potential areas for improvement. The response must be in ${language}.
+        Keep the summary concise and positive.
+    `;
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+        });
+        return response.text;
+    } catch (error) {
+        console.error("Error generating aptitude test summary:", error);
+        throw new Error("Failed to generate test summary from AI.");
+    }
+};
+
+const careerSuggestionSchema = {
+    type: Type.OBJECT,
+    properties: {
+        careerName: { type: Type.STRING },
+        description: { type: Type.STRING },
+        requiredSubjects: { type: Type.ARRAY, items: { type: Type.STRING } },
+    },
+    required: ['careerName', 'description', 'requiredSubjects'],
+};
+
+const streamRecommendationSchema = {
+    type: Type.OBJECT,
+    properties: {
+        streamName: { type: Type.STRING, enum: ['Science', 'Commerce', 'Humanities/Arts'] },
+        recommendationReason: { type: Type.STRING },
+        suggestedCareers: { type: Type.ARRAY, items: careerSuggestionSchema },
+    },
+    required: ['streamName', 'recommendationReason', 'suggestedCareers'],
+};
+
+const careerGuidanceSchema = {
+    type: Type.OBJECT,
+    properties: {
+        introduction: { type: Type.STRING },
+        streamRecommendations: { type: Type.ARRAY, items: streamRecommendationSchema },
+        conclusion: { type: Type.STRING },
+    },
+    required: ['introduction', 'streamRecommendations', 'conclusion'],
+};
+
+export const generateStreamGuidance = async (student: Student, aptitudeResults: any, language: string): Promise<CareerGuidance> => {
+    const prompt = `
+        Act as an expert career counselor for an Indian student.
+        Student Profile: ${student.name}, ${student.grade}.
+        Aptitude Test Results Summary: "${aptitudeResults.summary}".
+        Based on this profile and aptitude summary, generate a comprehensive career guidance report.
+        The report should recommend a suitable academic stream (Science, Commerce, or Humanities/Arts) and suggest at least 3 potential career paths for each recommended stream.
+        The entire response must be in the ${language} language and strictly follow the specified JSON schema.
+    `;
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: careerGuidanceSchema,
+                temperature: 0.7,
+            },
+        });
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText) as CareerGuidance;
+    } catch (error) {
+        console.error("Error generating stream guidance:", error);
+        throw new Error("Failed to generate career guidance from AI.");
+    }
+};
+
+export const createCareerCounselorChat = (student: Student, language: string): Chat => {
+    const systemInstruction = `You are Fitto, a friendly and experienced career counselor. You are talking to ${student.name}, a ${student.grade} student. Your goal is to help them explore career options, understand their strengths, and make informed decisions about their future. Be encouraging, ask clarifying questions, and provide helpful information. You must communicate in ${language}.`;
+
+    const chat: Chat = ai.chats.create({
+        model: 'gemini-2.5-flash',
+        config: {
+            systemInstruction: systemInstruction,
+        },
+    });
+    return chat;
 };

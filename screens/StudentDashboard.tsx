@@ -4,7 +4,7 @@ import { getPerformanceRecords, getLearningModule, saveLearningModule, getDiagra
 import { getAdaptiveNextStep, getChapterContent, generateDiagram } from '../services/geminiService';
 import { useLanguage } from '../contexts/Language-context';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowRightIcon, BookOpenIcon, SparklesIcon, RocketLaunchIcon, PuzzlePieceIcon, HeartIcon, TrophyIcon, MagnifyingGlassIcon, FireIcon, QuestionMarkCircleIcon, CubeIcon, UsersIcon, TrophyIcon as TrophySolid } from '@heroicons/react/24/solid';
+import { ArrowRightIcon, BookOpenIcon, SparklesIcon, RocketLaunchIcon, PuzzlePieceIcon, HeartIcon, TrophyIcon, MagnifyingGlassIcon, FireIcon, QuestionMarkCircleIcon, CubeIcon, UsersIcon, TrophyIcon as TrophySolid, ShieldCheckIcon, BriefcaseIcon } from '@heroicons/react/24/solid';
 import LoadingSpinner from '../components/LoadingSpinner';
 import FittoAvatar from '../components/FittoAvatar';
 import { CURRICULUM } from '../data/curriculum';
@@ -33,6 +33,7 @@ interface StudentDashboardProps {
   onStartPBL: () => void;
   onStartPeerPedia: () => void;
   onStartCompetitions: () => void;
+  onStartCareerGuidance: () => void;
 }
 
 const ActivityCard: React.FC<{ record: PerformanceRecord }> = React.memo(({ record }) => {
@@ -203,7 +204,7 @@ const FittoMessage: React.FC<{ message: string }> = ({ message }) => {
 };
 
 
-const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onBrowse, onStartWellbeing, onStartTutorial, onStartPBL, onStartPeerPedia, onStartCompetitions }) => {
+const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onBrowse, onStartWellbeing, onStartTutorial, onStartPBL, onStartPeerPedia, onStartCompetitions, onStartCareerGuidance }) => {
     const { t, tCurriculum, language } = useLanguage();
     const { currentUser: student } = useAuth();
     const [activities, setActivities] = useState<PerformanceRecord[]>([]);
@@ -318,6 +319,26 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onB
 
                 {/* Side Panel */}
                 <div className="lg:col-span-2 space-y-8">
+                    <div className="dashboard-highlight-card bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg flex items-center gap-4 text-left">
+                       <div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-full">
+                           <ShieldCheckIcon className="h-8 w-8 text-blue-600 dark:text-blue-300" />
+                       </div>
+                       <div>
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('alfanumrikGuaranteeTitle')}</h3>
+                            <p className="text-slate-500 dark:text-slate-400">{t('alfanumrikGuaranteeDesc')}</p>
+                       </div>
+                    </div>
+
+                    <button onClick={onStartCareerGuidance} className="dashboard-highlight-card w-full p-6 rounded-2xl flex items-center gap-4 text-left">
+                       <div className="p-3 bg-purple-100 dark:bg-purple-900/50 rounded-full">
+                           <BriefcaseIcon className="h-8 w-8 text-purple-600 dark:text-purple-300" />
+                       </div>
+                       <div>
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('careerCompassTitle')}</h3>
+                            <p className="text-slate-500 dark:text-slate-400">{t('careerCompassDesc')}</p>
+                       </div>
+                    </button>
+
                      <button onClick={onStartCompetitions} className="dashboard-highlight-card w-full p-6 rounded-2xl flex items-center gap-4 text-left">
                        <div className="p-3 bg-amber-100 dark:bg-amber-900/50 rounded-full">
                            <TrophySolid className="h-8 w-8 text-amber-500 dark:text-amber-300" />

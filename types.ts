@@ -506,3 +506,39 @@ export interface HallOfFameEntry {
     year: number;
     avatarUrl: string;
 }
+
+// --- New Types for Career Guidance ---
+export type AptitudeTrait = 'Logical Reasoning' | 'Verbal Ability' | 'Numerical Aptitude' | 'Spatial Awareness';
+
+export interface AptitudeQuestion {
+    question: string;
+    options: string[];
+    correctAnswer: string;
+    trait: AptitudeTrait;
+    explanation: string;
+}
+
+export interface AptitudeTestResult {
+    // FIX: Changed structure to correctly type scores and summary separately.
+    // The previous index signature `[key: string]: number` conflicted with `summary: string`.
+    scores: { [trait: string]: { correct: number; total: number } };
+    summary: string; // AI-generated summary
+}
+
+export interface CareerSuggestion {
+    careerName: string;
+    description: string;
+    requiredSubjects: string[];
+}
+
+export interface StreamRecommendation {
+    streamName: 'Science' | 'Commerce' | 'Humanities/Arts';
+    recommendationReason: string;
+    suggestedCareers: CareerSuggestion[];
+}
+
+export interface CareerGuidance {
+    introduction: string;
+    streamRecommendations: StreamRecommendation[];
+    conclusion: string;
+}
