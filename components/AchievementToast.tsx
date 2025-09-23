@@ -3,6 +3,7 @@ import { Achievement } from '../types';
 import { useLanguage } from '../contexts/Language-context';
 import { getIcon } from './IconMap';
 import Confetti from './Confetti';
+import { ShareIcon } from '@heroicons/react/24/solid';
 
 interface AchievementToastProps {
   achievement: Achievement;
@@ -24,6 +25,38 @@ const AchievementToast: React.FC<AchievementToastProps> = ({ achievement, onClos
 
         return () => clearTimeout(timer);
     }, [onClose]);
+    
+    const handleShare = () => {
+        const achievementName = t(achievement.name);
+        const shareHtml = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <title>Achievement Unlocked!</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+            </head>
+            <body class="bg-slate-100 flex items-center justify-center h-screen font-sans">
+                <div class="w-full max-w-sm aspect-[16/9] bg-white rounded-2xl shadow-2xl p-6 flex flex-col justify-between border-2 border-amber-400">
+                    <div>
+                        <p class="text-sm font-bold text-slate-500">Achievement Unlocked!</p>
+                        <h1 class="text-2xl font-bold text-amber-500">${achievementName}</h1>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-bold text-slate-800">Alfanumrik</p>
+                        <p class="text-xs text-slate-400">Unlock Your Brilliance</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+        const newWindow = window.open("", "_blank");
+        if (newWindow) {
+            newWindow.document.write(shareHtml);
+            newWindow.document.close();
+        }
+    };
+
 
     if (!isVisible) return null;
 
@@ -42,6 +75,10 @@ const AchievementToast: React.FC<AchievementToastProps> = ({ achievement, onClos
                             <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{t('achievementUnlocked')}</p>
                             <p className="mt-1 text-lg font-bold text-primary dark:text-primary-light" style={{color: 'rgb(var(--c-primary))'}}>{t(achievement.name)}</p>
                             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t(achievement.description)}</p>
+                            <button onClick={handleShare} className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 text-xs font-semibold bg-slate-100 dark:bg-slate-700 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600">
+                                <ShareIcon className="h-3 w-3" />
+                                Share
+                            </button>
                         </div>
                         <div className="ml-4 flex-shrink-0 flex">
                             <button

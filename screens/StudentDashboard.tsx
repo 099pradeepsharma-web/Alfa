@@ -316,6 +316,48 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onB
                         </h2>
                         {recommendations[0] && <FittoMessage message={recommendations[0]} />}
                     </div>
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+                        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4">Exploration Zone</h2>
+                        <p className="text-slate-500 dark:text-slate-400 mb-4">Discover new ways to learn, compete, and plan for your future.</p>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button onClick={onStartCareerGuidance} className="dashboard-highlight-card w-full p-4 rounded-xl flex items-center gap-3 text-left">
+                               <div className="p-3 bg-purple-100 dark:bg-purple-900/50 rounded-full">
+                                   <BriefcaseIcon className="h-7 w-7 text-purple-600 dark:text-purple-300" />
+                               </div>
+                               <div>
+                                    <h3 className="font-bold text-slate-800 dark:text-slate-100">{t('careerCompassTitle')}</h3>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs">{t('careerCompassDesc')}</p>
+                               </div>
+                            </button>
+                             <button onClick={onStartCompetitions} className="dashboard-highlight-card w-full p-4 rounded-xl flex items-center gap-3 text-left">
+                               <div className="p-3 bg-amber-100 dark:bg-amber-900/50 rounded-full">
+                                   <TrophySolid className="h-7 w-7 text-amber-500 dark:text-amber-300" />
+                               </div>
+                               <div>
+                                    <h3 className="font-bold text-slate-800 dark:text-slate-100">{t('academicExcellence')}</h3>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs">{t('academicExcellenceDesc')}</p>
+                               </div>
+                            </button>
+                             <button onClick={onStartPBL} className="dashboard-highlight-card w-full p-4 rounded-xl flex items-center gap-3 text-left">
+                               <div className="p-3 bg-fuchsia-100 dark:bg-fuchsia-900/50 rounded-full">
+                                   <CubeIcon className="h-7 w-7 text-fuchsia-600 dark:text-fuchsia-300" />
+                               </div>
+                               <div>
+                                    <h3 className="font-bold text-slate-800 dark:text-slate-100">{t('pblHubTitle')}</h3>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs">{t('pblHubDesc')}</p>
+                               </div>
+                            </button>
+                            <button onClick={onStartPeerPedia} className="dashboard-highlight-card w-full p-4 rounded-xl flex items-center gap-3 text-left">
+                               <div className="p-3 bg-cyan-100 dark:bg-cyan-900/50 rounded-full">
+                                   <UsersIcon className="h-7 w-7 text-cyan-600 dark:text-cyan-300" />
+                               </div>
+                               <div>
+                                    <h3 className="font-bold text-slate-800 dark:text-slate-100">{t('peerPediaTitle')}</h3>
+                                    <p className="text-slate-500 dark:text-slate-400 text-xs">{t('peerPediaDesc')}</p>
+                               </div>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Side Panel */}
@@ -329,26 +371,6 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onB
                             <p className="text-slate-500 dark:text-slate-400">{t('alfanumrikGuaranteeDesc')}</p>
                        </div>
                     </div>
-
-                    <button onClick={onStartCareerGuidance} className="dashboard-highlight-card w-full p-6 rounded-2xl flex items-center gap-4 text-left">
-                       <div className="p-3 bg-purple-100 dark:bg-purple-900/50 rounded-full">
-                           <BriefcaseIcon className="h-8 w-8 text-purple-600 dark:text-purple-300" />
-                       </div>
-                       <div>
-                            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('careerCompassTitle')}</h3>
-                            <p className="text-slate-500 dark:text-slate-400">{t('careerCompassDesc')}</p>
-                       </div>
-                    </button>
-
-                     <button onClick={onStartCompetitions} className="dashboard-highlight-card w-full p-6 rounded-2xl flex items-center gap-4 text-left">
-                       <div className="p-3 bg-amber-100 dark:bg-amber-900/50 rounded-full">
-                           <TrophySolid className="h-8 w-8 text-amber-500 dark:text-amber-300" />
-                       </div>
-                       <div>
-                            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('academicExcellence')}</h3>
-                            <p className="text-slate-500 dark:text-slate-400">{t('academicExcellenceDesc')}</p>
-                       </div>
-                    </button>
                     
                     <LearningStreakCard streak={learningStreak} />
 
@@ -378,26 +400,6 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onStartMission, onB
                         </div>
                     )}
                     
-                    <button onClick={onStartPBL} className="dashboard-highlight-card w-full p-6 rounded-2xl flex items-center gap-4 text-left">
-                       <div className="p-3 bg-fuchsia-100 dark:bg-fuchsia-900/50 rounded-full">
-                           <CubeIcon className="h-8 w-8 text-fuchsia-600 dark:text-fuchsia-300" />
-                       </div>
-                       <div>
-                            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('pblHubTitle')}</h3>
-                            <p className="text-slate-500 dark:text-slate-400">{t('pblHubDesc')}</p>
-                       </div>
-                    </button>
-
-                    <button onClick={onStartPeerPedia} className="dashboard-highlight-card w-full p-6 rounded-2xl flex items-center gap-4 text-left">
-                       <div className="p-3 bg-cyan-100 dark:bg-cyan-900/50 rounded-full">
-                           <UsersIcon className="h-8 w-8 text-cyan-600 dark:text-cyan-300" />
-                       </div>
-                       <div>
-                            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('peerPediaTitle')}</h3>
-                            <p className="text-slate-500 dark:text-slate-400">{t('peerPediaDesc')}</p>
-                       </div>
-                    </button>
-
                     <button onClick={onBrowse} className="dashboard-highlight-card w-full p-6 rounded-2xl flex items-center gap-4 text-left">
                        <div className="p-3 bg-primary-light rounded-full" style={{backgroundColor: 'rgb(var(--c-primary-light))'}}>
                            <MagnifyingGlassIcon className="h-8 w-8 text-primary-dark" style={{color: 'rgb(var(--c-primary-dark))'}} />

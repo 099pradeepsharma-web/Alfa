@@ -83,7 +83,9 @@ const MicrolearningScreen: React.FC<MicrolearningScreenProps> = ({ learningModul
                     </span>
                 </div>
                 <div className="w-full h-4 rounded-full microlearning-progress-bar-bg">
-                    <div className="h-4 rounded-full microlearning-progress-bar-fg" style={{ width: `${progressPercentage}%` }}></div>
+                    <div className="h-4 rounded-full microlearning-progress-bar-fg" style={{ width: `${progressPercentage}%` }}>
+                        <div className="shimmer"></div>
+                    </div>
                 </div>
             </div>
 

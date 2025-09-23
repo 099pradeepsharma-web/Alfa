@@ -260,6 +260,7 @@ export interface NextStepRecommendation {
     nextChapterTitle: string | null;
     action: 'REVIEW' | 'CONTINUE' | 'REVISE_PREREQUISITE';
     prerequisiteChapterTitle?: string | null; // Added for prerequisite navigation
+    nextChapterPreviewDiagramPrompt?: string | null;
 }
 
 

@@ -182,6 +182,23 @@
       
       .progress-bar-gradient {
          background-color: rgb(var(--c-success));
+         position: relative;
+         overflow: hidden;
+      }
+      .progress-bar-gradient .shimmer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to right, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+        background-size: 1000px 100%;
+        animation: shimmer 2.5s infinite linear;
+      }
+
+      @keyframes shimmer {
+          0% { background-position: -1000px 0; }
+          100% { background-position: 1000px 0; }
       }
 
       /* 7. ANIMATIONS */
@@ -351,13 +368,42 @@
       @keyframes toast-in-right { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
       .microlearning-screen-container { max-width: 800px; margin: 0 auto; }
       .microlearning-progress-bar-bg { background-color: rgb(var(--c-bg-secondary)); border: 1px solid rgb(var(--c-border)); }
-      .microlearning-progress-bar-fg { background-color: rgb(var(--c-success)); transition: width 0.5s ease-in-out; }
+      .microlearning-progress-bar-fg { background-color: rgb(var(--c-success)); transition: width 0.5s ease-in-out; position: relative; overflow: hidden; }
 
       /* 18. STRUCTURED TEXT & STYLED LISTS */
       .styled-list { list-style: none; padding-left: 1rem; }
       .styled-list li { position: relative; padding-left: 1.75rem; margin-bottom: 0.625rem; }
       .styled-list li::before { content: ''; position: absolute; left: 0; top: 0.4em; width: 0.6em; height: 0.6em; border-radius: 50%; background-color: rgb(var(--c-primary)); box-shadow: 0 0 0 3px rgba(var(--c-primary), 0.2); }
       .prose p { margin-bottom: 1em; }
+
+      /* 19. SOCIAL SHARING CARD */
+      .share-card-container {
+          width: 100%;
+          height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 2rem;
+          background-color: rgb(var(--c-bg-secondary));
+          font-family: var(--font-sans);
+      }
+      .share-card {
+          width: 100%;
+          max-width: 400px;
+          aspect-ratio: 16 / 9;
+          background-color: rgb(var(--c-surface));
+          border-radius: var(--radius-card);
+          padding: 1.5rem;
+          box-shadow: var(--shadow-card-hover);
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          border: 2px solid rgb(var(--c-primary));
+          background-image: 
+            linear-gradient(rgba(var(--c-border), 0.4) 1px, transparent 1px),
+            linear-gradient(to right, rgba(var(--c-border), 0.4) 1px, transparent 1px);
+          background-size: 2rem 2rem;
+      }
 
 
     </style>

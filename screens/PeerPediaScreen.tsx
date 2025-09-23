@@ -146,7 +146,10 @@ const PeerPediaScreen: React.FC<PeerPediaScreenProps> = ({ onBack }) => {
                     <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md h-fit">
                         {!selectedConcept ? <p className="text-slate-500 dark:text-slate-400 text-center p-4">{t('selectConcept')}</p> : (
                             <div>
-                                <h3 className="font-bold text-slate-700 dark:text-slate-200 border-b dark:border-slate-600 pb-2 mb-4">{t('peerExplanations')} "{tCurriculum(selectedConcept.conceptTitle)}"</h3>
+                                <h3 className="font-bold text-slate-700 dark:text-slate-200 border-b dark:border-slate-600 pb-2 mb-4 flex items-center justify-between">
+                                    <span>{t('peerExplanations')} "{tCurriculum(selectedConcept.conceptTitle)}"</span>
+                                    <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-primary-light text-primary-dark">{filteredExplanations.length}</span>
+                                </h3>
                                 
                                 <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
                                     {filteredExplanations.length > 0 ? filteredExplanations.map(exp => (

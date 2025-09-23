@@ -737,11 +737,11 @@ export const generateSectionContent = async (
         Given: Solve for x in the equation 3x + 5 = 17.\\nSolution:\\nStep 1: 3x + 5 = 17\\nStep 2: 3x = 17 - 5\\nStep 3: 3x = 12\\nStep 4: x = 12 ÷ 3\\nStep 5: x = 4\\nAnswer: x = 4
 
         **SPECIAL INSTRUCTIONS:**
-        -   **For 'categorizedProblems':** Generate a comprehensive and challenging set of practice questions. The quantity and complexity must align with CBSE standards for the specified grade.
-            -   Grades 6-8: Generate 15-20 questions (MCQs, Short Answer, Long Answer).
-            -   Grades 9-10: Generate 25-30 questions (MCQs, Short Answer, Long Answer, Case-Based).
-            -   Grades 11-12: Generate 30-40+ questions based on the last 10 years of CBSE exam patterns (MCQs, Short Answer, Long Answer, Case-Based, Assertion-Reasoning).
-            -   **Crucially for Short and Long Answer questions:** The 'answerWritingGuidance' field is MANDATORY. You MUST provide a detailed 'modelAnswer', a 'markingScheme', AND a helpful 'answerWritingGuidance' section. The guidance is the most important part; it must give students actionable, step-by-step tips on how to structure their answer to get full marks in CBSE exams, which keywords to include, and common mistakes to avoid.
+        -   **For 'categorizedProblems':** Generate a SUFFICIENT and comprehensive set of practice questions. The quantity MUST BE LARGER for students in Grade 6 and above to provide ample practice. The complexity must align with CBSE standards.
+            -   Grades 6-8: Generate 15-20 questions (mix of MCQ, Short Answer, Long Answer).
+            -   Grades 9-10: Generate 25-30 questions (mix of MCQ, Short Answer, Long Answer, Case-Based).
+            -   Grades 11-12: Generate 30-40+ questions based on the last 10 years of CBSE exam patterns (MCQ, Short/Long Answer, Case-Based, Assertion-Reasoning).
+            -   **For ALL Short and Long Answer questions, the 'answerWritingGuidance' field is MANDATORY and MUST be detailed and helpful.** It must give students actionable, step-by-step tips on how to structure their answer to get full marks in CBSE exams, which keywords to include, and common mistakes to avoid. Also provide a detailed 'modelAnswer' and 'markingScheme'.
         -   **For 'competitiveExamMapping':** Provide a detailed mapping of the chapter's concepts to the syllabus of major competitive exams like JEE (Main & Advanced), NEET, CUET, and relevant Olympiads. The structure should be:
             -   A brief introduction about the chapter's importance for these exams.
             -   A markdown list where each item maps a specific 'concept' from the chapter to the 'exam(s)' it's relevant for.
@@ -778,6 +778,56 @@ export const generateSectionContent = async (
     } catch (error) {
         console.error(`Error generating section content for "${sectionKey}":`, error);
         throw new Error(`Failed to generate the "${sectionKey}" section from AI. Please try again.`);
+    }
+};
+
+export const generateQuestionBankQuestions = async (grade: string, subject: string, chapter: string, language: string): Promise<QuestionBankItem[]> => {
+    // Determine question count based on grade
+    const gradeNumber = parseInt(grade.match(/\d+/)?.[0] || '0');
+    let questionCount = 30; // Default
+    if (gradeNumber >= 9 && gradeNumber <= 10) {
+        questionCount = 35;
+    } else if (gradeNumber >= 11) {
+        questionCount = 40;
+    }
+
+    const prompt = `
+        Act as an expert question paper setter for the Indian CBSE curriculum. Your task is to generate a comprehensive and diverse question bank of at least ${questionCount} questions.
+        The questions must be for a ${grade} student, studying the chapter "${chapter}" in the subject "${subject}".
+        The entire response, including all text, explanations, and answers, must be in the ${language} language and adhere to the specified JSON schema.
+
+        **CRITICAL REQUIREMENTS:**
+        1.  **COVERAGE:** Ensure questions cover ALL major topics and sub-topics within the chapter.
+        2.  **DIVERSITY:** Provide a balanced mix of question types ('MCQ', 'Short Answer', 'Long Answer'), difficulties ('Easy', 'Medium', 'Hard'), and Bloom's Taxonomy levels ('Remembering' through 'Creating').
+        3.  **CBSE ALIGNMENT:** Questions, especially for 'Short Answer' and 'Long Answer', must be in the style of CBSE board exams. Include competency-based and previous year style questions where appropriate.
+        4.  **AUTHENTICITY:** All content must be factually correct and pedagogically sound.
+        5.  **ANSWER WRITING GUIDANCE (MANDATORY for Short/Long Answer):** For every 'Short Answer' and 'Long Answer' question, the 'answerWritingGuidance' field is MANDATORY. It MUST provide actionable, step-by-step tips for students on how to structure their answer to get full marks in CBSE exams. This should include which keywords to use, how to present points, and common mistakes to avoid for that specific question.
+        6.  **MODEL ANSWERS (MANDATORY for Short/Long Answer):** Provide a detailed, ideal 'modelAnswer' and a clear 'markingScheme'.
+
+        Your final output must be a JSON array of question objects.
+    `;
+    
+    const questionBankSchema = {
+        type: Type.ARRAY,
+        items: questionBankItemSchema
+    };
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: questionBankSchema,
+                temperature: 0.8,
+            },
+        });
+
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText) as QuestionBankItem[];
+    } catch (error) {
+        console.error("Error generating question bank questions:", error);
+        throw new Error("Failed to generate questions from AI. Please try again.");
     }
 };
 

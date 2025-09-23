@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Grade, Subject, Chapter, LearningModule, QuizQuestion, NextStepRecommendation, ChapterProgress, Student, CategorizedProblems, VocabularyDeepDive, Theorem, FormulaDerivation, SolvedNumericalProblem, Formula, ProblemSolvingTemplate, CommonMistake, Experiment, TimelineEvent, KeyFigure, PrimarySourceSnippet, CaseStudy, GrammarRule, LiteraryDevice, HOTQuestion, KeyLawOrPrinciple, CulturalContext, MoralScienceCorner, Concept } from '../types';
+import { Grade, Subject, Chapter, LearningModule, QuizQuestion, NextStepRecommendation, ChapterProgress, Student, CategorizedProblems, VocabularyDeepDive, Theorem, FormulaDerivation, SolvedNumericalProblem, Formula, ProblemSolvingTemplate, CommonMistake, Experiment, TimelineEvent, KeyFigure, PrimarySourceSnippet, CaseStudy, GrammarRule, LiteraryDevice, HOTQuestion, KeyLawOrPrinciple, CulturalContext, MoralScienceCorner, Concept, QuestionBankItem } from '../types';
 import * as contentService from '../services/contentService';
 import { generateQuiz, generateNextStepRecommendation, generateSectionContent, generatePrintableResource } from '../services/geminiService';
 import { getChapterProgress, saveChapterProgress } from '../services/pineconeService';
@@ -136,20 +136,20 @@ const subjectConfig: Record<string, SectionKey[]> = {
     'physics': ['keyLawsAndPrinciples', 'formulaDerivations', 'formulaSheet', 'solvedNumericalProblems', 'problemSolvingTemplates', 'categorizedProblems', 'experiments', 'commonMistakes', 'scientificMethodApplications', 'interdisciplinaryConnections'],
     'chemistry': ['keyLawsAndPrinciples', 'formulaSheet', 'solvedNumericalProblems', 'categorizedProblems', 'experiments', 'commonMistakes', 'scientificMethodApplications', 'environmentalAwareness', 'interdisciplinaryConnections'],
     'biology': ['keyLawsAndPrinciples', 'experiments', 'scientificMethodApplications', 'environmentalAwareness', 'interdisciplinaryConnections', 'categorizedProblems'],
-    'history': ['timelineOfEvents', 'keyFigures', 'primarySourceAnalysis', 'inDepthCaseStudies', 'interdisciplinaryConnections'],
-    'geography': ['keyLawsAndPrinciples', 'inDepthCaseStudies', 'environmentalAwareness', 'interdisciplinaryConnections'],
-    'political science': ['keyFigures', 'primarySourceAnalysis', 'inDepthCaseStudies', 'interdisciplinaryConnections'],
+    'history': ['timelineOfEvents', 'keyFigures', 'primarySourceAnalysis', 'inDepthCaseStudies', 'interdisciplinaryConnections', 'categorizedProblems'],
+    'geography': ['keyLawsAndPrinciples', 'inDepthCaseStudies', 'environmentalAwareness', 'interdisciplinaryConnections', 'categorizedProblems'],
+    'political science': ['keyFigures', 'primarySourceAnalysis', 'inDepthCaseStudies', 'interdisciplinaryConnections', 'categorizedProblems'],
     'economics': ['keyLawsAndPrinciples', 'inDepthCaseStudies', 'categorizedProblems', 'interdisciplinaryConnections'],
-    'english': ['grammarSpotlight', 'literaryDeviceAnalysis', 'vocabularyDeepDive'],
-    'hindi': ['grammarSpotlight', 'literaryDeviceAnalysis', 'vocabularyDeepDive'],
+    'english': ['grammarSpotlight', 'literaryDeviceAnalysis', 'vocabularyDeepDive', 'categorizedProblems'],
+    'hindi': ['grammarSpotlight', 'literaryDeviceAnalysis', 'vocabularyDeepDive', 'categorizedProblems'],
     'computer science': ['problemSolvingTemplates', 'categorizedProblems', 'technologyIntegration'],
     'evs': ['keyLawsAndPrinciples', 'experiments', 'environmentalAwareness', 'interdisciplinaryConnections'],
     'social studies': ['timelineOfEvents', 'keyFigures', 'primarySourceAnalysis', 'inDepthCaseStudies', 'environmentalAwareness', 'interdisciplinaryConnections'],
     'accountancy': ['keyLawsAndPrinciples', 'problemSolvingTemplates', 'categorizedProblems', 'inDepthCaseStudies', 'commonMistakes'],
     'business studies': ['keyLawsAndPrinciples', 'problemSolvingTemplates', 'categorizedProblems', 'inDepthCaseStudies'],
-    'sociology': ['keyFigures', 'primarySourceAnalysis', 'inDepthCaseStudies'],
+    'sociology': ['keyFigures', 'primarySourceAnalysis', 'inDepthCaseStudies', 'categorizedProblems'],
     'robotics': ['problemSolvingTemplates', 'experiments', 'technologyIntegration', 'categorizedProblems'],
-    'ai and machine learning': ['problemSolvingTemplates', 'inDepthCaseStudies', 'technologyIntegration'],
+    'ai and machine learning': ['problemSolvingTemplates', 'inDepthCaseStudies', 'technologyIntegration', 'categorizedProblems'],
 };
 
 const getSectionsForSubject = (subjectName: string): SectionKey[] => {
@@ -437,6 +437,103 @@ const LiteraryDeviceAnalysisComponent: React.FC<{ items: LiteraryDevice[] | unde
 
 // --- END: Section Content Rendering Components ---
 
+// --- START: New Interactive Practice Components ---
+
+const InteractiveQuestion: React.FC<{
+    problem: QuestionBankItem;
+    index: number;
+    renderText: (text: string) => React.ReactNode;
+}> = ({ problem, index, renderText }) => {
+    const { t } = useLanguage();
+    const [userAnswer, setUserAnswer] = useState('');
+    const [isSubmitted, setIsSubmitted] = useState(false);
+
+    const handleSubmit = () => setIsSubmitted(true);
+    const handleTryAgain = () => {
+        setIsSubmitted(false);
+        setUserAnswer('');
+    };
+
+    const isMCQ = problem.questionType === 'MCQ';
+
+    if (isSubmitted) {
+        return (
+            <div className="bg-slate-100 dark:bg-slate-900/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700 space-y-4 animate-fade-in">
+                <p className="font-semibold text-slate-800 dark:text-slate-100">Q{index + 1}: {renderText(problem.questionText)}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 className="font-bold text-lg text-slate-700 dark:text-slate-200 mb-2">{t('yourAnswerComparison')}</h4>
+                        <div className="p-3 bg-white dark:bg-slate-800 rounded-md min-h-[100px] prose prose-sm max-w-none dark:prose-invert">
+                           <p className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{userAnswer || t('notAnswered')}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-lg text-slate-700 dark:text-slate-200 mb-2">{t('modelAnswerComparison')}</h4>
+                        <div className="p-3 bg-white dark:bg-slate-800 rounded-md min-h-[100px] space-y-4">
+                            {isMCQ ? (
+                                <>
+                                    <p><strong className="font-semibold">{t('correctAnswerLabel')}:</strong> {problem.correctAnswer}</p>
+                                    <p><strong className="font-semibold">{t('explanation')}:</strong> {problem.explanation}</p>
+                                </>
+                            ) : (
+                                <>
+                                    <div>
+                                        <h5 className="font-semibold text-sm text-slate-600 dark:text-slate-300">{t('modelAnswer')}</h5>
+                                        <MathSolutionComponent content={problem.modelAnswer} renderText={renderText} />
+                                    </div>
+                                    <div>
+                                        <h5 className="font-semibold text-sm text-slate-600 dark:text-slate-300">{t('markingScheme')}</h5>
+                                        <p className="text-xs italic">{problem.markingScheme}</p>
+                                    </div>
+                                    <div className="p-2 bg-indigo-50 dark:bg-indigo-900/40 rounded-md">
+                                        <h5 className="font-semibold text-sm text-indigo-800 dark:text-indigo-200">{t('answerWritingGuidance')}</h5>
+                                        <p className="text-sm text-indigo-700 dark:text-indigo-300 whitespace-pre-wrap">{problem.answerWritingGuidance}</p>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+                <div className="text-right">
+                    <button onClick={handleTryAgain} className="px-4 py-1.5 text-sm font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition shadow-sm">
+                        {t('tryAgain')}
+                    </button>
+                </div>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
+            <p className="font-semibold text-slate-800 dark:text-slate-100">Q{index + 1}: {renderText(problem.questionText)}</p>
+            {isMCQ ? (
+                <div className="mt-3 space-y-2">
+                    {problem.options.map(option => (
+                        <label key={option} className="flex items-center p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 cursor-pointer transition">
+                            <input type="radio" name={`q-${index}`} value={option} checked={userAnswer === option} onChange={(e) => setUserAnswer(e.target.value)} className="w-4 h-4 text-primary bg-slate-100 border-slate-300 focus:ring-primary dark:focus:ring-offset-slate-800" style={{color: 'rgb(var(--c-primary))'}} />
+                            <span className="ml-3 text-slate-700 dark:text-slate-200">{renderText(option)}</span>
+                        </label>
+                    ))}
+                </div>
+            ) : (
+                <textarea 
+                    value={userAnswer}
+                    onChange={(e) => setUserAnswer(e.target.value)}
+                    placeholder={t('enterYourAnswer')}
+                    rows={5}
+                    className="mt-3 w-full p-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/50 rounded-md focus:ring-2 focus:ring-primary focus:border-primary transition"
+                />
+            )}
+            <div className="text-right mt-3">
+                <button onClick={handleSubmit} disabled={!userAnswer.trim()} className="px-5 py-2 text-sm font-bold text-white rounded-lg btn-primary-gradient disabled:opacity-50 disabled:cursor-not-allowed">
+                    {isMCQ ? t('checkAnswer') : t('submitAnswer')}
+                </button>
+            </div>
+        </div>
+    );
+};
+
+
 interface CategorizedProblemsComponentProps {
     problems: CategorizedProblems;
     renderText: (text: string) => React.ReactNode;
@@ -446,9 +543,9 @@ const CategorizedProblemsComponent: React.FC<CategorizedProblemsComponentProps> 
     const [activeTab, setActiveTab] = useState<'conceptual' | 'application' | 'higherOrderThinking'>('conceptual');
 
     const tabs = [
-        { id: 'conceptual', label: t('conceptual'), problems: problems.conceptual },
-        { id: 'application', label: t('application'), problems: problems.application },
-        { id: 'higherOrderThinking', label: t('higherOrderThinking'), problems: problems.higherOrderThinking },
+        { id: 'conceptual', label: t('conceptual'), problems: problems.conceptual || [] },
+        { id: 'application', label: t('application'), problems: problems.application || [] },
+        { id: 'higherOrderThinking', label: t('higherOrderThinking'), problems: problems.higherOrderThinking || [] },
     ];
 
     const currentProblems = tabs.find(tab => tab.id === activeTab)?.problems || [];
@@ -458,7 +555,7 @@ const CategorizedProblemsComponent: React.FC<CategorizedProblemsComponentProps> 
             <div className="border-b border-slate-200 dark:border-slate-700">
                 <nav className="-mb-px flex space-x-4 px-4" aria-label="Tabs">
                     {tabs.map((tab) => (
-                        <button
+                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`whitespace-nowrap py-3 px-1 border-b-2 font-semibold text-sm transition-colors ${
@@ -468,28 +565,21 @@ const CategorizedProblemsComponent: React.FC<CategorizedProblemsComponentProps> 
                             }`}
                             style={{borderColor: activeTab === tab.id ? 'rgb(var(--c-primary))' : 'transparent', color: activeTab === tab.id ? 'rgb(var(--c-primary))' : ''}}
                         >
-                            {tab.label}
+                            {tab.label} ({tab.problems.length})
                         </button>
                     ))}
                 </nav>
             </div>
             <div className="p-4 space-y-4">
                 {currentProblems.map((problem, index) => (
-                    <div key={index}>
-                        <p className="font-semibold text-slate-800 dark:text-slate-100">Q: {problem.question}</p>
-                        <details className="mt-2 text-sm">
-                            <summary className="cursor-pointer font-semibold text-primary hover:text-primary-dark" style={{color: 'rgb(var(--c-primary))'}}>{t('viewSolution')}</summary>
-                            <div className="mt-2">
-                                <MathSolutionComponent content={problem.solution} renderText={renderText} />
-                            </div>
-                        </details>
-                    </div>
+                    <InteractiveQuestion key={`${activeTab}-${index}`} problem={problem} index={index} renderText={renderText} />
                 ))}
-                 {currentProblems.length === 0 && <p className="text-slate-500 dark:text-slate-400 text-sm">{t('noProblemsAvailable')}</p>}
+                 {currentProblems.length === 0 && <p className="text-slate-500 dark:text-slate-400 text-sm text-center py-4">{t('noProblemsAvailable')}</p>}
             </div>
         </div>
     );
 };
+// --- END: New Interactive Practice Components ---
 
 
 const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, student, language, onBackToChapters, onBackToSubjects, onChapterSelect, onStartTutorSession, onStartMicrolearningSession }) => {
@@ -543,6 +633,8 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
     setChapterBonusPoints(0);
   }
   
+  const gradeNumber = useMemo(() => parseInt(grade.level.replace(/\D/g, '') || '0', 10), [grade.level]);
+
   const sections = useMemo(() => {
     if (!learningModule) return [];
     
@@ -1180,6 +1272,37 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
             ))}
           </div>
         </section>
+
+        {gradeNumber >= 6 && (
+            <section className="chapter-view-section">
+                <h3 className="text-3xl font-bold text-slate-700 dark:text-slate-200 flex items-center">
+                    <QuestionMarkCircleIcon className="h-8 w-8 mr-3 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
+                    {t('questionBankTitle')}
+                </h3>
+                <div className="mt-6">
+                    {loadingSections['categorizedProblems'] ? (
+                        <div className="flex justify-center items-center p-8 bg-slate-100 dark:bg-slate-900/50 rounded-lg">
+                            <LoadingSpinner />
+                            <p className="ml-3 text-slate-600 dark:text-slate-300">{t('loadingQuestionBank')}</p>
+                        </div>
+                    ) : learningModule.categorizedProblems ? (
+                        <CategorizedProblemsComponent problems={learningModule.categorizedProblems} renderText={renderTextWithTTS} />
+                    ) : (
+                        <div className="p-6 bg-slate-100 dark:bg-slate-900/50 rounded-lg text-center">
+                            <p className="text-slate-600 dark:text-slate-300 mb-4">
+                                {t('questionBankDescription')}
+                            </p>
+                            <button
+                                onClick={() => handleLoadSection('categorizedProblems')}
+                                className="flex items-center justify-center mx-auto px-6 py-3 text-white font-bold rounded-lg btn-primary-gradient"
+                            >
+                                {t('loadPracticeProblems')}
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </section>
+        )}
 
         {learningModule.conceptMap && (
              <section className="chapter-view-section">

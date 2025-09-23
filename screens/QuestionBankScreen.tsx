@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { QuestionBankItem, Grade, Subject, Chapter } from '../types';
-import { generateQuestionBankQuestions } from '../services/questionBankService';
+import { generateQuestionBankQuestions } from '../services/geminiService';
 import { CURRICULUM } from '../data/curriculum';
 import { useLanguage } from '../contexts/Language-context';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -78,6 +78,14 @@ const QuestionCard: React.FC<{ question: QuestionBankItem }> = ({ question }) =>
                              <p className="whitespace-pre-wrap">{question.markingScheme}</p>
                         </div>
                     </details>
+                    {question.answerWritingGuidance && (
+                         <details className="text-sm">
+                            <summary className="cursor-pointer font-semibold text-primary hover:text-primary-dark" style={{color: 'rgb(var(--c-primary))'}}>{t('answerWritingGuidance')}</summary>
+                            <div className="mt-2 p-3 bg-indigo-50 dark:bg-indigo-900/40 rounded-md text-indigo-800 dark:text-indigo-200">
+                                 <p className="whitespace-pre-wrap">{question.answerWritingGuidance}</p>
+                            </div>
+                        </details>
+                    )}
                 </div>
             )}
         </div>
