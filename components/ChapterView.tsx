@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Grade, Subject, Chapter, LearningModule, QuizQuestion, NextStepRecommendation, ChapterProgress, Student, CategorizedProblems, VocabularyDeepDive, Theorem, FormulaDerivation, SolvedNumericalProblem, Formula, ProblemSolvingTemplate, CommonMistake, Experiment, TimelineEvent, KeyFigure, PrimarySourceSnippet, CaseStudy, GrammarRule, LiteraryDevice, HOTQuestion, KeyLawOrPrinciple, CulturalContext, MoralScienceCorner } from '../types';
+import { Grade, Subject, Chapter, LearningModule, QuizQuestion, NextStepRecommendation, ChapterProgress, Student, CategorizedProblems, VocabularyDeepDive, Theorem, FormulaDerivation, SolvedNumericalProblem, Formula, ProblemSolvingTemplate, CommonMistake, Experiment, TimelineEvent, KeyFigure, PrimarySourceSnippet, CaseStudy, GrammarRule, LiteraryDevice, HOTQuestion, KeyLawOrPrinciple, CulturalContext, MoralScienceCorner, Concept } from '../types';
 import * as contentService from '../services/contentService';
 import { generateQuiz, generateNextStepRecommendation, generateSectionContent, generatePrintableResource } from '../services/geminiService';
 import { getChapterProgress, saveChapterProgress } from '../services/pineconeService';
@@ -28,7 +28,7 @@ interface ChapterViewProps {
   onBackToChapters: () => void;
   onBackToSubjects: () => void;
   onChapterSelect: (chapter: Chapter) => void;
-  onStartTutorSession: () => void;
+  onStartTutorSession: (concepts: Concept[]) => void;
   onStartMicrolearningSession: (module: LearningModule) => void;
 }
 
@@ -941,6 +941,7 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
 
   const totalConcepts = learningModule?.keyConcepts.length || 0;
   const chapterProgressPercentage = totalConcepts > 0 ? (masteredConcepts / totalConcepts) * 100 : 0;
+  const isWellbeingModule = subject.name === 'Personal Growth & Well-being';
 
   if (isLoadingModule) {
     return (
@@ -1128,14 +1129,15 @@ const ChapterView: React.FC<ChapterViewProps> = ({ grade, subject, chapter, stud
           <div className="p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl shadow-lg text-white flex flex-col md:flex-row items-center gap-6">
               <ChatBubbleLeftRightIcon className="h-16 w-16 text-white/80 flex-shrink-0"/>
               <div className="text-center md:text-left">
-                  <h3 className="text-2xl font-bold">{t('doubtResolutionTitle')}</h3>
-                  <p className="mt-1 opacity-90">{t('doubtResolutionDescription')}</p>
+                  <h3 className="text-2xl font-bold">{t('aiTutorSessionTitle')}</h3>
+                  <p className="mt-1 opacity-90">{t('aiTutorSessionDescription')}</p>
               </div>
               <button 
-                  onClick={onStartTutorSession} 
-                  className="mt-4 md:mt-0 md:ml-auto flex-shrink-0 px-6 py-3 bg-white text-indigo-600 font-bold rounded-lg shadow-md hover:bg-indigo-50 transition-colors transform hover:scale-105"
+                  onClick={() => onStartTutorSession(learningModule.keyConcepts)} 
+                  disabled={isWellbeingModule}
+                  className="mt-4 md:mt-0 md:ml-auto flex-shrink-0 px-6 py-3 bg-white text-indigo-600 font-bold rounded-lg shadow-md hover:bg-indigo-50 transition-colors transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                  {t('startDoubtSession')}
+                  {t('startTutorSessionButton')}
               </button>
           </div>
         </section>

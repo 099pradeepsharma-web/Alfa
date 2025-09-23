@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Grade, Subject, Chapter, Student, LearningModule } from './types';
+import { Grade, Subject, Chapter, Student, LearningModule, Concept } from './types';
 import { getCurriculum } from './services/curriculumService';
 import { MOCK_STUDENTS } from './data/mockData';
 import { createTutorChat } from './services/geminiService';
@@ -51,6 +51,7 @@ const App: React.FC = () => {
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [tutorChat, setTutorChat] = useState<Chat | null>(null);
   const [activeMicrolearningModule, setActiveMicrolearningModule] = useState<LearningModule | null>(null);
+  const [postLoginDestination, setPostLoginDestination] = useState<{ grade: Grade, subject: Subject, chapter: Chapter } | null>(null);
 
 
   useEffect(() => {
@@ -103,6 +104,12 @@ const App: React.FC = () => {
     setSelectedChapter(null);
     setActiveStudent(null);
   }, [appState]);
+
+  const handleBackToGrades = useCallback(() => {
+    setSelectedGrade(null);
+    setSelectedSubject(null);
+    setSelectedChapter(null);
+  }, []);
   
   const handleBackToDashboard = useCallback(() => {
     setStudentView('dashboard');
@@ -159,9 +166,9 @@ const App: React.FC = () => {
     setStudentView('wellbeing');
   }, []);
   
-  const handleStartTutorSession = useCallback(() => {
+  const handleStartTutorSession = useCallback((concepts: Concept[]) => {
     if (!selectedGrade || !selectedSubject || !selectedChapter) return;
-    const chatSession = createTutorChat(selectedGrade.level, selectedSubject.name, selectedChapter.title, language);
+    const chatSession = createTutorChat(selectedGrade.level, selectedSubject.name, selectedChapter.title, language, concepts);
     setTutorChat(chatSession);
     setStudentView('tutor');
 }, [selectedGrade, selectedSubject, selectedChapter, language]);
@@ -210,13 +217,30 @@ const App: React.FC = () => {
     setStudentView('career_guidance');
   }, []);
 
+  const handleSearchSelect = useCallback((grade: Grade, subject: Subject, chapter: Chapter) => {
+    if (isLoggedIn && currentUser) {
+        setSelectedGrade(grade);
+        setSelectedSubject(subject);
+        setSelectedChapter(chapter);
+        setStudentView('browse');
+        setActiveMicrolearningModule(null);
+        if (appState !== 'student_flow') {
+            setAppState('student_flow');
+        }
+    } else {
+        // Not logged in, store destination and show login
+        setPostLoginDestination({ grade, subject, chapter });
+        setAppState('student_flow');
+    }
+  }, [isLoggedIn, currentUser, appState]);
+
 
   const renderStudentBrowseFlow = () => {
     if (!selectedGrade) {
       return <GradeSelector grades={curriculum} onSelect={handleGradeSelect} onBack={handleBackToDashboard} />;
     }
     if (!selectedSubject) {
-        return <SubjectSelector grade={selectedGrade} onSubjectSelect={handleSubjectSelect} onChapterSelect={handleChapterSelect} onBack={handleBackToDashboard} />;
+        return <SubjectSelector grade={selectedGrade} onSubjectSelect={handleSubjectSelect} onChapterSelect={handleChapterSelect} onBack={handleBackToGrades} />;
     }
     if (!selectedChapter) {
         return <SubjectSelector grade={selectedGrade} selectedSubject={selectedSubject} onSubjectSelect={handleSubjectSelect} onChapterSelect={handleChapterSelect} onBack={handleBackToSubjects} />;
@@ -244,6 +268,15 @@ const App: React.FC = () => {
     }
     if (!isLoggedIn || !currentUser) {
         return <LoginScreen grades={curriculum} onBack={() => setAppState('role_selection')} />;
+    }
+
+    if (postLoginDestination) {
+        setSelectedGrade(postLoginDestination.grade);
+        setSelectedSubject(postLoginDestination.subject);
+        setSelectedChapter(postLoginDestination.chapter);
+        setStudentView('browse');
+        setPostLoginDestination(null); // Clear destination
+        return <div className="flex justify-center items-center h-64"><LoadingSpinner /></div>;
     }
 
     if (studentView === 'dashboard') {
@@ -362,6 +395,8 @@ const App: React.FC = () => {
       <Header 
         onGoHome={handleGoHome} 
         showHomeButton={appState !== 'role_selection'} 
+        curriculum={curriculum}
+        onSearchSelect={handleSearchSelect}
       />
       <main className="container mx-auto p-4 md:p-8">
         {renderContent()}

@@ -12,34 +12,42 @@
     <style>
       /******************************************************************
        * Alfanumrik Design System & Style Guide
-       * Version: 2.2 (Student-Focused UI Enhancement)
+       * Version: 3.0 (Vibrant Engagement Palette)
        *
        * This system is designed for a K-12 educational app, prioritizing
-       * readability, accessibility (WCAG AAA contrast), and an engaging,
-       * study-optimized learning environment. It includes a full
-       * dark/light mode implementation and responsive considerations.
+       * readability, accessibility, and an engaging, study-optimized
+       * learning environment with a vibrant new color palette.
        ******************************************************************/
 
       /* 1. DESIGN TOKENS (CSS VARIABLES) */
       :root {
-        /* 1.1. LIGHT MODE COLORS */
-        --c-bg-primary: 250 251 252;      /* #FAFBFC (Soft off-white) */
-        --c-bg-secondary: 245 247 250;   /* #F5F7FA (Subtle grey for cards/sections) */
+        /* 1.1. LIGHT MODE COLORS (NEW VIBRANT PALETTE) */
+        --c-bg-primary: 248 249 251;      /* #F8F9FB (Very light grey) */
+        --c-bg-secondary: 239 242 245;   /* #EFF2F5 (Subtle grey for cards/sections) */
         --c-surface: 255 255 255;        /* #FFFFFF (Pure white for content cards) */
-        --c-bg-accent: 232 244 253;      /* #E8F4FD (Light blue for highlights) */
         
-        --c-text-primary: 26 32 44;      /* #1A202C (Dark charcoal, high contrast) */
+        /* Primary (Blue) */
+        --c-text-accent: 33 150 243;     /* #2196F3 (Bright Blue) */
+        --c-button-primary-bg: 33 150 243; /* #2196F3 */
+        --c-bg-accent: 227 242 253;      /* #E3F2FD (Very light blue) */
+        
+        --c-text-primary: 26 32 44;      /* #1A202C (Dark charcoal for high contrast) */
         --c-text-secondary: 74 85 104;   /* #4A5568 (Medium grey for descriptions) */
-        --c-text-accent: 43 108 176;     /* #2B6CB0 (Educational blue for links/actions) */
         
-        --c-success: 56 161 105;         /* #38A169 (Green for correct answers) */
-        --c-error: 229 62 62;           /* #E53E3E (Red for mistakes) */
-        --c-streak-text: 161 98 7;       /* amber-700 */
+        /* Supporting Palette */
+        --c-success: 76 175 80;         /* #4CAF50 (Success Green) */
+        --c-error: 239 68 68;           /* #EF4444 (Softer Red) */
+        --c-highlight: 255 241 118;      /* #FFF176 (Soft Yellow) */
+        --c-purple: 156 39 176;         /* #9C27B0 (Accent Purple) */
+        --c-pink: 233 30 99;            /* #E91E63 (Gentle Pink) */
+        --c-teal: 0 150 136;            /* #009688 (Calming Teal) */
+        
+        /* Achievements & Streaks (Orange) */
+        --c-streak-text: 194 99 0;       /* Darker shade of #FF9500 for text */
+        --c-streak-bg-start: 255 247 237;/* Light orange */
+        --c-streak-bg-end: 254 227 195;  /* Darker light orange */
         
         --c-border: 226 232 240;        /* #E2E8F0 */
-
-        /* 1.2. INTERACTIVE ELEMENT COLORS (LIGHT) */
-        --c-button-primary-bg: 59 130 246;     /* #3B82F6 */
         --c-button-primary-text: 255 255 255;  /* #FFFFFF */
 
         /* 1.3. Mapped variables for component compatibility */
@@ -55,37 +63,42 @@
         --font-mono: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
 
         /* 1.5. COMPONENT TOKENS */
-        --radius-card: 16px; /* Increased for a softer look */
+        --radius-card: 16px;
         --radius-button: 8px;
         --shadow-card: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.07);
         --shadow-card-hover: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-
-        /* 1.6 NEW: Gradient & Highlight Colors */
-        --c-streak-bg-start: 254 249 195; /* amber-100 */
-        --c-streak-bg-end: 253 224 71;    /* amber-300 */
       }
 
       .dark {
-        /* 2.1. DARK MODE COLORS (REFINED FOR BETTER VISIBILITY) */
-        --c-bg-primary: 15 23 42;        /* #0F172A (Deep slate, not pure black) */
-        --c-bg-secondary: 23 33 51;      /* #172133 (Deeper slate for hover/secondary areas) */
-        --c-surface: 30 41 59;           /* #1E293B (Slightly lighter card background for contrast) */
-        --c-bg-accent: 30 58 138;        /* #1E3A8A (Deep blue for highlights) */
-
-        --c-text-primary: 248 250 252;   /* #F8FAFC (Warm white) */
-        --c-text-secondary: 203 213 225; /* #CBD5E1 (Light grey for descriptions) */
-        --c-text-accent: 96 165 250;     /* #60A5FA (Bright blue for interactive elements) */
+        /* 2.1. DARK MODE COLORS (NEW VIBRANT PALETTE) */
+        --c-bg-primary: 17 24 39;        /* #111827 (Deep navy, not pure black) */
+        --c-bg-secondary: 31 41 55;      /* #1F2937 (Slightly lighter navy) */
+        --c-surface: 31 41 55;           /* #1F2937 (Card background) */
         
-        --c-success: 52 211 153;         /* #34D399 (Bright green) */
-        --c-error: 248 113 113;          /* #F87171 (Coral red) */
-        --c-streak-text: 254 240 138;    /* amber-200 */
+        /* Primary (Blue) */
+        --c-text-accent: 96 165 250;     /* #60A5FA (Bright, accessible blue) */
+        --c-button-primary-bg: 59 130 246; /* #3B82F6 */
+        --c-bg-accent: 29 78 216;        /* #1D4ED8 (Deep blue highlight) */
 
-        --c-border: 51 65 85;            /* #334155 (Softer border for a cleaner look) */
+        --c-text-primary: 243 244 246;   /* #F3F4F6 (Soft off-white) */
+        --c-text-secondary: 209 213 219; /* #D1D5DB (Light grey) */
+        
+        /* Supporting Palette */
+        --c-success: 52 211 153;         /* #34D399 (Bright Green) */
+        --c-error: 248 113 113;          /* #F87171 (Coral Red) */
+        --c-highlight: 253 224 71;       /* #FDE047 (Muted Yellow) */
+        --c-purple: 192 132 252;         /* #C084FC (Bright Purple) */
+        --c-pink: 244 114 182;           /* #F472B6 (Bright Pink) */
+        --c-teal: 45 212 191;            /* #2DD4BF (Bright Teal) */
+        
+        /* Achievements & Streaks (Orange) */
+        --c-streak-text: 251 146 60;     /* #FB923C (Bright Orange) */
+        --c-streak-bg-start: 60 30 0;    /* Dark orange */
+        --c-streak-bg-end: 124 58 20;    /* Lighter dark orange */
 
-        /* 2.2. INTERACTIVE ELEMENT COLORS (DARK) */
-        --c-button-primary-bg: 37 99 235;    /* #2563EB */
+        --c-border: 55 65 81;            /* #374151 (Softer border) */
         --c-button-primary-text: 248 250 252; /* #F8FAFC */
-
+        
         /* 2.3. Mapped variables for component compatibility */
         --c-primary: var(--c-text-accent);
         --c-primary-dark: var(--c-button-primary-bg);
@@ -97,19 +110,13 @@
         /* 2.4. COMPONENT TOKENS (DARK) */
         --shadow-card: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -4px rgba(0,0,0,0.3);
         --shadow-card-hover: 0 20px 25px -5px rgba(0,0,0,0.4), 0 8px 10px -6px rgba(0,0,0,0.4);
-
-         /* 2.5 NEW: Gradient & Highlight Colors (Dark) */
-        --c-streak-bg-start: 59 45 6;    /* custom dark amber */
-        --c-streak-bg-end: 146 64 14;   /* custom dark amber */
       }
       
       /* 3. TYPOGRAPHY SYSTEM DOCUMENTATION */
       /* ... (no changes) */
       
       /* 4. AGE-SPECIFIC & ACCESSIBILITY STYLES */
-      html.theme-young {
-        font-size: 110%; 
-      }
+      html.theme-young { font-size: 110%; }
       
       /* 5. BASE STYLES */
       ::selection {
@@ -174,744 +181,183 @@
       }
       
       .progress-bar-gradient {
-         background-color: rgb(var(--c-text-accent));
+         background-color: rgb(var(--c-success));
       }
 
       /* 7. ANIMATIONS */
-      @keyframes fade-in {
-        0% { opacity: 0; transform: translateY(10px); }
-        100% { opacity: 1; transform: translateY(0); }
-      }
-      .animate-fade-in {
-        animation: fade-in 0.5s ease-out forwards;
-      }
-      
-      @keyframes confetti-fall {
-        0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
-        100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
-      }
-      .confetti {
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        background-color: #f00; /* Will be overridden by inline styles */
-        opacity: 0;
-        animation: confetti-fall 5s linear infinite;
-      }
-      
-      @keyframes logo-float {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-3px); }
-      }
-      @keyframes logo-glow {
-        0%, 100% { filter: drop-shadow(0 0 3px rgba(var(--c-text-accent), 0.4)); }
-        50% { filter: drop-shadow(0 0 6px rgba(var(--c-text-accent), 0.6)); }
-      }
+      @keyframes fade-in { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+      .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+      @keyframes confetti-fall { 0% { transform: translateY(-100%) rotate(0deg); opacity: 1; } 100% { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+      .confetti { position: absolute; width: 10px; height: 10px; background-color: #f00; opacity: 0; animation: confetti-fall 5s linear infinite; }
+      @keyframes logo-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+      @keyframes logo-glow { 0%, 100% { filter: drop-shadow(0 0 3px rgba(var(--c-text-accent), 0.4)); } 50% { filter: drop-shadow(0 0 6px rgba(var(--c-text-accent), 0.6)); } }
 
 
       /* 8. TTS HIGHLIGHT */
        .tts-highlight {
-        background-color: rgb(var(--c-primary-light));
-        color: rgb(var(--c-primary-dark));
+        background-color: rgba(var(--c-highlight), 0.6);
+        color: rgb(var(--c-text-primary));
         padding: 2px 4px;
         border-radius: 4px;
         transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
       }
       .dark .tts-highlight {
-          background-color: rgb(var(--c-bg-accent));
+          background-color: rgba(var(--c-highlight), 0.25);
           color: rgb(var(--c-text-primary));
       }
 
       /* 9. UI REFINEMENTS & ACCESSIBILITY */
       
       /* Custom Scrollbars */
-      ::-webkit-scrollbar {
-        width: 12px;
-        height: 12px;
-      }
-      ::-webkit-scrollbar-track {
-        background-color: rgba(var(--c-bg-secondary), 0.5);
-      }
-      ::-webkit-scrollbar-thumb {
-        background-color: rgb(var(--c-border));
-        border-radius: 10px;
-        border: 3px solid rgba(var(--c-bg-secondary), 0.5);
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background-color: rgb(var(--c-text-accent));
-      }
+      ::-webkit-scrollbar { width: 12px; height: 12px; }
+      ::-webkit-scrollbar-track { background-color: rgba(var(--c-bg-secondary), 0.5); }
+      ::-webkit-scrollbar-thumb { background-color: rgb(var(--c-border)); border-radius: 10px; border: 3px solid rgba(var(--c-bg-secondary), 0.5); }
+      ::-webkit-scrollbar-thumb:hover { background-color: rgb(var(--c-text-accent)); }
 
       /* Accessible Focus Ring */
-      *:focus-visible {
-        outline: 2px solid rgba(var(--c-text-accent), 0.8) !important;
-        outline-offset: 2px !important;
-        border-radius: var(--radius-button) !important;
-      }
-
-      /* NEW: Breadcrumb link hover for better affordance */
-      .breadcrumb-link:hover {
-        text-decoration: underline;
-        color: rgb(var(--c-primary));
-      }
-
-      /* NEW: Increased spacing for section headers for better readability */
-      .chapter-view-section > h3 {
-          margin-bottom: 2rem !important;
-      }
-
-      /* Visually hidden but accessible to screen readers */
-      .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border-width: 0;
-      }
+      *:focus-visible { outline: 2px solid rgba(var(--c-text-accent), 0.8) !important; outline-offset: 2px !important; border-radius: var(--radius-button) !important; }
+      .breadcrumb-link:hover { text-decoration: underline; color: rgb(var(--c-primary)); }
+      .chapter-view-section > h3 { margin-bottom: 2rem !important; }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
       
       /* 10. VIDEO SIMULATION PLAYER */
-      .video-simulation-card-gradient {
-          background: linear-gradient(135deg, #4f46e5, #7c3aed);
-      }
-      .dark .video-simulation-card-gradient {
-          background: linear-gradient(135deg, #3730a3, #5b21b6);
-      }
+      .video-simulation-card-gradient { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
+      .dark .video-simulation-card-gradient { background: linear-gradient(135deg, #3730a3, #5b21b6); }
+      .video-loading-message { animation: pulse-text 3s infinite ease-in-out; }
+      @keyframes pulse-text { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.02); } }
 
-      .video-loading-message {
-          animation: pulse-text 3s infinite ease-in-out;
-      }
-
-      @keyframes pulse-text {
-        0%, 100% { opacity: 0.7; transform: scale(1); }
-        50% { opacity: 1; transform: scale(1.02); }
-      }
-
-      /* Add styles for the typing indicator in chat bubbles */
-      .chat-bubble {
-          padding: 0.75rem 1rem;
-          border-radius: 1.25rem;
-          max-width: 80%;
-          word-wrap: break-word;
-      }
-      .user-bubble {
-          background-color: rgb(var(--c-primary-dark));
-          color: white;
-          border-bottom-right-radius: 0.25rem;
-      }
-      .fitto-bubble {
-          background-color: rgb(var(--c-bg-card-hover));
-          color: rgb(var(--c-text-primary));
-          border-bottom-left-radius: 0.25rem;
-      }
-      .typing-indicator {
-          display: flex;
-          align-items: center;
-          padding: 0.5rem;
-      }
-      .typing-indicator span {
-          height: 8px;
-          width: 8px;
-          background-color: rgba(var(--c-text-secondary), 0.7);
-          border-radius: 50%;
-          margin: 0 2px;
-          animation: typing-bounce 1.2s infinite ease-in-out;
-      }
+      /* CHAT BUBBLES */
+      .chat-bubble { padding: 0.75rem 1rem; border-radius: 1.25rem; max-width: 80%; word-wrap: break-word; }
+      .user-bubble { background-color: rgb(var(--c-primary-dark)); color: white; border-bottom-right-radius: 0.25rem; }
+      .fitto-bubble { background-color: rgb(var(--c-bg-card-hover)); color: rgb(var(--c-text-primary)); border-bottom-left-radius: 0.25rem; }
+      .typing-indicator { display: flex; align-items: center; padding: 0.5rem; }
+      .typing-indicator span { height: 8px; width: 8px; background-color: rgba(var(--c-text-secondary), 0.7); border-radius: 50%; margin: 0 2px; animation: typing-bounce 1.2s infinite ease-in-out; }
       .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
       .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-      @keyframes typing-bounce {
-          0%, 80%, 100% { transform: scale(0); }
-          40% { transform: scale(1.0); }
-      }
+      @keyframes typing-bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
 
       /* 11. FITTO AVATAR STYLES */
-      .fitto-avatar {
-          background-color: rgb(var(--c-primary));
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          transition: all 0.3s ease;
-      }
-      .fitto-eye {
-          background-color: white;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-          position: relative;
-          transition: all 0.3s ease;
-      }
-      .fitto-avatar.thinking .fitto-eye {
-          animation: fitto-thinking 1.5s infinite;
-      }
-      @keyframes fitto-thinking {
-          0%, 100% { transform: scale(1) rotate(0deg); }
-          25% { transform: scale(0.9) rotate(-15deg); }
-          50% { transform: scale(1) rotate(0deg); }
-          75% { transform: scale(0.9) rotate(15deg); }
-      }
-      .fitto-avatar.speaking .fitto-eye {
-          transform: scale(1.05);
-      }
-      .waveform-bar {
-          width: 20%;
-          height: 10%;
-          background-color: rgb(var(--c-primary-dark));
-          margin: 0 1px;
-          animation: waveform-speak 1s infinite ease-in-out alternate;
-      }
+      .fitto-avatar { background-color: rgb(var(--c-primary)); border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; transition: all 0.3s ease; }
+      .fitto-eye { background-color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; transition: all 0.3s ease; }
+      .fitto-avatar.thinking .fitto-eye { animation: fitto-thinking 1.5s infinite; }
+      @keyframes fitto-thinking { 0%, 100% { transform: scale(1) rotate(0deg); } 25% { transform: scale(0.9) rotate(-15deg); } 50% { transform: scale(1) rotate(0deg); } 75% { transform: scale(0.9) rotate(15deg); } }
+      .fitto-avatar.speaking .fitto-eye { transform: scale(1.05); }
+      .waveform-bar { width: 20%; height: 10%; background-color: rgb(var(--c-primary-dark)); margin: 0 1px; animation: waveform-speak 1s infinite ease-in-out alternate; }
       .waveform-bar:nth-child(1) { animation-delay: 0s; }
       .waveform-bar:nth-child(2) { animation-delay: 0.2s; }
       .waveform-bar:nth-child(3) { animation-delay: 0.4s; }
-      @keyframes waveform-speak {
-          from { height: 10%; } to { height: 60%; }
-      }
-      .fitto-avatar.celebrating {
-          animation: fitto-celebrate-jump 0.5s ease-in-out;
-      }
-      @keyframes fitto-celebrate-jump {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-      }
+      @keyframes waveform-speak { from { height: 10%; } to { height: 60%; } }
+      .fitto-avatar.celebrating { animation: fitto-celebrate-jump 0.5s ease-in-out; }
+      @keyframes fitto-celebrate-jump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
       .fitto-confetti-container { position: absolute; width: 100%; height: 100%; }
-      .fitto-confetti-particle {
-          position: absolute;
-          top: 50%; left: 50%;
-          width: 5px; height: 5px;
-          border-radius: 50%;
-          opacity: 0;
-          animation: fitto-confetti-burst 0.5s ease-out forwards;
-      }
-      @keyframes fitto-confetti-burst {
-          from { transform: translate(-50%, -50%) scale(0); opacity: 1; }
-          to { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1); opacity: 0; }
-      }
-      .fitto-avatar.encouraging .fitto-eye {
-          transform: scale(0.95);
-          border-radius: 40% 60% 40% 60% / 60% 40% 60% 40%;
-          animation: fitto-encouraging-wobble 2s infinite ease-in-out;
-      }
-      @keyframes fitto-encouraging-wobble {
-          0%, 100% { transform: rotate(0deg); }
-          25% { transform: rotate(-5deg); }
-          75% { transform: rotate(5deg); }
-      }
+      .fitto-confetti-particle { position: absolute; top: 50%; left: 50%; width: 5px; height: 5px; border-radius: 50%; opacity: 0; animation: fitto-confetti-burst 0.5s ease-out forwards; }
+      @keyframes fitto-confetti-burst { from { transform: translate(-50%, -50%) scale(0); opacity: 1; } to { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1); opacity: 0; } }
+      .fitto-avatar.encouraging .fitto-eye { transform: scale(0.95); border-radius: 40% 60% 40% 60% / 60% 40% 60% 40%; animation: fitto-encouraging-wobble 2s infinite ease-in-out; }
+      @keyframes fitto-encouraging-wobble { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-5deg); } 75% { transform: rotate(5deg); } }
       
       /* 12. DASHBOARD CARDS & TESTIMONIAL */
-      .dashboard-highlight-card {
-        position: relative; /* For the glowing border pseudo-element */
-        transition: all 0.3s ease-in-out;
-        cursor: pointer;
-        background-color: rgb(var(--c-bg-card));
-        border: 1px solid rgb(var(--c-border));
-        z-index: 1; /* Ensure card content is above any background elements */
-      }
-      /* REFINED: Glowing "aurora" border effect on hover */
-      .dashboard-highlight-card::before {
-        content: '';
-        position: absolute;
-        inset: -1px;
-        border-radius: calc(var(--radius-card) + 1px); /* Match parent's radius */
-        background: linear-gradient(120deg, transparent, rgba(var(--c-primary), 0.8), transparent);
-        opacity: 0;
-        transition: opacity 0.4s ease;
-        z-index: -1;
-        background-size: 200% 200%;
-        animation: gradient-pan 4s linear infinite;
-      }
-      .dashboard-highlight-card:hover::before {
-        opacity: 1;
-      }
-      .dashboard-highlight-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-card-hover);
-        border-color: transparent; /* Hide original border to reveal glow */
-      }
-      @keyframes gradient-pan {
-        0% { background-position: 150% 50%; }
-        50% { background-position: -50% 50%; }
-        100% { background-position: 150% 50%; }
-      }
+      .dashboard-highlight-card { position: relative; transition: all 0.3s ease-in-out; cursor: pointer; background-color: rgb(var(--c-bg-card)); border: 1px solid rgb(var(--c-border)); z-index: 1; }
+      .dashboard-highlight-card::before { content: ''; position: absolute; inset: -1px; border-radius: calc(var(--radius-card) + 1px); background: linear-gradient(120deg, transparent, rgba(var(--c-primary), 0.8), transparent); opacity: 0; transition: opacity 0.4s ease; z-index: -1; background-size: 200% 200%; animation: gradient-pan 4s linear infinite; }
+      .dashboard-highlight-card:hover::before { opacity: 1; }
+      .dashboard-highlight-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-card-hover); border-color: transparent; }
+      @keyframes gradient-pan { 0% { background-position: 150% 50%; } 50% { background-position: -50% 50%; } 100% { background-position: 150% 50%; } }
 
-      .streak-card-gradient {
-          background-image: linear-gradient(135deg, rgb(var(--c-streak-bg-start)), rgb(var(--c-streak-bg-end)));
-      }
+      .streak-card-gradient { background-image: linear-gradient(135deg, rgb(var(--c-streak-bg-start)), rgb(var(--c-streak-bg-end))); }
       
-      .mission-card-gradient {
-          position: relative;
-          overflow: hidden;
-      }
-      /* REFINED: Dynamic, rotating gradient background for the main mission card */
-      .mission-card-gradient::after {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background-image: 
-              radial-gradient(circle at 20% 20%, rgba(var(--c-primary), 0.15), transparent 35%),
-              radial-gradient(circle at 80% 70%, rgba(var(--c-success), 0.1), transparent 35%);
-          animation: rotate-gradient 20s linear infinite;
-          z-index: 0;
-      }
-      /* Ensure content stays above the pseudo-element */
-      .mission-card-gradient > * {
-          position: relative;
-          z-index: 1;
-      }
-      @keyframes rotate-gradient {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-      }
+      .mission-card-gradient { position: relative; overflow: hidden; }
+      .mission-card-gradient::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background-image: radial-gradient(circle at 20% 20%, rgba(var(--c-primary), 0.15), transparent 35%), radial-gradient(circle at 80% 70%, rgba(var(--c-success), 0.1), transparent 35%); animation: rotate-gradient 20s linear infinite; z-index: 0; }
+      .mission-card-gradient > * { position: relative; z-index: 1; }
+      @keyframes rotate-gradient { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-      .smart-card-confidence-bar {
-          position: absolute;
-          top: 0;
-          left: 0;
-          height: 6px;
-          width: var(--confidence, 0%);
-          background-color: var(--confidence-color, rgb(var(--c-success)));
-          border-radius: 6px;
-          transition: width 0.5s ease-out;
-      }
-      .ai-generated-tag {
-          display: inline-flex;
-          align-items: center;
-          background-color: rgba(var(--c-primary), 0.1);
-          color: rgb(var(--c-primary-dark));
-          font-size: 0.75rem;
-          font-weight: 600;
-          padding: 4px 8px;
-          border-radius: 9999px;
-      }
-      .dark .ai-generated-tag {
-          background-color: rgba(var(--c-primary), 0.2);
-          color: rgb(var(--c-primary-light));
-      }
-      .difficulty-dots {
-          display: flex;
-          gap: 4px;
-      }
-      .difficulty-dot {
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-      }
-      .activity-icon-bg {
-          padding: 0.75rem;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-      }
+      .smart-card-confidence-bar { position: absolute; top: 0; left: 0; height: 6px; width: var(--confidence, 0%); background-color: var(--confidence-color, rgb(var(--c-success))); border-radius: 6px; transition: width 0.5s ease-out; }
+      .ai-generated-tag { display: inline-flex; align-items: center; background-color: rgba(var(--c-purple), 0.1); color: rgb(var(--c-purple)); font-size: 0.75rem; font-weight: 600; padding: 4px 8px; border-radius: 9999px; }
+      .dark .ai-generated-tag { background-color: rgba(var(--c-purple), 0.2); color: rgb(var(--c-purple)); }
+      .difficulty-dots { display: flex; gap: 4px; }
+      .difficulty-dot { width: 10px; height: 10px; border-radius: 50%; }
+      .activity-icon-bg { padding: 0.75rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
       .activity-icon-bg-academic { background-color: rgba(var(--c-primary), 0.1); color: rgb(var(--c-primary-dark)); }
-      .activity-icon-bg-iq { background-color: rgba(168, 85, 247, 0.1); color: #9333ea; }
-      .activity-icon-bg-eq { background-color: rgba(236, 72, 153, 0.1); color: #db2777; }
+      .activity-icon-bg-iq { background-color: rgba(var(--c-purple), 0.1); color: rgb(var(--c-purple)); }
+      .dark .activity-icon-bg-iq { color: rgb(var(--c-purple)); }
+      .activity-icon-bg-eq { background-color: rgba(var(--c-pink), 0.1); color: rgb(var(--c-pink)); }
+      .dark .activity-icon-bg-eq { color: rgb(var(--c-pink)); }
 
-      /* NEW: Score badges for activity feed */
-      .activity-score {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          font-size: 0.875rem; /* text-sm */
-          padding: 0.25rem 0.5rem;
-          min-width: 55px;
-          border-radius: var(--radius-button);
-          border: 1px solid;
-      }
-      .activity-score-high {
-          color: rgb(var(--c-success));
-          background-color: rgba(var(--c-success), 0.1);
-          border-color: rgba(var(--c-success), 0.2);
-      }
-      .activity-score-medium {
-          color: #D97706; /* amber-600 */
-          background-color: #FEF3C7; /* amber-100 */
-          border-color: #FDE68A; /* amber-200 */
-      }
-      .dark .activity-score-medium {
-          color: #FBBF24; /* amber-400 */
-          background-color: #45330E;
-          border-color: #78350F; /* amber-900 */
-      }
-      .activity-score-low {
-          color: rgb(var(--c-error));
-          background-color: rgba(var(--c-error), 0.1);
-          border-color: rgba(var(--c-error), 0.2);
-      }
+      .activity-score { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.875rem; padding: 0.25rem 0.5rem; min-width: 55px; border-radius: var(--radius-button); border: 1px solid; }
+      .activity-score-high { color: rgb(var(--c-success)); background-color: rgba(var(--c-success), 0.1); border-color: rgba(var(--c-success), 0.2); }
+      .activity-score-medium { color: rgb(var(--c-streak-text)); background-color: rgb(var(--c-streak-bg-start)); border-color: rgb(var(--c-streak-bg-end)); }
+      .dark .activity-score-medium { color: rgb(var(--c-streak-text)); background-color: rgba(var(--c-streak-bg-start), 0.1); border-color: rgba(var(--c-streak-bg-end), 0.5); }
+      .activity-score-low { color: rgb(var(--c-error)); background-color: rgba(var(--c-error), 0.1); border-color: rgba(var(--c-error), 0.2); }
 
-      .testimonial-card {
-        background-color: rgba(var(--c-primary-light), 0.3);
-        border: 1px solid rgba(var(--c-primary), 0.2);
-        border-radius: var(--radius-card);
-        padding: 1.5rem;
-        position: relative;
-        text-align: center;
-        overflow: hidden;
-      }
-      .dark .testimonial-card {
-        background-color: rgba(var(--c-bg-accent), 0.1);
-        border-color: rgba(var(--c-primary), 0.3);
-      }
-      .testimonial-card .quote-icon {
-        position: absolute;
-        top: 1rem;
-        left: 1rem;
-        width: 3rem;
-        height: 3rem;
-        color: rgba(var(--c-primary), 0.2);
-        opacity: 0.8;
-      }
-      .testimonial-quote {
-        font-size: 1.125rem; /* text-lg */
-        font-style: italic;
-        font-weight: 500;
-        color: rgb(var(--c-text-primary));
-        line-height: 1.6;
-        margin: 0;
-        position: relative;
-        z-index: 1;
-      }
-      .testimonial-cite {
-        display: block;
-        margin-top: 1rem;
-        font-style: normal;
-        font-weight: 600;
-        color: rgb(var(--c-text-secondary));
-      }
-      .testimonial-cite strong {
-        color: rgb(var(--c-text-primary));
-      }
+      .testimonial-card { background-color: rgba(var(--c-teal), 0.1); border: 1px solid rgba(var(--c-teal), 0.2); border-radius: var(--radius-card); padding: 1.5rem; position: relative; text-align: center; overflow: hidden; }
+      .dark .testimonial-card { background-color: rgba(var(--c-teal), 0.1); border-color: rgba(var(--c-teal), 0.3); }
+      .testimonial-card .quote-icon { position: absolute; top: 1rem; left: 1rem; width: 3rem; height: 3rem; color: rgba(var(--c-teal), 0.2); opacity: 0.8; }
+      .testimonial-quote { font-size: 1.125rem; font-style: italic; font-weight: 500; color: rgb(var(--c-text-primary)); line-height: 1.6; margin: 0; position: relative; z-index: 1; }
+      .testimonial-cite { display: block; margin-top: 1rem; font-style: normal; font-weight: 600; color: rgb(var(--c-text-secondary)); }
+      .testimonial-cite strong { color: rgb(var(--c-text-primary)); }
 
-      /* 13. NEW: Mathematical Content Presentation (Textbook Style) */
-      .math-solution-box {
-        background-color: rgba(var(--c-bg-secondary), 0.5);
-        border: 1px solid rgb(var(--c-border));
-        border-radius: var(--radius-button);
-        padding: 1.5rem;
-        font-family: var(--font-mono);
-        font-size: 1rem;
-        line-height: 2;
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 0.25rem 1rem;
-        align-items: baseline;
-        overflow-x: auto;
-      }
-      .dark .math-solution-box {
-        background-color: rgba(var(--c-bg-primary), 0.8);
-      }
-      .math-solution-label {
-        grid-column: 1 / -1;
-        font-weight: 700;
-        color: rgb(var(--c-primary-dark));
-        margin-top: 0.5rem;
-        margin-bottom: 0.25rem;
-      }
-      .math-solution-lhs {
-        grid-column: 1;
-        text-align: right;
-        color: rgb(var(--c-text-secondary));
-      }
-      .math-solution-rhs {
-        grid-column: 2;
-        text-align: left;
-        font-weight: 600;
-        color: rgb(var(--c-text-primary));
-      }
-      .math-solution-explanation {
-        grid-column: 1 / -1;
-        color: rgb(var(--c-text-secondary));
-        font-style: italic;
-        padding: 0.25rem 0;
-      }
-      .math-solution-final-answer {
-        grid-column: 1 / -1;
-        background-color: rgba(var(--c-success), 0.1);
-        border-left: 4px solid rgb(var(--c-success));
-        padding: 0.75rem 1.25rem;
-        margin-top: 1rem;
-        font-weight: 700;
-        color: rgb(var(--c-success));
-      }
-      .dark .math-solution-final-answer {
-        background-color: rgba(var(--c-success), 0.15);
-      }
+      /* 13. MATHEMATICAL CONTENT */
+      .math-solution-box { background-color: rgba(var(--c-bg-secondary), 0.5); border: 1px solid rgb(var(--c-border)); border-radius: var(--radius-button); padding: 1.5rem; font-family: var(--font-mono); font-size: 1rem; line-height: 2; display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 1rem; align-items: baseline; overflow-x: auto; }
+      .dark .math-solution-box { background-color: rgba(var(--c-bg-primary), 0.8); }
+      .math-solution-label { grid-column: 1 / -1; font-weight: 700; color: rgb(var(--c-primary-dark)); margin-top: 0.5rem; margin-bottom: 0.25rem; }
+      .math-solution-lhs { grid-column: 1; text-align: right; color: rgb(var(--c-text-secondary)); }
+      .math-solution-rhs { grid-column: 2; text-align: left; font-weight: 600; color: rgb(var(--c-text-primary)); }
+      .math-solution-explanation { grid-column: 1 / -1; color: rgb(var(--c-text-secondary)); font-style: italic; padding: 0.25rem 0; }
+      .math-solution-final-answer { grid-column: 1 / -1; background-color: rgba(var(--c-success), 0.1); border-left: 4px solid rgb(var(--c-success)); padding: 0.75rem 1.25rem; margin-top: 1rem; font-weight: 700; color: rgb(var(--c-success)); }
+      .dark .math-solution-final-answer { background-color: rgba(var(--c-success), 0.15); }
 
-      /* 14. REFINED: Mermaid.js Concept Map Styling */
-      .mermaid-container-wrapper {
-        background-color: rgb(var(--c-bg-secondary));
-        border: 1px solid rgb(var(--c-border));
-        border-radius: var(--radius-card);
-        padding: 1.5rem;
-        box-shadow: var(--shadow-card);
-      }
-      .dark .mermaid-container-wrapper {
-        background-color: rgb(var(--c-bg-primary));
-      }
+      /* 14. MERMAID.JS CONCEPT MAP */
+      .mermaid-container-wrapper { background-color: rgb(var(--c-bg-secondary)); border: 1px solid rgb(var(--c-border)); border-radius: var(--radius-card); padding: 1.5rem; box-shadow: var(--shadow-card); }
+      .dark .mermaid-container-wrapper { background-color: rgb(var(--c-bg-primary)); }
+      .mermaid-container { display: flex; justify-content: center; align-items: center; background-color: rgb(var(--c-surface)); padding: 1rem; border-radius: var(--radius-button); overflow: auto; min-height: 300px; cursor: grab; background-image: linear-gradient(rgba(var(--c-primary), 0.1) 1px, transparent 1px), linear-gradient(to right, rgba(var(--c-primary), 0.1) 1px, transparent 1px); background-size: 2rem 2rem; border: 1px solid rgba(var(--c-primary), 0.2); }
+      .mermaid-container:active { cursor: grabbing; }
+      .dark .mermaid-container { background-color: rgba(var(--c-bg-primary), 0.8); background-image: linear-gradient(rgba(var(--c-primary), 0.08) 1px, transparent 1px), linear-gradient(to right, rgba(var(--c-primary), 0.08) 1px, transparent 1px); border-color: rgba(var(--c-primary), 0.3); }
+      .mermaid-error { font-family: var(--font-mono); color: rgb(var(--c-error)); text-align: center; padding: 1rem; }
+      .mermaid-error-title { font-weight: bold; font-size: 1.1em; }
+      .mermaid svg { max-width: none; height: auto; }
+      :root .mermaid .node rect, :root .mermaid .node circle, :root .mermaid .node ellipse, :root .mermaid .node polygon { fill: rgb(var(--c-surface)); stroke: rgb(var(--c-primary-dark)); stroke-width: 2.5px; rx: 8; }
+      :root .mermaid .node.clickable:hover { filter: drop-shadow(0 0 5px rgba(var(--c-primary-dark), 0.5)); }
+      :root .mermaid .node .label { font-family: var(--font-sans); color: rgb(var(--c-text-primary)) !important; font-weight: 600; font-size: 15px; }
+      :root .mermaid .edgePath .path { stroke: rgb(var(--c-primary-dark)); stroke-width: 2px; }
+      :root .mermaid .arrowheadPath { fill: rgb(var(--c-primary-dark)); }
+      :root .mermaid .edgeLabel { background-color: rgba(var(--c-surface), 0.8) !important; color: rgb(var(--c-primary-dark)) !important; font-family: var(--font-sans); padding: 2px 4px; border-radius: 4px; }
+      .dark .mermaid .node rect, .dark .mermaid .node circle, .dark .mermaid .node ellipse, .dark .mermaid .node polygon { fill: rgb(var(--c-surface)); stroke: rgb(var(--c-primary)); }
+      .dark .mermaid .node.clickable:hover { filter: drop-shadow(0 0 5px rgba(var(--c-primary), 0.6)); }
+      .dark .mermaid .node .label { color: rgb(var(--c-text-primary)) !important; }
+      .dark .mermaid .edgePath .path { stroke: rgb(var(--c-primary)); }
+      .dark .mermaid .arrowheadPath { fill: rgb(var(--c-primary)); }
+      .dark .mermaid .edgeLabel { background-color: rgba(var(--c-surface), 0.8) !important; color: rgb(var(--c-primary-light)) !important; }
 
-      .mermaid-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: rgb(var(--c-surface));
-        padding: 1rem;
-        border-radius: var(--radius-button); /* Inner container with smaller radius */
-        overflow: auto;
-        min-height: 300px;
-        cursor: grab;
-        /* Blueprint background */
-        background-image: 
-            linear-gradient(rgba(var(--c-primary), 0.1) 1px, transparent 1px),
-            linear-gradient(to right, rgba(var(--c-primary), 0.1) 1px, transparent 1px);
-        background-size: 2rem 2rem;
-        border: 1px solid rgba(var(--c-primary), 0.2);
-      }
-      .mermaid-container:active {
-          cursor: grabbing;
-      }
+      /* 15. AI TUTOR SESSION SCREEN */
+      .tutor-session-container { display: flex; flex-direction: column; height: calc(100vh - 150px); max-width: 800px; margin: 0 auto; background-color: rgb(var(--c-surface)); border-radius: var(--radius-card); box-shadow: var(--shadow-card-hover); overflow: hidden; border: 1px solid rgb(var(--c-border)); }
+      .tutor-session-header { flex-shrink: 0; border-bottom: 1px solid rgb(var(--c-border)); }
+      .tutor-session-messages { flex-grow: 1; overflow-y: auto; padding: 1.5rem; }
+      .tutor-session-input-form { flex-shrink: 0; padding: 1rem; background-color: rgb(var(--c-bg-secondary)); border-top: 1px solid rgb(var(--c-border)); }
 
-      .dark .mermaid-container {
-          background-color: rgba(var(--c-bg-primary), 0.8);
-          background-image: 
-            linear-gradient(rgba(var(--c-primary), 0.08) 1px, transparent 1px),
-            linear-gradient(to right, rgba(var(--c-primary), 0.08) 1px, transparent 1px);
-          border-color: rgba(var(--c-primary), 0.3);
-      }
+      /* 16. ADAPTIVE STORY PLAYER */
+      .adaptive-story-container { background-color: rgb(var(--c-bg-secondary)); border: 1px solid rgb(var(--c-border)); border-radius: var(--radius-card); padding: 1.5rem; font-family: var(--font-sans); }
+      .dark .adaptive-story-container { background-color: rgb(var(--c-bg-primary)); }
+      .adaptive-story-intro { border-bottom: 1px solid rgb(var(--c-border)); padding-bottom: 1rem; margin-bottom: 1rem; }
+      .adaptive-story-text { font-size: 1.125rem; line-height: 1.75; color: rgb(var(--c-text-primary)); margin-bottom: 1.5rem; min-height: 100px; }
+      .adaptive-story-choices { display: flex; flex-direction: column; gap: 0.75rem; }
+      .adaptive-story-choice-btn { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; font-weight: 600; border-radius: var(--radius-button); border: 2px solid rgb(var(--c-border)); background-color: rgb(var(--c-surface)); color: rgb(var(--c-text-accent)); transition: all 0.2s ease-in-out; }
+      .adaptive-story-choice-btn:hover:not(:disabled) { border-color: rgb(var(--c-text-accent)); background-color: rgba(var(--c-bg-accent), 0.5); transform: translateY(-2px); box-shadow: var(--shadow-card); }
+      .adaptive-story-choice-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+      .adaptive-story-feedback { margin-top: 1.5rem; padding: 1rem; border-radius: var(--radius-button); border-left-width: 4px; animation: fade-in 0.3s ease-out; }
+      .adaptive-story-feedback-correct { border-color: rgb(var(--c-success)); background-color: rgba(var(--c-success), 0.1); color: rgb(var(--c-success)); }
+      .adaptive-story-feedback-neutral { border-color: rgb(var(--c-border)); background-color: rgba(var(--c-bg-secondary), 0.8); color: rgb(var(--c-text-secondary)); }
+      .adaptive-story-controls { margin-top: 1.5rem; text-align: right; }
 
-      .mermaid-error {
-          font-family: var(--font-mono);
-          color: rgb(var(--c-error));
-          text-align: center;
-          padding: 1rem;
-      }
-      .mermaid-error-title {
-          font-weight: bold;
-          font-size: 1.1em;
-      }
+      /* 17. GAMIFIED LEARNING & MICROLEARNING */
+      .achievement-toast { position: fixed; top: 20px; right: 20px; z-index: 100; animation: toast-in-right 0.5s ease-out forwards; }
+      @keyframes toast-in-right { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+      .microlearning-screen-container { max-width: 800px; margin: 0 auto; }
+      .microlearning-progress-bar-bg { background-color: rgb(var(--c-bg-secondary)); border: 1px solid rgb(var(--c-border)); }
+      .microlearning-progress-bar-fg { background-color: rgb(var(--c-success)); transition: width 0.5s ease-in-out; }
 
-      .mermaid svg {
-        max-width: none; /* Allow zooming beyond container */
-        height: auto;
-      }
-
-      /* REFINED: Light Theme Styles for Mermaid */
-      :root .mermaid .node rect,
-      :root .mermaid .node circle,
-      :root .mermaid .node ellipse,
-      :root .mermaid .node polygon {
-        fill: rgb(var(--c-surface)); /* White nodes */
-        stroke: rgb(var(--c-primary-dark)); /* Dark blue border */
-        stroke-width: 2.5px;
-        rx: 8; /* Rounded corners */
-      }
-      :root .mermaid .node.clickable:hover {
-          filter: drop-shadow(0 0 5px rgba(var(--c-primary-dark), 0.5));
-      }
-      :root .mermaid .node .label {
-        font-family: var(--font-sans);
-        color: rgb(var(--c-text-primary)) !important;
-        font-weight: 600;
-        font-size: 15px; /* Larger font */
-      }
-      :root .mermaid .edgePath .path {
-        stroke: rgb(var(--c-primary-dark));
-        stroke-width: 2px;
-      }
-      :root .mermaid .arrowheadPath {
-        fill: rgb(var(--c-primary-dark));
-      }
-      :root .mermaid .edgeLabel {
-        background-color: rgba(var(--c-surface), 0.8) !important;
-        color: rgb(var(--c-primary-dark)) !important;
-        font-family: var(--font-sans);
-        padding: 2px 4px;
-        border-radius: 4px;
-      }
-
-      /* REFINED: Dark Mode Styles for Mermaid */
-      .dark .mermaid .node rect,
-      .dark .mermaid .node circle,
-      .dark .mermaid .node ellipse,
-      .dark .mermaid .node polygon {
-        fill: rgb(var(--c-surface)); /* Dark card color */
-        stroke: rgb(var(--c-primary)); /* Bright blue border */
-      }
-      .dark .mermaid .node.clickable:hover {
-          filter: drop-shadow(0 0 5px rgba(var(--c-primary), 0.6));
-      }
-      .dark .mermaid .node .label {
-        color: rgb(var(--c-text-primary)) !important;
-      }
-      .dark .mermaid .edgePath .path {
-        stroke: rgb(var(--c-primary));
-      }
-      .dark .mermaid .arrowheadPath {
-        fill: rgb(var(--c-primary));
-      }
-      .dark .mermaid .edgeLabel {
-        background-color: rgba(var(--c-surface), 0.8) !important;
-        color: rgb(var(--c-primary-light)) !important;
-      }
-
-      /* 15. NEW: AI Tutor Session Screen */
-      .tutor-session-container {
-          display: flex;
-          flex-direction: column;
-          height: calc(100vh - 150px); /* Adjust based on header height */
-          max-width: 800px;
-          margin: 0 auto;
-          background-color: rgb(var(--c-surface));
-          border-radius: var(--radius-card);
-          box-shadow: var(--shadow-card-hover);
-          overflow: hidden;
-          border: 1px solid rgb(var(--c-border));
-      }
-      .tutor-session-header {
-          flex-shrink: 0;
-          border-bottom: 1px solid rgb(var(--c-border));
-      }
-      .tutor-session-messages {
-          flex-grow: 1;
-          overflow-y: auto;
-          padding: 1.5rem;
-      }
-      .tutor-session-input-form {
-          flex-shrink: 0;
-          padding: 1rem;
-          background-color: rgb(var(--c-bg-secondary));
-          border-top: 1px solid rgb(var(--c-border));
-      }
-
-      /* 16. NEW: Adaptive Story Player */
-      .adaptive-story-container {
-          background-color: rgb(var(--c-bg-secondary));
-          border: 1px solid rgb(var(--c-border));
-          border-radius: var(--radius-card);
-          padding: 1.5rem;
-          font-family: var(--font-sans);
-      }
-      .dark .adaptive-story-container {
-          background-color: rgb(var(--c-bg-primary));
-      }
-      .adaptive-story-intro {
-          border-bottom: 1px solid rgb(var(--c-border));
-          padding-bottom: 1rem;
-          margin-bottom: 1rem;
-      }
-      .adaptive-story-text {
-          font-size: 1.125rem; /* text-lg */
-          line-height: 1.75;
-          color: rgb(var(--c-text-primary));
-          margin-bottom: 1.5rem;
-          min-height: 100px;
-      }
-      .adaptive-story-choices {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-      }
-      .adaptive-story-choice-btn {
-          display: block;
-          width: 100%;
-          text-align: left;
-          padding: 0.75rem 1rem;
-          font-weight: 600;
-          border-radius: var(--radius-button);
-          border: 2px solid rgb(var(--c-border));
-          background-color: rgb(var(--c-surface));
-          color: rgb(var(--c-text-accent));
-          transition: all 0.2s ease-in-out;
-      }
-      .adaptive-story-choice-btn:hover:not(:disabled) {
-          border-color: rgb(var(--c-text-accent));
-          background-color: rgba(var(--c-bg-accent), 0.5);
-          transform: translateY(-2px);
-          box-shadow: var(--shadow-card);
-      }
-      .adaptive-story-choice-btn:disabled {
-          cursor: not-allowed;
-          opacity: 0.7;
-      }
-      .adaptive-story-feedback {
-          margin-top: 1.5rem;
-          padding: 1rem;
-          border-radius: var(--radius-button);
-          border-left-width: 4px;
-          animation: fade-in 0.3s ease-out;
-      }
-      .adaptive-story-feedback-correct {
-          border-color: rgb(var(--c-success));
-          background-color: rgba(var(--c-success), 0.1);
-          color: rgb(var(--c-success));
-      }
-      .adaptive-story-feedback-neutral {
-          border-color: rgb(var(--c-border));
-          background-color: rgba(var(--c-bg-secondary), 0.8);
-          color: rgb(var(--c-text-secondary));
-      }
-      .adaptive-story-controls {
-          margin-top: 1.5rem;
-          text-align: right;
-      }
-
-      /* 17. NEW: Gamified Learning & Microlearning */
-      .achievement-toast {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 100;
-        animation: toast-in-right 0.5s ease-out forwards;
-      }
-      @keyframes toast-in-right {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-      }
-      
-      .microlearning-screen-container {
-        max-width: 800px;
-        margin: 0 auto;
-      }
-      .microlearning-progress-bar-bg {
-        background-color: rgb(var(--c-bg-secondary));
-        border: 1px solid rgb(var(--c-border));
-      }
-      .microlearning-progress-bar-fg {
-        background-color: rgb(var(--c-success));
-        transition: width 0.5s ease-in-out;
-      }
-
-      /* 18. NEW: Structured Text & Styled Lists */
-      .styled-list {
-        list-style: none;
-        padding-left: 1rem;
-      }
-      .styled-list li {
-        position: relative;
-        padding-left: 1.75rem;
-        margin-bottom: 0.625rem; /* 10px */
-      }
-      .styled-list li::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0.4em; /* Adjust vertical alignment */
-        width: 0.6em;
-        height: 0.6em;
-        border-radius: 50%;
-        background-color: rgb(var(--c-primary));
-        box-shadow: 0 0 0 3px rgba(var(--c-primary), 0.2);
-      }
-      .prose p {
-          margin-bottom: 1em; /* Ensure paragraphs have space between them */
-      }
+      /* 18. STRUCTURED TEXT & STYLED LISTS */
+      .styled-list { list-style: none; padding-left: 1rem; }
+      .styled-list li { position: relative; padding-left: 1.75rem; margin-bottom: 0.625rem; }
+      .styled-list li::before { content: ''; position: absolute; left: 0; top: 0.4em; width: 0.6em; height: 0.6em; border-radius: 50%; background-color: rgb(var(--c-primary)); box-shadow: 0 0 0 3px rgba(var(--c-primary), 0.2); }
+      .prose p { margin-bottom: 1em; }
 
 
     </style>

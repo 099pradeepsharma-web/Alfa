@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, AdaptiveStory, InteractiveExplainer, PrintableResource, CulturalContext, MoralScienceCorner, AptitudeQuestion, CareerGuidance } from '../types';
+import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, AdaptiveStory, InteractiveExplainer, PrintableResource, CulturalContext, MoralScienceCorner, AptitudeQuestion, CareerGuidance, QuestionBankItem } from '../types';
 
 // The API key is sourced from the `process.env.API_KEY` environment variable.
 // To use a new key (e.g., from Vertex AI Studio), set this variable in your deployment environment.
@@ -251,21 +251,31 @@ const problemSolvingTemplateSchema = {
     required: ['problemType', 'steps']
 };
 
-const categorizedProblemSchema = {
+const questionBankItemSchema = {
     type: Type.OBJECT,
     properties: {
-        question: { type: Type.STRING },
-        solution: { type: Type.STRING }
+        questionText: { type: Type.STRING },
+        questionType: { type: Type.STRING, enum: ['MCQ', 'Short Answer', 'Long Answer'] },
+        difficulty: { type: Type.STRING, enum: ['Easy', 'Medium', 'Hard'] },
+        bloomTaxonomy: { type: Type.STRING, enum: ['Remembering', 'Understanding', 'Applying', 'Analyzing', 'Evaluating', 'Creating'] },
+        isCompetencyBased: { type: Type.BOOLEAN },
+        isPreviousYearQuestion: { type: Type.BOOLEAN },
+        options: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
+        correctAnswer: { type: Type.STRING, nullable: true },
+        explanation: { type: Type.STRING, nullable: true },
+        markingScheme: { type: Type.STRING, nullable: true },
+        modelAnswer: { type: Type.STRING, nullable: true },
+        answerWritingGuidance: { type: Type.STRING, nullable: true, description: "Crucial for Short/Long answers. Provides CBSE-aligned tips on structuring the answer, keywords, and common mistakes." },
     },
-    required: ['question', 'solution']
+    required: ['questionText', 'questionType', 'difficulty', 'bloomTaxonomy', 'isCompetencyBased', 'isPreviousYearQuestion']
 };
 
 const categorizedProblemsSchema = {
     type: Type.OBJECT,
     properties: {
-        conceptual: { type: Type.ARRAY, items: categorizedProblemSchema },
-        application: { type: Type.ARRAY, items: categorizedProblemSchema },
-        higherOrderThinking: { type: Type.ARRAY, items: categorizedProblemSchema }
+        conceptual: { type: Type.ARRAY, items: questionBankItemSchema },
+        application: { type: Type.ARRAY, items: questionBankItemSchema },
+        higherOrderThinking: { type: Type.ARRAY, items: questionBankItemSchema }
     },
     required: ['conceptual', 'application', 'higherOrderThinking']
 };
@@ -458,68 +468,6 @@ const moralScienceCornerSchema = {
     required: ['title', 'story', 'moral'],
 };
 
-
-const learningModuleSchema = {
-    type: Type.OBJECT,
-    properties: {
-        chapterTitle: { type: Type.STRING },
-        introduction: { type: Type.STRING },
-        learningObjectives: { type: Type.ARRAY, items: { type: Type.STRING } },
-        keyConcepts: { type: Type.ARRAY, items: conceptSchema },
-        summary: { type: Type.STRING },
-        conceptMap: { type: Type.STRING, nullable: true },
-        learningTricksAndMnemonics: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
-        higherOrderThinkingQuestions: { type: Type.ARRAY, items: hotQuestionSchema, nullable: true },
-        competitiveExamMapping: { type: Type.STRING, nullable: true },
-        interactiveVideoSimulation: { ...interactiveVideoSimulationSchema, nullable: true },
-        interactiveExplainer: interactiveExplainerSchema,
-        virtualLab: { ...virtualLabSchema, nullable: true },
-        adaptiveStory: adaptiveStorySchema,
-        culturalContext: { ...culturalContextSchema, nullable: true },
-        moralScienceCorner: { ...moralScienceCornerSchema, nullable: true },
-
-        // New fields
-        prerequisitesCheck: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
-        selfAssessmentChecklist: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
-        extensionActivities: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
-        remedialActivities: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
-        careerConnections: { type: Type.STRING, nullable: true },
-        technologyIntegration: { type: Type.STRING, nullable: true },
-
-        // Math
-        keyTheoremsAndProofs: { type: Type.ARRAY, items: theoremSchema, nullable: true },
-        formulaDerivations: { type: Type.ARRAY, items: formulaDerivationSchema, nullable: true },
-        formulaSheet: { type: Type.ARRAY, items: formulaSchema, nullable: true },
-        problemSolvingTemplates: { type: Type.ARRAY, items: problemSolvingTemplateSchema, nullable: true },
-        categorizedProblems: { ...categorizedProblemsSchema, nullable: true },
-        commonMistakes: { type: Type.ARRAY, items: commonMistakeSchema, nullable: true },
-        
-        // Science
-        keyLawsAndPrinciples: { type: Type.ARRAY, items: keyLawOrPrincipleSchema, nullable: true },
-        solvedNumericalProblems: { type: Type.ARRAY, items: solvedNumericalProblemSchema, nullable: true },
-        experiments: { type: Type.ARRAY, items: experimentSchema, nullable: true },
-        scientificMethodApplications: { type: Type.STRING, nullable: true },
-        currentDiscoveries: { type: Type.STRING, nullable: true },
-        environmentalAwareness: { type: Type.STRING, nullable: true },
-        interdisciplinaryConnections: { type: Type.STRING, nullable: true },
-        
-        // Social Science, Commerce, Humanities
-        timelineOfEvents: { type: Type.ARRAY, items: timelineEventSchema, nullable: true },
-        keyFigures: { type: Type.ARRAY, items: keyFigureSchema, nullable: true },
-        primarySourceAnalysis: { type: Type.ARRAY, items: primarySourceSnippetSchema, nullable: true },
-        inDepthCaseStudies: { type: Type.ARRAY, items: caseStudySchema, nullable: true },
-        
-        // Language Arts
-        grammarSpotlight: { type: Type.ARRAY, items: grammarRuleSchema, nullable: true },
-        literaryDeviceAnalysis: { type: Type.ARRAY, items: literaryDeviceSchema, nullable: true },
-        
-        // Shared
-        vocabularyDeepDive: { type: Type.ARRAY, items: vocabularyDeepDiveSchema, nullable: true },
-    },
-    required: ['chapterTitle', 'introduction', 'learningObjectives', 'keyConcepts', 'summary']
-};
-
-
 const quizSchema = {
     type: Type.ARRAY,
     items: {
@@ -680,13 +628,35 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
         Your entire output MUST be a JSON object that strictly follows the 'LearningModule' schema, but only containing the core fields listed above. Ensure all text fields are complete. No markdown headers (like ##), just paragraphs and bullet points.
     `;
 
+    // FIX: Created a smaller, dedicated schema for this API call to avoid complexity errors.
+    const initialLearningModuleSchema = {
+        type: Type.OBJECT,
+        properties: {
+            chapterTitle: { type: Type.STRING },
+            introduction: { type: Type.STRING },
+            learningObjectives: { type: Type.ARRAY, items: { type: Type.STRING } },
+            prerequisitesCheck: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
+            keyConcepts: { type: Type.ARRAY, items: conceptSchema },
+            summary: { type: Type.STRING },
+            conceptMap: { type: Type.STRING, nullable: true },
+            interactiveVideoSimulation: { ...interactiveVideoSimulationSchema, nullable: true },
+            interactiveExplainer: { ...interactiveExplainerSchema, nullable: true },
+            virtualLab: { ...virtualLabSchema, nullable: true },
+            adaptiveStory: { ...adaptiveStorySchema, nullable: true },
+            culturalContext: { ...culturalContextSchema, nullable: true },
+            moralScienceCorner: { ...moralScienceCornerSchema, nullable: true },
+            formulaSheet: { type: Type.ARRAY, items: formulaSchema, nullable: true },
+        },
+        required: ['chapterTitle', 'introduction', 'learningObjectives', 'keyConcepts', 'summary']
+    };
+
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
-                responseSchema: learningModuleSchema,
+                responseSchema: initialLearningModuleSchema,
                 temperature: 0.8,
             },
         });
@@ -774,11 +744,11 @@ export const generateSectionContent = async (
         Given: Solve for x in the equation 3x + 5 = 17.\\nSolution:\\nStep 1: 3x + 5 = 17\\nStep 2: 3x = 17 - 5\\nStep 3: 3x = 12\\nStep 4: x = 12 ÷ 3\\nStep 5: x = 4\\nAnswer: x = 4
 
         **SPECIAL INSTRUCTIONS:**
-        -   **For 'categorizedProblems':** Adhere to grade-specific guidelines for question generation:
-            -   Grades 11-12: Generate 40+ questions based on the last 10 years of CBSE exam patterns (MCQs, SA, LA, Case-Based, Assertion-Reasoning).
-            -   Grades 9-10: Generate 35+ questions based on the last 10 years of CBSE exam patterns (MCQs, VSA, SA, LA, Case-Based).
-            -   Grades 6-8: Generate 25+ questions (MCQs, VSA, SA).
-            -   Below Grade 6: Generate 15 conceptual reinforcement questions.
+        -   **For 'categorizedProblems':** Generate a comprehensive and challenging set of practice questions. The quantity and complexity must align with CBSE standards for the specified grade.
+            -   Grades 6-8: Generate 15-20 questions (MCQs, Short Answer, Long Answer).
+            -   Grades 9-10: Generate 25-30 questions (MCQs, Short Answer, Long Answer, Case-Based).
+            -   Grades 11-12: Generate 30-40+ questions based on the last 10 years of CBSE exam patterns (MCQs, Short Answer, Long Answer, Case-Based, Assertion-Reasoning).
+            -   **Crucially for Short and Long Answer questions:** You MUST provide a detailed 'modelAnswer', a 'markingScheme', AND a helpful 'answerWritingGuidance' section. The guidance should give students actionable tips on structuring their answer, keywords to include, and common mistakes to avoid, as per CBSE guidelines.
         -   **For 'competitiveExamMapping':** Provide a detailed mapping of the chapter's concepts to the syllabus of major competitive exams like JEE (Main & Advanced), NEET, CUET, and relevant Olympiads. The structure should be:
             -   A brief introduction about the chapter's importance for these exams.
             -   A markdown list where each item maps a specific 'concept' from the chapter to the 'exam(s)' it's relevant for.
@@ -1494,13 +1464,31 @@ export const validateCurriculumOutline = async (
 };
 
 // --- New Function for AI Tutor Chat ---
-export const createTutorChat = (grade: string, subject: string, chapter: string, language: string): Chat => {
-    const systemInstruction = `You are Fitto, an expert, friendly, and encouraging AI Tutor for a ${grade} student studying ${subject} in the ${language} language. Your current topic is "${chapter}". Your goal is to help the student deeply understand the concepts. You can explain topics, provide practice problems, and give step-by-step feedback on their solutions. Do not just give answers; guide the student to discover the answers themselves. Start the conversation by greeting the student warmly, mentioning the chapter topic, and asking if they'd like to review a key concept or try a practice problem to begin.`;
+export const createTutorChat = (grade: string, subject: string, chapter: string, language: string, keyConcepts: Concept[]): Chat => {
+    const conceptsContext = keyConcepts.map(c => `- '${c.conceptTitle}': ${c.explanation.substring(0, 150)}...`).join('\n');
+    
+    const systemInstruction = `You are Fitto, an expert, friendly, and encouraging AI Tutor for a ${grade} student studying ${subject} in the ${language} language. Your current topic is "${chapter}". 
+    
+    **Your Core Directives:**
+    1.  **Stay Focused:** Your primary goal is to help the student deeply understand the concepts of this chapter. You MUST strictly adhere to the provided key concepts. Do not discuss unrelated topics.
+    2.  **Guide, Don't Give:** Do not just give answers. Guide the student to discover the answers themselves using the Socratic method. Ask leading questions.
+    3.  **Simplify:** Break down complex answers into smaller, numbered steps or bullet points. Use simple language and analogies appropriate for a ${grade} student.
+    4.  **Be Proactive:** If a student seems confused, proactively offer to explain a related key concept from the list below or provide a simple analogy.
+    5.  **Format for Clarity:** Enclose key terms in single quotes for emphasis (e.g., 'photosynthesis'). Use markdown-style lists ('- ' or '1. ') for clarity.
+    
+    **Key Concepts for this Chapter:**
+    ${conceptsContext}
+
+    **Conversation Start:**
+    Start the conversation by greeting the student warmly and mentioning the chapter topic ("${chapter}"). Then, on new lines, provide 2-3 specific questions a student might ask, each prefixed with "SUGGESTION:". For example:
+    SUGGESTION: Can you explain 'photosynthesis' in a simple way?
+    SUGGESTION: What is the formula for calculating area?`;
 
     const chat: Chat = ai.chats.create({
         model: 'gemini-2.5-flash',
         config: {
             systemInstruction: systemInstruction,
+            temperature: 0.8,
         },
     });
     return chat;

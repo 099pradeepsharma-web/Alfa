@@ -26,7 +26,7 @@ const SubjectSelector: React.FC<SubjectSelectorProps> = ({ grade, selectedSubjec
       <div className="flex items-center mb-6">
         <button onClick={onBack} className="flex items-center text-primary hover:text-primary-dark font-semibold transition" style={{color: 'rgb(var(--c-primary))', textDecorationColor: 'rgb(var(--c-primary-dark))'}}>
           <ArrowLeftIcon className="h-5 w-5 mr-2" />
-          {t('backToGrades')}
+          {selectedSubject ? t('backToSubjects') : t('backToGrades')}
         </button>
       </div>
 

@@ -66,17 +66,6 @@ export interface ProblemSolvingTemplate {
   steps: string[];
 }
 
-export interface CategorizedProblem {
-  question: string;
-  solution: string;
-}
-
-export interface CategorizedProblems {
-  conceptual: CategorizedProblem[];
-  application: CategorizedProblem[];
-  higherOrderThinking: CategorizedProblem[];
-}
-
 export interface CommonMistake {
   mistake: string;
   correction: string;
@@ -407,15 +396,23 @@ interface ShortAnswerDetails extends BaseQuestion {
     questionType: 'Short Answer';
     markingScheme: string;
     modelAnswer: string;
+    answerWritingGuidance?: string;
 }
 
 interface LongAnswerDetails extends BaseQuestion {
     questionType: 'Long Answer';
     markingScheme: string;
     modelAnswer: string;
+    answerWritingGuidance?: string;
 }
 
 export type QuestionBankItem = MCQDetails | ShortAnswerDetails | LongAnswerDetails;
+
+export interface CategorizedProblems {
+  conceptual: QuestionBankItem[];
+  application: QuestionBankItem[];
+  higherOrderThinking: QuestionBankItem[];
+}
 
 // --- New Types for Curriculum Generation ---
 export interface CurriculumOutlineChapter {
