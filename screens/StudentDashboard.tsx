@@ -152,6 +152,7 @@ const MissionCard: React.FC<{ onStartMission: () => void, student: Student }> = 
                             AI-Personalized
                         </div>
                         <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">{t('todaysMission')}</h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t('todaysMissionDesc')}</p>
                     </div>
                     <div className="text-right">
                          <div className="difficulty-dots" aria-label={`Difficulty: ${difficulty.label}`}>
