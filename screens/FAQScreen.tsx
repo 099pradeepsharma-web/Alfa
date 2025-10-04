@@ -14,17 +14,17 @@ const AccordionItem: React.FC<{ question: string; answer: string; }> = ({ questi
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border-b border-slate-200 dark:border-slate-700">
+    <div className="border-b border-slate-200">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex justify-between items-center text-left py-4 px-2"
         aria-expanded={isOpen}
       >
-        <span className="text-lg font-semibold text-slate-800 dark:text-slate-100">{question}</span>
+        <span className="text-lg font-semibold text-slate-800">{question}</span>
         <ChevronDownIcon className={`h-6 w-6 text-slate-500 transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-screen' : 'max-h-0'}`}>
-        <div className="p-4 pt-0 text-slate-600 dark:text-slate-300 prose prose-lg max-w-none">
+        <div className="p-4 pt-0 text-slate-600 prose prose-lg max-w-none">
             <p>{answer}</p>
         </div>
       </div>
@@ -36,44 +36,41 @@ const FAQScreen: React.FC<FAQScreenProps> = ({ onBack }) => {
   const { t } = useLanguage();
   const [activeRole, setActiveRole] = useState<Role>('student');
 
-  const roleConfig: { [key in Role]: { icon: React.ElementType, title: string, data: FAQSection } } = {
-    student: { icon: UserIcon, title: t('faqStudentTitle'), data: FAQS.find(f => f.role === 'student')! },
-    teacher: { icon: AcademicCapIcon, title: t('faqTeacherTitle'), data: FAQS.find(f => f.role === 'teacher')! },
-    parent: { icon: HeartIcon, title: t('faqParentTitle'), data: FAQS.find(f => f.role === 'parent')! },
+  const roleConfig: { [key in Role]: { icon: React.ElementType; title: string; data: FAQSection, animation: string; } } = {
+    student: { icon: UserIcon, title: t('faqStudentTitle'), data: FAQS.find(f => f.role === 'student')!, animation: 'bounce-icon' },
+    teacher: { icon: AcademicCapIcon, title: t('faqTeacherTitle'), data: FAQS.find(f => f.role === 'teacher')!, animation: 'bounce-icon' },
+    parent: { icon: HeartIcon, title: t('faqParentTitle'), data: FAQS.find(f => f.role === 'parent')!, animation: 'bounce-icon' },
   };
 
   return (
     <div className="animate-fade-in max-w-4xl mx-auto">
-      <button onClick={onBack} className="flex items-center text-primary hover:text-primary-dark font-semibold transition mb-6" style={{ color: 'rgb(var(--c-primary))' }}>
+      <button onClick={onBack} className="flex items-center text-slate-600 hover:text-slate-900 font-semibold transition mb-6">
         <ArrowLeftIcon className="h-5 w-5 mr-2" />
         {t('backToHome')}
       </button>
 
-      <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
-        <header className="text-center border-b border-slate-200 dark:border-slate-700 pb-6 mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-slate-100 mt-3">{t('faqTitle')}</h1>
-          <p className="text-lg text-slate-500 dark:text-slate-400 mt-2">{t('faqSubtitle')}</p>
+      <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200">
+        <header className="text-center border-b border-slate-200 pb-6 mb-6">
+          <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mt-3">{t('faqTitle')}</h1>
+          <p className="text-lg text-slate-500 mt-2">{t('faqSubtitle')}</p>
         </header>
 
         <div className="mb-6">
-          <div className="flex justify-center border-b border-slate-200 dark:border-slate-700" role="tablist">
-            {Object.entries(roleConfig).map(([role, config]) => (
-              <button
-                key={role}
-                onClick={() => setActiveRole(role as Role)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-bold -mb-px border-b-2 transition-colors ${
-                  activeRole === role
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-primary'
-                }`}
-                role="tab"
-                aria-selected={activeRole === role}
-                style={{borderColor: activeRole === role ? 'rgb(var(--c-primary))' : 'transparent', color: activeRole === role ? 'rgb(var(--c-primary))' : ''}}
-              >
-                <config.icon className="h-5 w-5" />
-                {config.title}
-              </button>
-            ))}
+          <div className="tab-bar">
+            <nav className="flex justify-center space-x-6" role="tablist">
+                {Object.entries(roleConfig).map(([role, config]) => (
+                <button
+                    key={role}
+                    onClick={() => setActiveRole(role as Role)}
+                    className={`tab-button ${ activeRole === role ? 'active' : '' }`}
+                    role="tab"
+                    aria-selected={activeRole === role}
+                >
+                    <config.icon className={`h-5 w-5 mr-2 ${ activeRole === role ? `animate-${config.animation}` : '' }`} />
+                    <span>{config.title}</span>
+                </button>
+                ))}
+            </nav>
           </div>
         </div>
         

@@ -103,9 +103,9 @@ const CompetitionScreen: React.FC<CompetitionScreenProps> = ({ onBack }) => {
     const [activeTab, setActiveTab] = useState<'leaderboard' | 'competitions' | 'halloffame'>('leaderboard');
 
     const tabs = [
-        { id: 'leaderboard', name: t('leaderboard'), icon: FireIcon },
-        { id: 'competitions', name: t('liveCompetitions'), icon: AcademicCapIcon },
-        { id: 'halloffame', name: t('hallOfFame'), icon: StarIcon }
+        { id: 'leaderboard', name: t('leaderboard'), icon: FireIcon, animation: 'flicker-icon' },
+        { id: 'competitions', name: t('liveCompetitions'), icon: AcademicCapIcon, animation: 'bounce-icon' },
+        { id: 'halloffame', name: t('hallOfFame'), icon: StarIcon, animation: 'glow-icon' }
     ];
 
     return (
@@ -122,27 +122,22 @@ const CompetitionScreen: React.FC<CompetitionScreenProps> = ({ onBack }) => {
                     <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-2xl mx-auto">{t('competitionHubDesc')}</p>
                 </div>
 
-                <div className="mb-6 border-b border-slate-200 dark:border-slate-700">
-                    <nav className="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
+                <div className="tab-bar">
+                    <nav className="flex space-x-6 overflow-x-auto" aria-label="Tabs">
                         {tabs.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
-                            className={`group inline-flex items-center py-4 px-1 border-b-2 font-semibold text-sm transition-colors whitespace-nowrap
-                            ${ activeTab === tab.id
-                                ? 'border-primary text-primary'
-                                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600'
-                            }`}
-                            style={{borderColor: activeTab === tab.id ? 'rgb(var(--c-primary))' : 'transparent', color: activeTab === tab.id ? 'rgb(var(--c-primary))' : ''}}
+                            className={`tab-button ${ activeTab === tab.id ? 'active' : '' }`}
                         >
-                            <tab.icon className="-ml-0.5 mr-2 h-5 w-5" />
+                            <tab.icon className={`-ml-0.5 mr-2 h-5 w-5 ${ activeTab === tab.id ? `animate-${tab.animation}` : '' }`} />
                             <span>{tab.name}</span>
                         </button>
                         ))}
                     </nav>
                 </div>
                 
-                <div>
+                <div className="mt-6">
                     {activeTab === 'leaderboard' && <LeaderboardTab />}
                     {activeTab === 'competitions' && <CompetitionsTab />}
                     {activeTab === 'halloffame' && <HallOfFameTab />}

@@ -9,15 +9,30 @@ interface ProjectHubScreenProps {
   onBack: () => void;
 }
 
-const ProjectCard: React.FC<{ project: Project, onSelect: () => void, isSelected: boolean }> = ({ project, onSelect, isSelected }) => {
+const ProjectCard: React.FC<{
+    project: Project;
+    onSelect: () => void;
+    isSelected: boolean;
+    onPriorityChange: (priority: 'High' | 'Medium' | 'Low') => void;
+}> = ({ project, onSelect, isSelected, onPriorityChange }) => {
     const { t, tCurriculum } = useLanguage();
+
+    const priority = project.priority || 'Medium';
+    const priorityClasses: Record<string, string> = {
+        High: 'priority-high',
+        Medium: 'priority-medium',
+        Low: 'priority-low',
+    };
 
     return (
         <div className={`bg-white dark:bg-slate-800 rounded-2xl shadow-lg border-2 transition-all duration-300 ${isSelected ? 'border-primary shadow-primary/20' : 'border-slate-200 dark:border-slate-700'}`}>
             <div className="p-6">
                 <div className="flex justify-between items-start">
                     <div>
-                        <p className="font-bold text-sm text-primary" style={{color: 'rgb(var(--c-primary))'}}>{tCurriculum(project.subject)}</p>
+                        <div className="flex items-center gap-3 mb-2">
+                            <p className="font-bold text-sm text-primary" style={{color: 'rgb(var(--c-primary))'}}>{tCurriculum(project.subject)}</p>
+                            <span className={`priority-tag ${priorityClasses[priority]}`}>{priority}</span>
+                        </div>
                         <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mt-1">{project.title}</h3>
                     </div>
                      <div className="flex-shrink-0 ml-4 p-3 bg-primary-light rounded-full" style={{backgroundColor: 'rgb(var(--c-primary-light))'}}>
@@ -25,10 +40,24 @@ const ProjectCard: React.FC<{ project: Project, onSelect: () => void, isSelected
                     </div>
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">{project.problemStatement}</p>
-                 <button onClick={onSelect} className="mt-4 text-sm font-bold text-primary hover:text-primary-dark flex items-center" style={{color: 'rgb(var(--c-primary))'}}>
-                    {t('viewProject')}
-                    <ChevronDownIcon className={`h-5 w-5 ml-1 transition-transform ${isSelected ? 'rotate-180' : ''}`} />
-                </button>
+                 <div className="flex justify-between items-center mt-4">
+                    <button onClick={onSelect} className="text-sm font-bold text-primary hover:text-primary-dark flex items-center" style={{color: 'rgb(var(--c-primary))'}}>
+                        {t('viewProject')}
+                        <ChevronDownIcon className={`h-5 w-5 ml-1 transition-transform ${isSelected ? 'rotate-180' : ''}`} />
+                    </button>
+                    <div className="relative" onClick={(e) => e.stopPropagation()}>
+                        <select
+                            value={priority}
+                            onChange={(e) => onPriorityChange(e.target.value as 'High' | 'Medium' | 'Low')}
+                            className="text-xs font-semibold appearance-none bg-bg-primary border border-border-color rounded-full py-1 pl-3 pr-7 focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                        >
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                        <ChevronDownIcon className="h-3 w-3 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary" />
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -108,11 +137,35 @@ const ProjectHubScreen: React.FC<ProjectHubScreenProps> = ({ onBack }) => {
     const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
     const [selectedProject, setSelectedProject] = useState<string | null>(null);
     const [subjectFilter, setSubjectFilter] = useState<string>('all');
+    const [sortByPriority, setSortByPriority] = useState<boolean>(false);
 
     const subjects = useMemo(() => ['all', ...Array.from(new Set(MOCK_PROJECTS.map(p => p.subject)))], []);
-    const filteredProjects = useMemo(() => 
-        subjectFilter === 'all' ? projects : projects.filter(p => p.subject === subjectFilter),
-    [projects, subjectFilter]);
+    
+    const handlePriorityChange = (projectId: string, priority: 'High' | 'Medium' | 'Low') => {
+        setProjects(prevProjects =>
+            prevProjects.map(p =>
+                p.id === projectId ? { ...p, priority } : p
+            )
+        );
+    };
+
+    const filteredProjects = useMemo(() => {
+        let projectsToProcess = subjectFilter === 'all'
+            ? [...projects]
+            : projects.filter(p => p.subject === subjectFilter);
+        
+        if (sortByPriority) {
+            const priorityOrder: Record<string, number> = { 'High': 1, 'Medium': 2, 'Low': 3 };
+            projectsToProcess.sort((a, b) => {
+                const priorityA = priorityOrder[a.priority || 'Medium'];
+                const priorityB = priorityOrder[b.priority || 'Medium'];
+                return priorityA - priorityB;
+            });
+        }
+        
+        return projectsToProcess;
+    }, [projects, subjectFilter, sortByPriority]);
+
 
     const handleNewSubmission = (projectId: string, submission: ProjectSubmission) => {
         setProjects(prevProjects => prevProjects.map(p => {
@@ -137,12 +190,22 @@ const ProjectHubScreen: React.FC<ProjectHubScreenProps> = ({ onBack }) => {
                     <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-2xl mx-auto">{t('projectHubDescScreen')}</p>
                 </div>
 
-                <div className="my-6">
+                <div className="my-6 flex flex-wrap items-center gap-4">
                     <label htmlFor="subject-filter" className="sr-only">{t('filterBySubject')}</label>
                     <select id="subject-filter" value={subjectFilter} onChange={e => setSubjectFilter(e.target.value)}
                      className="w-full md:w-auto px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-lg focus:ring-1 focus:ring-primary">
                         {subjects.map(s => <option key={s} value={s}>{s === 'all' ? t('allSubjects') : tCurriculum(s)}</option>)}
                     </select>
+
+                    <button
+                        onClick={() => setSortByPriority(prev => !prev)}
+                        className={`px-4 py-2 border rounded-lg font-semibold text-sm transition ${sortByPriority 
+                            ? 'bg-primary-light text-primary-dark border-primary' 
+                            : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200'}`
+                        }
+                    >
+                        Sort by Priority: {sortByPriority ? 'On' : 'Off'}
+                    </button>
                 </div>
                 
                 <div className="space-y-6">
@@ -152,6 +215,7 @@ const ProjectHubScreen: React.FC<ProjectHubScreenProps> = ({ onBack }) => {
                                 project={project}
                                 onSelect={() => setSelectedProject(prev => prev === project.id ? null : project.id)}
                                 isSelected={selectedProject === project.id}
+                                onPriorityChange={(newPriority) => handlePriorityChange(project.id, newPriority)}
                             />
                             {selectedProject === project.id && <ProjectDetailView project={project} onNewSubmission={(sub) => handleNewSubmission(project.id, sub)} />}
                         </div>

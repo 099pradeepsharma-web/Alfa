@@ -12,23 +12,19 @@ interface CurriculumGeneratorScreenProps {
 }
 
 const formatReport = (text: string) => {
-    // Split into lines and handle markdown-like syntax
     return text.split('\n').map((line, index) => {
-        // Match HEADING: prefix
         if (line.startsWith('HEADING: ')) {
             const headingText = line.substring('HEADING: '.length).replace(/:$/, '');
-            return <h4 key={index} className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-4 mb-2">{headingText}</h4>;
+            return <h4 key={index} className="text-lg font-bold text-text-primary mt-4 mb-2">{headingText}</h4>;
         }
-        // Match list items like - or *
         if (line.match(/^\s*[-*]\s/)) {
-            return <li key={index} className="ml-5 list-disc text-slate-600 dark:text-slate-300 mb-1">{line.replace(/^\s*[-*]\s/, '')}</li>;
+            return <li key={index} className="ml-5 list-disc text-text-secondary mb-1">{line.replace(/^\s*[-*]\s/, '')}</li>;
         }
-        // Regular paragraph
         if (line.trim()) {
-            return <p key={index} className="text-slate-600 dark:text-slate-300 mb-2">{line}</p>;
+            return <p key={index} className="text-text-secondary mb-2">{line}</p>;
         }
         return null;
-    }).filter(Boolean); // Remove null entries
+    }).filter(Boolean);
 };
 
 const CurriculumGeneratorScreen: React.FC<CurriculumGeneratorScreenProps> = ({ onBack }) => {
@@ -47,7 +43,6 @@ const CurriculumGeneratorScreen: React.FC<CurriculumGeneratorScreenProps> = ({ o
 
     const availableGrades = useMemo(() => CURRICULUM.filter(g => parseInt(g.level.split(' ')[1]) >= 6), []);
     
-    // Function to escape single quotes for SQL insertion
     const escapeSql = (str: string) => str.replace(/'/g, "''");
 
     const generateSqlScript = (
@@ -60,37 +55,17 @@ const CurriculumGeneratorScreen: React.FC<CurriculumGeneratorScreenProps> = ({ o
         script += `-- Subject: ${subject.name}\n`;
         script += `-- Generated on: ${new Date().toISOString()}\n\n`;
 
-        script += `-- NOTE: This script populates grades, subjects, chapters, and topics (from learning objectives).\n`;
-        script += `-- Other tables like subtopics, questions, and explanations are not populated by this generator.\n\n`;
+        script += `-- NOTE: This script populates grades, subjects, and chapters.\n\n`;
 
-        // IDs - simple counters for this export
-        const gradeId = 1;
-        const subjectId = 1;
-        let chapterIdCounter = 1;
-        let topicIdCounter = 1;
+        const gradeId = Math.floor(Math.random() * 1000);
+        const subjectId = Math.floor(Math.random() * 1000);
         
-        const gradeNumber = grade.level.match(/\d+/)?.[0] || '0';
-
-        // 1. Grades Table
-        script += `-- Grades Table\n`;
-        script += `INSERT INTO grades (id, grade_number, description) VALUES (${gradeId}, ${gradeNumber}, '${escapeSql(grade.description)}');\n\n`;
-
-        // 2. Subjects Table
-        script += `-- Subjects Table\n`;
+        script += `INSERT INTO grades (id, grade_level, description) VALUES (${gradeId}, '${escapeSql(grade.level)}', '${escapeSql(grade.description)}');\n`;
         script += `INSERT INTO subjects (id, name, grade_id) VALUES (${subjectId}, '${escapeSql(subject.name)}', ${gradeId});\n\n`;
 
-        // 3. Chapters and Topics Tables
-        script += `-- Chapters and Topics (Learning Objectives)\n`;
         curriculumOutline.forEach((chapter, index) => {
-            const currentChapterId = chapterIdCounter++;
-            script += `INSERT INTO chapters (id, title, chapter_number, subject_id) VALUES (${currentChapterId}, '${escapeSql(chapter.chapterTitle)}', ${index + 1}, ${subjectId});\n`;
-            
-            chapter.learningObjectives.forEach(objective => {
-                const currentTopicId = topicIdCounter++;
-                // Using 'Medium' as a default difficulty as it's not provided by the generator
-                script += `INSERT INTO topics (id, title, chapter_id, difficulty_level) VALUES (${currentTopicId}, '${escapeSql(objective)}', ${currentChapterId}, 'Medium');\n`;
-            });
-            script += `\n`;
+            const chapterId = Math.floor(Math.random() * 10000);
+            script += `INSERT INTO chapters (id, title, chapter_number, subject_id) VALUES (${chapterId}, '${escapeSql(chapter.chapterTitle)}', ${index + 1}, ${subjectId});\n`;
         });
         
         return script;
@@ -166,40 +141,38 @@ const CurriculumGeneratorScreen: React.FC<CurriculumGeneratorScreenProps> = ({ o
 
     return (
         <div className="animate-fade-in">
-             <button onClick={onBack} className="flex items-center text-primary hover:text-primary-dark font-semibold transition mb-6" style={{color: 'rgb(var(--c-primary))'}}>
+             <button onClick={onBack} className="flex items-center text-primary hover:text-primary-dark font-semibold transition mb-6">
                 <ArrowLeftIcon className="h-5 w-5 mr-2" />
                 {t('backToDashboard')}
             </button>
 
-            <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
-                <div className="text-center border-b border-slate-200 dark:border-slate-700 pb-6 mb-6">
-                    <SparklesIcon className="h-12 w-12 mx-auto text-primary" style={{color: 'rgb(var(--c-primary))'}} />
-                    <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mt-2">{t('curriculumGenerator')}</h2>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-2xl mx-auto">{t('curriculumGeneratorPrompt')}</p>
+            <div className="dashboard-highlight-card p-8">
+                <div className="text-center border-b border-border pb-6 mb-6">
+                    <SparklesIcon className="h-12 w-12 mx-auto text-primary" />
+                    <h2 className="text-3xl font-bold text-text-primary mt-2">{t('curriculumGenerator')}</h2>
+                    <p className="text-text-secondary mt-1 max-w-2xl mx-auto">{t('curriculumGeneratorPrompt')}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    {/* Grade Selector */}
                     <select
                         value={selectedGrade?.level || ''}
                         onChange={(e) => {
                             setSelectedGrade(availableGrades.find(g => g.level === e.target.value) || null);
                             setSelectedSubject(null);
                         }}
-                        className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"
+                        className="w-full"
                     >
                         <option value="" disabled>{t('selectGradePlaceholder')}</option>
                         {availableGrades.map(g => <option key={g.level} value={g.level}>{tCurriculum(g.level)}</option>)}
                     </select>
 
-                    {/* Subject Selector */}
                     <select
                         value={selectedSubject?.name || ''}
                         disabled={!selectedGrade}
                         onChange={(e) => {
                             setSelectedSubject(selectedGrade?.subjects.find(s => s.name === e.target.value) || null);
                         }}
-                        className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition disabled:opacity-50"
+                        className="w-full disabled:opacity-50"
                     >
                         <option value="" disabled>{t('selectSubjectPrompt')}</option>
                         {selectedGrade?.subjects.map(s => <option key={s.name} value={s.name}>{tCurriculum(s.name)}</option>)}
@@ -210,7 +183,7 @@ const CurriculumGeneratorScreen: React.FC<CurriculumGeneratorScreenProps> = ({ o
                      <button
                         onClick={handleGenerate}
                         disabled={!selectedSubject || isLoading}
-                        className="flex items-center justify-center w-full sm:w-auto px-8 py-3 text-white font-bold rounded-lg btn-primary-gradient disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="flex items-center justify-center w-full sm:w-auto btn-accent"
                     >
                         {isLoading ? (
                             <><LoadingSpinner /><span className="ml-2">{t('generatingOutline')}</span></>
@@ -232,7 +205,7 @@ const CurriculumGeneratorScreen: React.FC<CurriculumGeneratorScreenProps> = ({ o
                         <button
                             onClick={handleValidate}
                             disabled={isValidating}
-                            className="flex items-center justify-center w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white font-bold rounded-lg shadow-md transition disabled:opacity-70"
+                            className="flex items-center justify-center w-full sm:w-auto px-8 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-lg shadow-md transition disabled:opacity-70"
                         >
                              {isValidating ? (
                                 <><LoadingSpinner /><span className="ml-2">{t('validatingCurriculum')}</span></>
@@ -243,19 +216,19 @@ const CurriculumGeneratorScreen: React.FC<CurriculumGeneratorScreenProps> = ({ o
                     )}
                 </div>
                 
-                {error && <p className="text-red-500 dark:text-red-400 text-center font-semibold">{error}</p>}
+                {error && <p className="text-red-400 text-center font-semibold">{error}</p>}
                 
                 {outline && (
-                    <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700 space-y-4 max-h-[800px] overflow-y-auto pr-2">
+                    <div className="mt-8 pt-6 border-t border-border space-y-4 max-h-[800px] overflow-y-auto pr-2">
                         {outline.map((item, index) => (
-                            <div key={index} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
-                                <h3 className="font-bold text-lg text-primary-dark dark:text-primary flex items-center mb-3" style={{color: 'rgb(var(--c-primary-dark))'}}>
+                            <div key={index} className="bg-surface p-4 rounded-lg border border-border">
+                                <h3 className="font-bold text-lg text-primary flex items-center mb-3">
                                     <BookOpenIcon className="h-5 w-5 mr-2" />
                                     {item.chapterTitle}
                                 </h3>
                                 <ul className="space-y-2">
                                     {item.learningObjectives.map((obj, i) => (
-                                        <li key={i} className="flex items-start text-slate-600 dark:text-slate-300">
+                                        <li key={i} className="flex items-start text-text-secondary">
                                             <CheckIcon className="h-4 w-4 mr-2 mt-1 flex-shrink-0 text-green-500" />
                                             <span>{obj}</span>
                                         </li>
@@ -267,21 +240,21 @@ const CurriculumGeneratorScreen: React.FC<CurriculumGeneratorScreenProps> = ({ o
                 )}
                 
                 {isValidating && (
-                    <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700 flex flex-col items-center">
+                    <div className="mt-8 pt-6 border-t border-border flex flex-col items-center">
                         <LoadingSpinner />
-                        <p className="mt-2 text-primary-dark font-semibold">{t('validatingCurriculum')}</p>
+                        <p className="mt-2 text-primary font-semibold">{t('validatingCurriculum')}</p>
                     </div>
                 )}
 
                 {validationReport && (
-                    <div className="mt-8 pt-6 border-t-2 border-dashed border-slate-200 dark:border-slate-700">
+                    <div className="mt-8 pt-6 border-t-2 border-dashed border-border">
                          <div className="text-center mb-4">
-                            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center justify-center">
-                                <DocumentCheckIcon className="h-7 w-7 mr-2 text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
+                            <h3 className="text-2xl font-bold text-text-primary flex items-center justify-center">
+                                <DocumentCheckIcon className="h-7 w-7 mr-2 text-primary"/>
                                 {t('qualityReportTitle')}
                             </h3>
                         </div>
-                        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg">
+                        <div className="p-4 bg-surface border border-border rounded-lg">
                            {formatReport(validationReport)}
                         </div>
                     </div>

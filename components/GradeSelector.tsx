@@ -36,11 +36,11 @@ const GradeCard: React.FC<{ grade: Grade; onSelect: () => void; }> = React.memo(
             style={{ minHeight: '150px' }}
         >
             <div className="relative z-10">
-                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 group-hover:text-primary-dark transition-colors" style={{color: 'rgb(var(--c-primary-dark))'}}>{tCurriculum(grade.level)}</h3>
-                <p className="text-slate-500 dark:text-slate-400 mt-1">{tCurriculum(grade.description)}</p>
+                <h3 className="text-xl font-bold text-text-primary group-hover:text-primary transition-colors">{tCurriculum(grade.level)}</h3>
+                <p className="text-text-secondary mt-1">{tCurriculum(grade.description)}</p>
             </div>
             <div className="relative z-10 w-full flex justify-end mt-2">
-                <Icon aria-hidden="true" className="h-10 w-10 text-slate-300 dark:text-slate-500 group-hover:text-primary transition-colors duration-300 group-hover:scale-110" style={{color: 'rgb(var(--c-primary))'}} />
+                <Icon aria-hidden="true" className="h-10 w-10 text-slate-700 group-hover:text-primary transition-colors duration-300 group-hover:scale-110" />
             </div>
         </button>
     )
@@ -51,15 +51,15 @@ const GradeSelector: React.FC<GradeSelectorProps> = ({ grades, onSelect, onBack 
   return (
     <div className="animate-fade-in">
       <div className="flex items-center mb-6">
-        <button onClick={onBack} className="flex items-center text-primary hover:text-primary-dark font-semibold transition" style={{color: 'rgb(var(--c-primary))', textDecorationColor: 'rgb(var(--c-primary-dark))'}}>
+        <button onClick={onBack} className="flex items-center text-text-secondary hover:text-text-primary font-semibold transition">
           <ArrowLeftIcon className="h-5 w-5 mr-2" />
           {t('backToDashboard')}
         </button>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
-        <h2 className="text-3xl lg:text-4xl font-bold text-center mb-2 text-slate-700 dark:text-slate-200">{t('welcomeLearner')}</h2>
-        <p className="text-lg text-center text-slate-500 dark:text-slate-400 mb-8">{t('selectGradePrompt')}</p>
+      <div className="dashboard-highlight-card p-8">
+        <h2 className="text-3xl lg:text-4xl font-bold text-center mb-2 text-text-primary">{t('welcomeLearner')}</h2>
+        <p className="text-lg text-center text-text-secondary mb-8">{t('selectGradePrompt')}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {grades.map((grade) => (
             <GradeCard

@@ -137,6 +137,22 @@ export const queryCollection = async <T>(table: ArrayTables, predicate: (item: T
 };
 
 /**
+ * Queries a collection using an index for high performance.
+ */
+export const queryCollectionByIndex = async <T>(
+    table: ArrayTables, 
+    indexName: string, 
+    queryValue: IDBValidKey
+): Promise<T[]> => {
+    const db = await openDb();
+    const tx = db.transaction(table, 'readonly');
+    const store = tx.objectStore(table);
+    const index = store.index(indexName);
+    const result = await promisifyRequest<T[]>(index.getAll(queryValue));
+    return result ?? [];
+};
+
+/**
  * Updates a document in the 'questions' collection by finding it via ID and replacing it.
  */
 export const updateDocInCollection = async (table: 'questions', id: string, updatedDoc: StudentQuestion): Promise<void> => {
@@ -164,4 +180,11 @@ export const findUserById = async (id: number): Promise<User | null> => {
 
 export const addUser = async (user: User): Promise<void> => {
     await addDocToCollection('users', user);
+};
+
+export const updateUser = async (user: User): Promise<void> => {
+    const db = await openDb();
+    const tx = db.transaction('users', 'readwrite');
+    const store = tx.objectStore('users');
+    await promisifyRequest(store.put(user));
 };

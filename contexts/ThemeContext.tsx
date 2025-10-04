@@ -11,21 +11,18 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    // Check for saved theme in localStorage, default to 'light'
-    const savedTheme = localStorage.getItem('alfanumrik-theme');
-    if (savedTheme === 'dark' || savedTheme === 'light') {
-        return savedTheme;
-    }
-    // Or check for system preference
+    // Check for saved theme in localStorage, or system preference, or default to light
+    const savedTheme = localStorage.getItem('alfanumrik-theme') as Theme | null;
+    if (savedTheme) return savedTheme;
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        return 'dark';
+      return 'dark';
     }
     return 'light';
   });
 
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
+    root.classList.remove(theme === 'light' ? 'dark' : 'light');
     root.classList.add(theme);
     localStorage.setItem('alfanumrik-theme', theme);
   }, [theme]);

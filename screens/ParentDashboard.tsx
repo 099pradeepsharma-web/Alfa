@@ -11,7 +11,7 @@ interface ParentDashboardProps {
   onBack: () => void;
 }
 
-const ParentDashboard: React.FC<ParentDashboardProps> = ({ child, onSelectStudent, onBack }) => {
+const ParentDashboard: React.FC<ParentDashboardProps> = React.memo(({ child, onSelectStudent, onBack }) => {
   const { t, tCurriculum } = useLanguage();
   const [agreed, setAgreed] = useState(false);
   const [isAssigned, setIsAssigned] = useState(false);
@@ -34,51 +34,51 @@ const ParentDashboard: React.FC<ParentDashboardProps> = ({ child, onSelectStuden
 
   return (
     <div className="animate-fade-in">
-        <button onClick={onBack} className="flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-semibold transition mb-6">
+        <button onClick={onBack} className="flex items-center text-slate-600 hover:text-slate-900 font-semibold transition mb-6">
             <ArrowLeftIcon className="h-5 w-5 mr-2" />
             {t('backToRoleSelection')}
         </button>
-        <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg">
-            <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 border-b dark:border-slate-600 pb-4 mb-6">{t('parentDashboard')}</h2>
-            <p className="text-slate-600 dark:text-slate-300 mb-6">{t('parentDashboardPrompt')}</p>
+        <div className="bg-white p-8 rounded-2xl shadow-lg">
+            <h2 className="text-3xl font-bold text-slate-800 border-b border-slate-200 pb-4 mb-6">{t('parentDashboard')}</h2>
+            <p className="text-slate-600 mb-6">{t('parentDashboardPrompt')}</p>
             <div className="space-y-4">
                 <button
                 onClick={() => onSelectStudent(child)}
-                className="w-full flex items-center justify-between bg-slate-50 dark:bg-slate-700 p-4 rounded-lg hover:bg-indigo-50 dark:hover:bg-slate-600 hover:shadow-sm transition-all duration-200"
+                className="w-full flex items-center justify-between bg-slate-50 p-4 rounded-lg hover:bg-slate-100 hover:shadow-sm transition-all duration-200"
                 >
                 <div className="flex items-center">
                     <img src={child.avatarUrl} alt={child.name} className="h-12 w-12 rounded-full mr-4" />
                     <div>
-                    <p className="font-bold text-slate-800 dark:text-slate-100 text-lg">{child.name}</p>
-                    <p className="text-slate-500 dark:text-slate-400">{tCurriculum(child.grade)}</p>
+                    <p className="font-bold text-slate-800 text-lg">{child.name}</p>
+                    <p className="text-slate-500">{tCurriculum(child.grade)}</p>
                     </div>
                 </div>
-                <ChevronRightIcon className="h-6 w-6 text-slate-400 dark:text-slate-500" />
+                <ChevronRightIcon className="h-6 w-6 text-slate-400" />
                 </button>
             </div>
 
-            <div className="mt-8 bg-blue-50 dark:bg-blue-900/40 p-6 rounded-xl border border-blue-200 dark:border-blue-700">
+            <div className="mt-8 bg-slate-50 p-6 rounded-xl border border-slate-200">
                 <div className="flex items-center gap-4">
-                    <div className="p-2 bg-white/50 dark:bg-slate-900/50 rounded-full">
-                        <CheckBadgeIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                    <div className="p-2 bg-white/50 rounded-full">
+                        <CheckBadgeIcon className="h-8 w-8 text-slate-500" />
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('curriculumAlignmentTitle')}</h3>
-                        <p className="text-slate-600 dark:text-slate-300 mt-1">{t('curriculumAlignmentDesc')}</p>
+                        <h3 className="text-xl font-bold text-slate-800">{t('curriculumAlignmentTitle')}</h3>
+                        <p className="text-slate-600 mt-1">{t('curriculumAlignmentDesc')}</p>
                     </div>
                 </div>
             </div>
 
-            <div className="mt-8 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-700">
-                <h3 className="text-xl font-bold text-slate-700 dark:text-slate-200">Special Module: Personal Growth & Well-being</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <div className="mt-8 bg-slate-50 p-6 rounded-xl border border-slate-200">
+                <h3 className="text-xl font-bold text-slate-700">Special Module: Personal Growth & Well-being</h3>
+                <p className="text-sm text-slate-500 mt-1">
                     Assign the "The Great Transformation" module to help your child navigate their journey from teen to adult.
                 </p>
 
                 {isLoading ? (
                     <div className="mt-4 flex justify-center"><LoadingSpinner /></div>
                 ) : isAssigned ? (
-                    <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/40 text-green-800 dark:text-green-200 rounded-lg font-semibold text-center flex items-center justify-center gap-2">
+                    <div className="mt-4 p-3 bg-slate-100 text-slate-800 rounded-lg font-semibold text-center flex items-center justify-center gap-2">
                         <CheckCircleIcon className="h-5 w-5" />
                         Module has been assigned to {child.name}.
                     </div>
@@ -88,12 +88,11 @@ const ParentDashboard: React.FC<ParentDashboardProps> = ({ child, onSelectStuden
                             <input
                                 id="terms-agree"
                                 type="checkbox"
-                                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary mt-0.5"
-                                style={{color: 'rgb(var(--c-primary))'}}
+                                className="h-5 w-5 rounded border-gray-300 text-slate-600 focus:ring-slate-500 mt-0.5"
                                 checked={agreed}
                                 onChange={(e) => setAgreed(e.target.checked)}
                             />
-                            <label htmlFor="terms-agree" className="text-sm text-slate-600 dark:text-slate-300">
+                            <label htmlFor="terms-agree" className="text-sm text-slate-600">
                                 I have reviewed the module's objectives and agree to assign this sensitive but important content to my child. I understand it covers topics related to adolescent development.
                             </label>
                         </div>
@@ -101,8 +100,7 @@ const ParentDashboard: React.FC<ParentDashboardProps> = ({ child, onSelectStuden
                             <button
                                 onClick={handleAssignModule}
                                 disabled={!agreed}
-                                className="px-4 py-2 bg-primary text-white font-semibold rounded-lg shadow-sm hover:bg-primary-dark transition disabled:opacity-50 disabled:cursor-not-allowed"
-                                style={{backgroundColor: 'rgb(var(--c-primary))'}}
+                                className="px-4 py-2 bg-slate-700 text-white font-semibold rounded-lg shadow-sm hover:bg-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Assign to {child.name}
                             </button>
@@ -114,6 +112,6 @@ const ParentDashboard: React.FC<ParentDashboardProps> = ({ child, onSelectStuden
         </div>
     </div>
   );
-};
+});
 
 export default ParentDashboard;

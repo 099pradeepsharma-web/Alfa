@@ -110,8 +110,13 @@ const MicrolearningScreen: React.FC<MicrolearningScreenProps> = ({ learningModul
                             subject={{ name: 'General', icon: '', chapters: [] }}
                             chapter={{ title: learningModule.chapterTitle }}
                             language={language}
-                            onClose={() => setShowPractice(false)}
-                            onMastered={handleConceptMastered}
+                            onResult={(score) => {
+                                if (score >= 75) {
+                                    handleConceptMastered();
+                                } else {
+                                    setShowPractice(false);
+                                }
+                            }}
                         />
                     ) : (
                          <div className="text-center">

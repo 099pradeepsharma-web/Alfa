@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Concept, Student, Grade, Subject, Chapter, StudentQuestion, FittoResponse } from '../types';
-import { BeakerIcon, ViewfinderCircleIcon, ExclamationTriangleIcon, ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
-import { CheckCircleIcon as CheckCircleSolid, MicrophoneIcon, PaperAirplaneIcon, PencilSquareIcon, StopCircleIcon, TrophyIcon } from '@heroicons/react/24/solid';
-import { saveStudentQuestion, updateStudentQuestion, getDiagram, saveDiagram } from '../services/pineconeService';
-import { getFittoAnswer, generateDiagram } from '../services/geminiService';
+import { BeakerIcon, ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon as CheckCircleSolid, MicrophoneIcon, PaperAirplaneIcon, PencilSquareIcon, StopCircleIcon, TrophyIcon, PlayCircleIcon, PauseCircleIcon } from '@heroicons/react/24/solid';
+import { saveStudentQuestion, updateStudentQuestion } from '../services/pineconeService';
+import { getFittoAnswer } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 
 import LoadingSpinner from './LoadingSpinner';
@@ -46,7 +46,7 @@ const ProgressBadge: React.FC<{ status: ConceptCardProps['progressStatus'] }> = 
     }
 }
 
-const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chapter, language, progressStatus, onMarkAsInProgress, onConceptMastered, renderText }) => {
+const ConceptCard: React.FC<ConceptCardProps> = React.memo(({ concept, grade, subject, chapter, language, progressStatus, onMarkAsInProgress, onConceptMastered, renderText }) => {
   const { t } = useLanguage();
   const { currentUser } = useAuth();
   const student = currentUser!;
@@ -56,45 +56,10 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
   const [conversation, setConversation] = useState<ConversationTurn[]>([]);
   const [showPractice, setShowPractice] = useState(false);
   const chatHistoryRef = useRef<HTMLDivElement>(null);
-  
-  const [diagramUrl, setDiagramUrl] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [diagramError, setDiagramError] = useState<string | null>(null);
-
-  const diagramDbKey = `diagram-${grade.level}-${subject.name}-${chapter.title}-${concept.conceptTitle}`;
-
-  useEffect(() => {
-    const checkCache = async () => {
-        const cachedUrl = await getDiagram(diagramDbKey);
-        if (cachedUrl) {
-            setDiagramUrl(cachedUrl);
-        }
-    };
-    checkCache();
-  }, [diagramDbKey]);
-
-  const handleGenerateDiagram = useCallback(async () => {
-    setIsGenerating(true);
-    setDiagramError(null);
-    try {
-        const generatedImageUrl = await generateDiagram(concept.diagramDescription, subject.name);
-        await saveDiagram(diagramDbKey, generatedImageUrl);
-        setDiagramUrl(generatedImageUrl);
-    } catch (err: any) {
-        let errorMessage = t('diagramFailedError');
-        if (err.message === "QUOTA_EXCEEDED") {
-            errorMessage = t('diagramQuotaError');
-        }
-        setDiagramError(errorMessage);
-    } finally {
-        setIsGenerating(false);
-    }
-  }, [concept.diagramDescription, subject.name, diagramDbKey, t]);
-
 
   const SubjectIcon = getIcon(subject.icon);
   
-  const { isSpeaking: isFittoSpeaking, play: playFittoResponse, stop: stopFittoResponse } = useTTS();
+  const { isSpeaking: isFittoSpeaking, isPaused, currentlyPlayingId, play: playFittoResponse, pause, resume, stop: stopFittoResponse } = useTTS();
 
   const handleSubmitText = useCallback(async (text: string) => {
     const trimmedQuestion = text.trim();
@@ -125,8 +90,6 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
         await saveStudentQuestion(newQuestion, language);
         const response = await getFittoAnswer(newQuestion, language);
         
-        playFittoResponse(response.responseText);
-        
         setConversation(prev => prev.map(turn => 
             turn.id === thinkingTurn.id ? { ...turn, text: response.responseText, state: undefined } : turn
         ));
@@ -141,7 +104,7 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
     } finally {
         setIsSubmitting(false);
     }
-  }, [isSubmitting, student, grade, subject, chapter, concept.conceptTitle, language, playFittoResponse, isFittoSpeaking, stopFittoResponse]);
+  }, [isSubmitting, student, grade, subject, chapter, concept.conceptTitle, language, isFittoSpeaking, stopFittoResponse]);
   
   const { isListening, transcript, startListening, stopListening, isSupported } = useSpeechRecognition({
       onEnd: handleSubmitText
@@ -200,12 +163,12 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
                             </div>
                         );
                     } else { // Fitto's turn
-                        const isLastTurn = index === conversation.length - 1;
+                        const isCurrentAudio = currentlyPlayingId === turn.id.toString();
                         const avatarState: FittoState = turn.state === 'thinking' 
                             ? 'thinking' 
                             : turn.state === 'error' 
                                 ? 'encouraging' 
-                                : (isLastTurn && isFittoSpeaking ? 'speaking' : 'idle');
+                                : (isFittoSpeaking && isCurrentAudio ? 'speaking' : 'idle');
 
                         return (
                             <div key={`${turn.id}-${turn.state || 'final'}`} className="flex items-end space-x-3 animate-fade-in">
@@ -227,14 +190,17 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
                                             <p className="text-slate-700 dark:text-slate-200">{turn.text}</p>
                                         </div>
                                     )}
-                                    {isLastTurn && isFittoSpeaking && !turn.state && (
-                                      <button
-                                        onClick={stopFittoResponse}
-                                        className="flex-shrink-0 p-2 rounded-full bg-slate-200 dark:bg-slate-600 hover:bg-red-100 dark:hover:bg-red-800/50 text-slate-600 dark:text-slate-200 hover:text-red-500 dark:hover:text-red-400 transition"
-                                        aria-label="Stop speaking"
-                                      >
-                                          <StopCircleIcon className="h-5 w-5"/>
-                                      </button>
+                                    {!turn.state && turn.text && (
+                                        <div className="flex-shrink-0">
+                                            {(!isFittoSpeaking || !isCurrentAudio) ? (
+                                                <button onClick={() => playFittoResponse(turn.text, turn.id.toString())} className="p-2 rounded-full bg-slate-200 dark:bg-slate-600 hover:bg-primary-light text-slate-600 dark:text-slate-200 hover:text-primary-dark transition" aria-label="Play audio response"><PlayCircleIcon className="h-5 w-5"/></button>
+                                            ) : (
+                                                <div className="flex items-center gap-1">
+                                                    <button onClick={isPaused ? resume : pause} className="p-2 rounded-full bg-slate-200 dark:bg-slate-600 hover:bg-primary-light text-slate-600 dark:text-slate-200 hover:text-primary-dark transition" aria-label={isPaused ? "Resume audio" : "Pause audio"}>{isPaused ? <PlayCircleIcon className="h-5 w-5"/> : <PauseCircleIcon className="h-5 w-5"/>}</button>
+                                                    <button onClick={stopFittoResponse} className="p-2 rounded-full bg-slate-200 dark:bg-slate-600 hover:bg-red-100 dark:hover:bg-red-800/50 text-slate-600 dark:text-slate-200 hover:text-red-500 dark:hover:text-red-400 transition" aria-label="Stop speaking"><StopCircleIcon className="h-5 w-5"/></button>
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
                                   </div>
                                 </div>
@@ -319,60 +285,21 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
         </h4>
         <div className="text-primary-dark/80 prose prose-lg max-w-none prose-indigo dark:prose-invert" style={{color: 'rgba(var(--c-primary-dark), 0.8)'}}><StructuredText text={concept.realWorldExample} renderText={renderText} /></div>
       </div>
-
-      <div className="mt-4">
-        <h4 className="font-semibold text-slate-700 dark:text-slate-200 flex items-center mb-2">
-            <ViewfinderCircleIcon className="h-5 w-5 mr-2" />
-            {t('visualDiagram')}
-        </h4>
-        <div role="status" className="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-4 text-center min-h-[200px] flex items-center justify-center bg-white dark:bg-slate-800">
-            {isGenerating && (
-                <div className="flex flex-col items-center text-slate-500 dark:text-slate-400">
-                    <div className="text-primary h-8 w-8" style={{color: 'rgb(var(--c-primary))'}}><LoadingSpinner /></div>
-                    <p className="text-sm mt-2">{t('aiDrawingDiagram')}</p>
-                </div>
-            )}
-            {diagramError && (
-                 <div className="text-slate-500 dark:text-slate-400 flex flex-col items-center p-4">
-                    {diagramError === t('diagramQuotaError') ? (
-                        <ClockIcon className="h-10 w-10 mb-3 text-amber-500" />
-                    ) : (
-                        <ExclamationTriangleIcon className="h-10 w-10 mb-3 text-red-500" />
-                    )}
-                    <p className="font-semibold text-center">{diagramError}</p>
-                    <p className="text-xs italic mt-3 text-slate-400 dark:text-slate-500 text-center">
-                        <strong>{t('visualContext')}:</strong> "{concept.diagramDescription}"
-                    </p>
-                </div>
-            )}
-            {!isGenerating && !diagramError && diagramUrl && (
-                <div>
-                    <img src={diagramUrl} alt={concept.diagramDescription} className="rounded-md mx-auto mb-2 max-h-[300px] w-auto bg-white" />
-                    <p className="text-sm text-slate-500 dark:text-slate-400 italic">{concept.diagramDescription}</p>
-                </div>
-            )}
-            {!isGenerating && !diagramError && !diagramUrl && concept.diagramDescription && concept.diagramDescription.trim().length > 10 && (
-                <button 
-                    onClick={handleGenerateDiagram} 
-                    className="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary-light transition-colors group"
-                >
-                    <SparklesIcon className="h-10 w-10 mb-2 transition-transform group-hover:scale-110" />
-                    <span className="font-semibold">{t('generateDiagramButton')}</span>
-                </button>
-            )}
-        </div>
-      </div>
       
       <div className="mt-6">
         {showPractice ? (
-            <PracticeExercises 
+            <PracticeExercises
                 concept={concept}
                 grade={grade}
                 subject={subject}
                 chapter={chapter}
                 language={language}
-                onClose={() => setShowPractice(false)}
-                onMastered={handleMastered}
+                onResult={(score) => {
+                    if (score >= 75) { // Assuming 75% is mastery
+                        handleMastered();
+                    }
+                    setShowPractice(false);
+                }}
             />
         ) : (
              <div className="text-center">
@@ -398,6 +325,6 @@ const ConceptCard: React.FC<ConceptCardProps> = ({ concept, grade, subject, chap
       </div>
     </div>
   );
-};
+});
 
 export default ConceptCard;

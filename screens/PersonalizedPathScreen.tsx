@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Student, AdaptiveAction, QuizQuestion, IQExercise, EQExercise, PerformanceRecord } from '../types';
-import { getAdaptiveNextStep, generateQuiz, generateIQExercises, generateEQExercises, getChapterContent } from '../services/geminiService';
+import { Student, AdaptiveAction, QuizQuestion, IQExercise, EQExercise, PerformanceRecord, Chapter } from '../types';
+import { getAdaptiveNextStep, generateQuiz, generateIQExercises, generateEQExercises } from '../services/geminiService';
+import { getChapterContent } from '../services/contentService';
 import { CURRICULUM } from '../data/curriculum';
 import LoadingSpinner from '../components/LoadingSpinner';
 import MissionQuiz from '../components/MissionQuiz';
@@ -80,7 +81,13 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ onBack 
                         throw new Error("Missing subject or chapter details for academic task.");
                     }
                     // Mission: 6 Academic, 2 IQ, 2 EQ
-                    const module = await getChapterContent(student.grade, details.subject, details.chapter, student.name, language);
+                    const gradeData = CURRICULUM.find(g => g.level === student.grade);
+                    const subjectData = gradeData?.subjects.find(s => s.name === details.subject);
+                    const chapterObject = subjectData?.chapters.find(c => c.title === details.chapter);
+                    if (!chapterObject) {
+                        throw new Error(`Chapter "${details.chapter}" not found in curriculum.`);
+                    }
+                    const {content: module} = await getChapterContent(student.grade, details.subject, chapterObject, student, language);
                     const academicQuestions = await generateQuiz(module.keyConcepts, language, 6);
                     const iqQuestions = await generateIQExercises(student.grade, language, 2);
                     const eqQuestions = await generateEQExercises(student.grade, language, 2);
@@ -93,7 +100,13 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ onBack 
                     missionTasks.push(...iqQuestions, ...eqQuestions);
                     
                     const weakArea = findWeakestAcademicArea(student.performance, student.grade);
-                    const module = await getChapterContent(student.grade, weakArea.subject, weakArea.chapter, student.name, language);
+                    const gradeData = CURRICULUM.find(g => g.level === student.grade);
+                    const subjectData = gradeData?.subjects.find(s => s.name === weakArea.subject);
+                    const chapterObject = subjectData?.chapters.find(c => c.title === weakArea.chapter);
+                    if (!chapterObject) {
+                        throw new Error(`Chapter "${weakArea.chapter}" not found in curriculum.`);
+                    }
+                    const {content: module} = await getChapterContent(student.grade, weakArea.subject, chapterObject, student, language);
                     const academicQuestions = await generateQuiz(module.keyConcepts, language, 2);
                     missionTasks.push(...academicQuestions);
 
@@ -104,7 +117,13 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ onBack 
                     missionTasks.push(...eqQuestions, ...iqQuestions);
                      
                     const weakArea = findWeakestAcademicArea(student.performance, student.grade);
-                    const module = await getChapterContent(student.grade, weakArea.subject, weakArea.chapter, student.name, language);
+                    const gradeData = CURRICULUM.find(g => g.level === student.grade);
+                    const subjectData = gradeData?.subjects.find(s => s.name === weakArea.subject);
+                    const chapterObject = subjectData?.chapters.find(c => c.title === weakArea.chapter);
+                    if (!chapterObject) {
+                        throw new Error(`Chapter "${weakArea.chapter}" not found in curriculum.`);
+                    }
+                    const {content: module} = await getChapterContent(student.grade, weakArea.subject, chapterObject, student, language);
                     const academicQuestions = await generateQuiz(module.keyConcepts, language, 2);
                     missionTasks.push(...academicQuestions);
                 }
@@ -146,11 +165,11 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ onBack 
         return (
             <div className="flex flex-col items-center justify-center h-96">
                 <LoadingSpinner />
-                <p className="mt-4 text-slate-600 dark:text-slate-300 text-lg">{t('craftingYourPath')}</p>
+                <p className="mt-4 text-text-secondary text-lg">{t('craftingYourPath')}</p>
                  {adaptiveAction && (
-                    <div className="mt-4 text-center p-4 bg-slate-100 dark:bg-slate-800 rounded-lg max-w-md">
-                        <p className="font-semibold text-primary" style={{color: 'rgb(var(--c-primary))'}}>{t('aiReasoning')}</p>
-                        <p className="text-slate-600 dark:text-slate-300 italic">"{adaptiveAction.details.reasoning}"</p>
+                    <div className="mt-4 text-center p-4 bg-surface rounded-lg max-w-md">
+                        <p className="font-semibold text-primary">{t('aiReasoning')}</p>
+                        <p className="text-text-secondary italic">"{adaptiveAction.details.reasoning}"</p>
                     </div>
                 )}
             </div>
@@ -159,19 +178,18 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ onBack 
     
     if (pathState === 'ERROR') {
          return (
-             <div className="text-center p-8 bg-red-50 dark:bg-red-900/20 rounded-2xl shadow-lg border border-red-200 dark:border-red-800">
-                <ExclamationTriangleIcon className="h-12 w-12 mx-auto text-red-500 dark:text-red-400" />
-                <h3 className="text-2xl font-bold text-red-800 dark:text-red-300 mt-4">{t('errorCraftingPathTitle')}</h3>
-                <p className="text-red-700 dark:text-red-400 mt-2">{t('errorCraftingPathBody')}</p>
-                {error && <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">({error})</p>}
+             <div className="text-center p-8 bg-red-900/20 rounded-2xl shadow-lg border border-red-800">
+                <ExclamationTriangleIcon className="h-12 w-12 mx-auto text-red-400" />
+                <h3 className="text-2xl font-bold text-red-300 mt-4">{t('errorCraftingPathTitle')}</h3>
+                <p className="text-red-400 mt-2">{t('errorCraftingPathBody')}</p>
+                {error && <p className="text-xs text-slate-400 mt-2">({error})</p>}
                 <div className="mt-6 flex items-center justify-center gap-4">
-                    <button onClick={onBack} className="px-6 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-lg shadow-sm hover:bg-slate-300 dark:hover:bg-slate-600 transition">
+                    <button onClick={onBack} className="px-6 py-2 bg-slate-700 text-slate-200 font-bold rounded-lg shadow-sm hover:bg-slate-600 transition">
                         {t('backToDashboard')}
                     </button>
                     <button 
                         onClick={handleRetry}
-                        className="flex items-center justify-center px-6 py-2 bg-primary text-white font-bold rounded-lg shadow-sm hover:bg-primary-dark transition"
-                        style={{backgroundColor: 'rgb(var(--c-primary))'}}
+                        className="flex items-center justify-center px-6 py-2 btn-accent"
                     >
                         <ArrowPathIcon className="h-5 w-5 mr-2" />
                         {t('retryButton')}
@@ -183,21 +201,21 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ onBack 
 
     return (
         <div className="animate-fade-in">
-             <div className="mb-6 p-6 bg-white dark:bg-slate-800 rounded-2xl shadow-lg">
-                <button onClick={onBack} className="flex items-center text-primary hover:text-primary-dark font-semibold transition mb-4" style={{color: 'rgb(var(--c-primary))'}}>
+             <div className="mb-6 p-6 dashboard-highlight-card">
+                <button onClick={onBack} className="flex items-center text-primary hover:text-primary-dark font-semibold transition mb-4">
                     <ArrowLeftIcon className="h-5 w-5 mr-2" />
                     {t('backToDashboard')}
                 </button>
-                <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">{t('yourNextMission')}</h1>
-                <div className="mt-2 text-left p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                    <p className="font-semibold text-primary flex items-center" style={{color: 'rgb(var(--c-primary))'}}>
+                <h1 className="text-3xl font-bold text-text-primary">{t('yourNextMission')}</h1>
+                <div className="mt-2 text-left p-3 bg-surface rounded-lg">
+                    <p className="font-semibold text-primary flex items-center">
                         <SparklesIcon className="h-5 w-5 mr-2" />
                         {t('aiReasoning')}
                     </p>
-                    <p className="text-slate-600 dark:text-slate-300 italic">"{adaptiveAction?.details.reasoning}"</p>
+                    <p className="text-text-secondary italic">"{adaptiveAction?.details.reasoning}"</p>
                 </div>
             </div>
-            <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg">
+            <div className="dashboard-highlight-card p-8">
                 {renderTask()}
             </div>
         </div>

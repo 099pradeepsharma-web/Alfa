@@ -1,8 +1,7 @@
-
-
-import { LearningModule, Student } from '../types';
+import { LearningModule, Student, Chapter } from '../types';
 import * as geminiService from './geminiService';
 import * as pineconeService from './pineconeService';
+import { retrieveFromRag } from '../data/ragContent';
 
 // This is a placeholder for a real pre-generated content store (e.g., JSON files in a CDN)
 // It also serves as a simple in-memory cache for the current session to reduce localStorage reads.
@@ -16,18 +15,19 @@ const generateDbKey = (grade: string, subject: string, chapter: string, language
  * Implements a multi-layer caching strategy to optimize for scale and reduce API calls:
  * 1. In-memory session cache (fastest)
  * 2. Persistent local storage cache (via pineconeService)
- * 3. Dynamic generation (via geminiService) with a robust fallback.
+ * 3. Retrieval from RAG system (pre-generated content)
+ * 4. Dynamic generation (via geminiService) with a robust fallback.
  *
  * @returns An object containing the content and a boolean indicating if it was from a cache.
  */
 export const getChapterContent = async (
     grade: string, 
     subject: string, 
-    chapter: string, 
+    chapter: Chapter, 
     student: Student, 
     language: string
 ): Promise<{content: LearningModule, fromCache: boolean}> => {
-    const dbKey = generateDbKey(grade, subject, chapter, language);
+    const dbKey = generateDbKey(grade, subject, chapter.title, language);
 
     // Layer 1: Check in-memory session cache
     if (IN_MEMORY_STORE[dbKey]) {
@@ -41,7 +41,18 @@ export const getChapterContent = async (
         return { content: cachedContent, fromCache: true };
     }
 
-    // Layer 3: Dynamic generation with fallback for production readiness
+    // Layer 3: Retrieve from RAG system (pre-generated content)
+    const ragContent = retrieveFromRag(chapter.title, language);
+    if (ragContent) {
+        // Save to caches for future offline use
+        await pineconeService.saveLearningModule(dbKey, ragContent, language);
+        IN_MEMORY_STORE[dbKey] = ragContent;
+        // This content is "cached" in the codebase, so it's fast and authentic.
+        return { content: ragContent, fromCache: true };
+    }
+
+
+    // Layer 4: Dynamic generation with fallback for production readiness
     try {
         const generatedContent = await geminiService.getChapterContent(grade, subject, chapter, student.name, language);
         // Save to both caches for future requests
@@ -54,7 +65,7 @@ export const getChapterContent = async (
         // Fallback to a minimal, offline-friendly content structure to ensure app doesn't crash
         // This fallback is now more explicit about what might be missing.
         const fallbackContent: LearningModule = {
-            chapterTitle: chapter,
+            chapterTitle: chapter.title,
             introduction: "We're having trouble connecting to our AI to generate this lesson, including interactive elements like Virtual Labs, Video Explainers, and Adaptive Stories. Please check your internet connection and try again. The app will continue to work in offline mode if you have viewed this content before.",
             learningObjectives: ["Understand the key terms of this chapter.", "Practice related questions when online."],
             keyConcepts: [{
@@ -63,7 +74,12 @@ export const getChapterContent = async (
                 realWorldExample: "N/A",
                 diagramDescription: "N/A"
             }],
-            summary: "Content is temporarily unavailable."
+            summary: "Content is temporarily unavailable.",
+            interactiveVideoSimulation: {
+                title: "Video Not Available",
+                description: "The interactive video for this concept could not be loaded at this time. Please check your connection and try again.",
+                videoPrompt: "An error screen."
+            }
         };
         return { content: fallbackContent, fromCache: false };
     }

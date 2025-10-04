@@ -57,7 +57,7 @@ export const saveReport = async (studentId: number, userRole: 'teacher' | 'paren
  */
 export const getPerformanceRecords = async (userId: number): Promise<PerformanceRecord[]> => {
     type StoredPerformanceRecord = PerformanceRecord & { studentId: number };
-    return await db.queryCollection<StoredPerformanceRecord>('performance', (record) => record.studentId === userId);
+    return await db.queryCollectionByIndex<StoredPerformanceRecord>('performance', 'studentId', userId);
 };
 
 // --- New Learning Streak Logic ---
@@ -145,7 +145,7 @@ export const saveChapterProgress = async (key: string, progress: ChapterProgress
  */
 export const getStudentQuestions = async (userId: number, language: string): Promise<StudentQuestion[]> => {
     // language is not needed for querying the central collection, but kept for API consistency.
-    return await db.queryCollection<StudentQuestion>('questions', (q) => q.studentId === userId);
+    return await db.queryCollectionByIndex<StudentQuestion>('questions', 'studentId', userId);
 };
 
 /**
@@ -262,7 +262,7 @@ export const setWellbeingModuleStatus = async (studentId: number, isAssigned: bo
  */
 export const getAchievements = async (userId: number): Promise<Achievement[]> => {
     type StoredAchievement = Achievement & { studentId: number };
-    return await db.queryCollection<StoredAchievement>('achievements', (ach) => ach.studentId === userId);
+    return await db.queryCollectionByIndex<StoredAchievement>('achievements', 'studentId', userId);
 };
 
 /**

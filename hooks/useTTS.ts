@@ -13,6 +13,7 @@ export const useTTS = () => {
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
     const [currentSentenceIndex, setCurrentSentenceIndex] = useState(-1);
+    const [currentlyPlayingId, setCurrentlyPlayingId] = useState<string | null>(null);
     const [isSupported, setIsSupported] = useState(false);
 
     const utterancesRef = useRef<SpeechSynthesisUtterance[]>([]);
@@ -22,6 +23,7 @@ export const useTTS = () => {
         if (!synthRef.current || index >= utterancesRef.current.length) {
             setIsSpeaking(false);
             setCurrentSentenceIndex(-1);
+            setCurrentlyPlayingId(null);
             return;
         }
 
@@ -36,7 +38,7 @@ export const useTTS = () => {
         synthRef.current.speak(utterance);
     }, []);
 
-    const play = useCallback((text: string) => {
+    const play = useCallback((text: string, id: string) => {
         if (!synthRef.current || isSpeaking) return;
 
         const synth = synthRef.current;
@@ -69,6 +71,7 @@ export const useTTS = () => {
 
         setIsSpeaking(true);
         setIsPaused(false);
+        setCurrentlyPlayingId(id);
         speakSentences(0);
 
     }, [isSpeaking, speakSentences]);
@@ -94,6 +97,7 @@ export const useTTS = () => {
         setIsSpeaking(false);
         setIsPaused(false);
         setCurrentSentenceIndex(-1);
+        setCurrentlyPlayingId(null);
         utterancesRef.current = [];
     }, []);
 
@@ -122,5 +126,5 @@ export const useTTS = () => {
         };
     }, []);
 
-    return { isSupported, isSpeaking, isPaused, currentSentenceIndex, play, pause, resume, stop };
+    return { isSupported, isSpeaking, isPaused, currentSentenceIndex, currentlyPlayingId, play, pause, resume, stop };
 };

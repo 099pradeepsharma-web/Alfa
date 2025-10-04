@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AdaptiveStory, StoryNode } from '../types';
+import { AdaptiveStory, StoryNode, StoryNodeChoice } from '../types';
 import { useLanguage } from '../contexts/Language-context';
 import { ArrowPathIcon, CheckCircleIcon, InformationCircleIcon } from '@heroicons/react/24/solid';
 
@@ -13,20 +13,23 @@ const AdaptiveStoryPlayer: React.FC<AdaptiveStoryPlayerProps> = ({ storyData }) 
     const [currentNode, setCurrentNode] = useState<StoryNode | null>(null);
     const [feedback, setFeedback] = useState<string | null>(null);
     const [isChoiceMade, setIsChoiceMade] = useState(false);
+    const [selectedChoiceText, setSelectedChoiceText] = useState<string | null>(null);
 
     useEffect(() => {
         const node = storyData.nodes.find(n => n.id === currentNodeId) || null;
         setCurrentNode(node);
         setFeedback(null);
         setIsChoiceMade(false);
+        setSelectedChoiceText(null);
     }, [currentNodeId, storyData.nodes]);
 
-    const handleChoiceClick = (nextNodeId: string, choiceFeedback: string) => {
-        setFeedback(choiceFeedback);
+    const handleChoiceClick = (choice: StoryNodeChoice) => {
+        setFeedback(choice.feedback);
+        setSelectedChoiceText(choice.text);
         setIsChoiceMade(true);
         
         setTimeout(() => {
-            setCurrentNodeId(nextNodeId);
+            setCurrentNodeId(choice.nextNodeId);
         }, 2500); // Wait 2.5 seconds to show feedback before moving on
     };
     
@@ -45,24 +48,34 @@ const AdaptiveStoryPlayer: React.FC<AdaptiveStoryPlayerProps> = ({ storyData }) 
     return (
         <div className="adaptive-story-container">
             <div className="adaptive-story-intro">
-                <h4 className="text-xl font-bold text-slate-800 dark:text-slate-100">{storyData.title}</h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{storyData.introduction}</p>
+                <h4 className="text-xl font-bold text-text-primary">{storyData.title}</h4>
+                <p className="text-sm text-text-secondary mt-1">{storyData.introduction}</p>
             </div>
             
             <p className="adaptive-story-text whitespace-pre-wrap">{currentNode.text}</p>
             
             {!currentNode.isEnding && (
                  <div className="adaptive-story-choices">
-                    {currentNode.choices.map((choice, index) => (
-                        <button
-                            key={index}
-                            onClick={() => handleChoiceClick(choice.nextNodeId, choice.feedback)}
-                            disabled={isChoiceMade}
-                            className="adaptive-story-choice-btn"
-                        >
-                           {choice.text}
-                        </button>
-                    ))}
+                    {currentNode.choices.map((choice, index) => {
+                        let buttonClass = "adaptive-story-choice-btn";
+                        if (isChoiceMade) {
+                            if (choice.text === selectedChoiceText) {
+                                buttonClass += " selected";
+                            } else {
+                                buttonClass += " unselected";
+                            }
+                        }
+                        return (
+                            <button
+                                key={index}
+                                onClick={() => handleChoiceClick(choice)}
+                                disabled={isChoiceMade}
+                                className={buttonClass}
+                            >
+                               {choice.text}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
 
@@ -76,16 +89,16 @@ const AdaptiveStoryPlayer: React.FC<AdaptiveStoryPlayerProps> = ({ storyData }) 
             )}
             
             {currentNode.isEnding && (
-                <div className="mt-6 text-center p-4 bg-green-50 dark:bg-green-900/40 border border-green-200 dark:border-green-700 rounded-lg">
+                <div className="mt-6 text-center p-4 bg-green-900/40 border border-green-700 rounded-lg">
                     <CheckCircleIcon className="h-8 w-8 mx-auto text-green-500" />
-                    <p className="mt-2 font-bold text-lg text-green-800 dark:text-green-200">The story has concluded.</p>
+                    <p className="mt-2 font-bold text-lg text-green-200">The story has concluded.</p>
                 </div>
             )}
             
             <div className="adaptive-story-controls">
                 <button 
                     onClick={handleRestart}
-                    className="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-primary-dark dark:hover:text-primary-dark transition-colors duration-200"
+                    className="flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors duration-200"
                 >
                     <ArrowPathIcon className="h-5 w-5" />
                     {t('restartStory')}

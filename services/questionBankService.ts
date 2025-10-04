@@ -26,6 +26,7 @@ const questionBankItemSchema = {
         // Short/Long Answer specific
         markingScheme: { type: Type.STRING, nullable: true },
         modelAnswer: { type: Type.STRING, nullable: true },
+        answerWritingGuidance: { type: Type.STRING, nullable: true, description: "Provides CBSE-aligned tips on structuring the answer." },
     },
     required: [
         'questionText', 
@@ -45,7 +46,7 @@ const questionBankSchema = {
 
 export const generateQuestionBankQuestions = async (grade: string, subject: string, chapter: string, language: string): Promise<QuestionBankItem[]> => {
     const prompt = `
-        Act as an expert question paper setter for the Indian CBSE curriculum. Your task is to generate a comprehensive and diverse sample of 10-15 questions for a question bank.
+        Act as an expert question paper setter for the Indian CBSE curriculum. Your task is to generate a comprehensive and diverse sample of 25-30 questions for a question bank.
         The questions must be for a ${grade} student, studying the chapter "${chapter}" in the subject "${subject}".
         The entire response, including all text, explanations, and answers, must be in the ${language} language and adhere to the specified JSON schema.
 
@@ -65,8 +66,9 @@ export const generateQuestionBankQuestions = async (grade: string, subject: stri
         -   **For 'Short Answer' and 'Long Answer'**:
             -   \`markingScheme\`: A detailed breakdown of how marks would be awarded (e.g., "1 mark for definition, 2 marks for example").
             -   \`modelAnswer\`: A comprehensive and well-structured model answer.
+            -   \`answerWritingGuidance\`: Crucial for Short/Long answers. Provides CBSE-aligned tips on structuring the answer, keywords, and common mistakes.
 
-        Ensure the generated questions cover a range of difficulties and cognitive skills as per Bloom's Taxonomy. The total number of questions in the final array should be between 10 and 15.
+        Ensure the generated questions cover a range of difficulties and cognitive skills as per Bloom's Taxonomy. The total number of questions in the final array should be between 25 and 30.
     `;
 
     try {

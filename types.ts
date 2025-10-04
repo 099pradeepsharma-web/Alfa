@@ -6,10 +6,15 @@ export interface User {
   password_plaintext: string; // Stored as plaintext for this simulation. In a real app, this would be a hash.
   grade: string;
   avatarUrl: string;
+  avatarSeed?: string;
+  school?: string;
+  city?: string;
+  board?: string;
 }
 
 export interface Chapter {
   title: string;
+  tags?: string[];
 }
 
 export interface Subject {
@@ -252,15 +257,17 @@ export interface QuizQuestion {
   correctAnswer: string;
   explanation: string;
   conceptTitle: string; // Link question to a specific concept
+  type?: 'ACADEMIC' | 'IQ' | 'EQ';
+  skill?: string;
+  difficulty?: 'Easy' | 'Medium' | 'Hard';
 }
 
 // New type for adaptive learning recommendation
 export interface NextStepRecommendation {
     recommendationText: string;
     nextChapterTitle: string | null;
-    action: 'REVIEW' | 'CONTINUE' | 'REVISE_PREREQUISITE';
-    prerequisiteChapterTitle?: string | null; // Added for prerequisite navigation
-    nextChapterPreviewDiagramPrompt?: string | null;
+    action: 'REVIEW' | 'CONTINUE' | 'REVISE_PREREQUISITE' | 'START_CRITICAL_THINKING' | 'START_WELLBEING';
+    prerequisiteChapterTitle?: string | null;
 }
 
 
@@ -289,6 +296,10 @@ export interface Student {
   name: string;
   grade: string;
   avatarUrl: string;
+  avatarSeed?: string;
+  school?: string;
+  city?: string;
+  board?: string;
   performance: PerformanceRecord[];
   achievements: Achievement[];
   points: number;
@@ -296,7 +307,11 @@ export interface Student {
 
 // New type for progress tracking
 export type ChapterProgress = {
-  [conceptTitle: string]: 'in-progress' | 'mastered';
+  [conceptTitle: string]: {
+    status: 'locked' | 'novice' | 'competent' | 'master';
+    score: number;
+    failedAttempts: number;
+  };
 };
 
 // New types for Student Q&A feature
@@ -459,6 +474,7 @@ export interface Project {
   title: string;
   subject: string;
   grade: string;
+  priority?: 'High' | 'Medium' | 'Low';
   problemStatement: string;
   objectives: string[];
   guidingQuestions: string[];

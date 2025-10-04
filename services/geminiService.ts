@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, AdaptiveStory, InteractiveExplainer, PrintableResource, CulturalContext, MoralScienceCorner, AptitudeQuestion, CareerGuidance, QuestionBankItem, CategorizedProblems } from '../types';
+import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, AdaptiveStory, InteractiveExplainer, PrintableResource, CulturalContext, MoralScienceCorner, AptitudeQuestion, CareerGuidance, QuestionBankItem, CategorizedProblems, Chapter } from '../types';
+import { CURRICULUM } from '../data/curriculum';
 
 // The API key is sourced from the `process.env.API_KEY` environment variable.
 // To use a new key (e.g., from Vertex AI Studio), set this variable in your deployment environment.
@@ -10,170 +11,33 @@ if (!process.env.API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-// --- Static Content for "The Great Transformation" Chapter ---
-const THE_GREAT_TRANSFORMATION_EN: LearningModule = {
-  chapterTitle: 'The Great Transformation: Navigating Your Journey from Teen to Adult',
-  introduction: "Hey there! Ever feel like you're on a roller coaster you didn't even buy a ticket for? One minute, you're a kid, and the next, your body and mind are doing all sorts of new, confusing things. Welcome to the 'great transformation', a journey every single one of us goes through. It's a time of immense change, not just physically, but emotionally and mentally too.\n\nThis phase, starting around Grade 7, is when you begin to shed your childhood skin and step into a new one. It can feel awkward and a little scary, but trust us, you're not alone. The goal of this section is to help you understand what's happening to you, so you can embrace these changes, stay focused on your dreams, and emerge stronger and more confident.",
-  learningObjectives: [
-    "Understand the key physical, emotional, and mental changes during adolescence.",
-    "Recognize that common struggles like distraction and mood swings are normal during this phase.",
-    "Identify healthy coping mechanisms and strategies for managing stress and emotions.",
-    "Develop a positive mindset towards personal growth and identity formation."
-  ],
-  keyConcepts: [
-    {
-      conceptTitle: 'The Science Behind the Changes',
-      explanation: "So, what's really going on? Your brain is undergoing a massive rewiring. The part of your brain responsible for 'emotions and risk-taking' (the limbic system) is developing faster than the part that handles 'reasoning and decision-making' (the prefrontal cortex).\n\nThis developmental mismatch is why you might feel more intense emotions, and why sometimes, a small thing can feel like a huge deal. At the same time, your body is buzzing with hormones that are causing you to grow, change, and develop physically. Understanding this science can help you be a little kinder to yourself when you feel overwhelmed.",
-      realWorldExample: "Think about why a sad song might suddenly make you feel extremely emotional, or why you might feel a sudden urge to do something risky with friends. It's often your developing emotional brain taking the lead before your reasoning brain has a chance to catch up.",
-      diagramDescription: "A simple diagram of a brain. One part, labeled 'Emotional Center (Limbic System)', is shown brightly lit and larger, with a label 'Developing Fast!'. Another part, labeled 'Reasoning Center (Prefrontal Cortex)', is shown dimmer and smaller, with a label 'Still Developing'."
-    },
-    {
-      conceptTitle: 'Case Study: A Tale of Two Students',
-      explanation: "Let's meet two students, Rohan and Priya, both in Grade 9, facing similar challenges.\n\nRohan's Story: Rohan was a fantastic student, but lately, he's feeling easily distracted. He's more interested in spending time with his friends, and feels a lot of pressure to fit in. He finds himself procrastinating, and his grades are starting to slip. He feels guilty but doesn't know how to regain control.\n\nPriya's Story: Priya is experiencing mood swings. One minute she's happy and the next she's crying over something small. She feels a huge amount of pressure from her parents to do well in her exams, and is also navigating new friendships and peer groups. She feels exhausted and can't seem to focus on her studies like she used to.\n\nTheir feelings are completely normal. These aren't signs of weakness or a lack of focus; they are a direct result of the changes happening inside them. The key is to learn how to 'manage these new feelings' and channel that energy in the right direction.",
-      realWorldExample: "This case study itself is a real-world example. Many students feel exactly like Rohan or Priya when they navigate school pressure, friendships, and internal changes all at once.",
-      diagramDescription: "An illustration showing two students, Rohan and Priya, looking confused. Arrows point from them to icons representing 'procrastination' (a clock), 'peer pressure' (a group of people), 'mood swings' (a happy and a sad mask), and 'exam stress' (a book with a low grade). A separate arrow points towards a toolkit icon, representing the solution."
-    },
-    {
-      conceptTitle: 'Your Toolkit for Success',
-      explanation: "So, how do you navigate this? Here are four powerful tools you can use:\n\n1.  Talk it Out: Find a trusted adult—a parent, a teacher, a counselor—and talk to them. You'd be surprised how much better you'll feel just by sharing your thoughts.\n\n2.  Stay Active: Physical activity is a powerful tool to manage stress and anxiety. Whether it's playing a sport, dancing, or even just going for a walk, it helps clear your mind and boosts your mood.\n\n3.  Find Your Anchor: This is a time of exploration, but it helps to have things that ground you. This could be a hobby you love, a goal you're passionate about, or simply your personal values. When you feel overwhelmed, connect with your anchor. Take a deep breath and remind yourself of what's truly important to you.\n\n4.  Embrace Your Identity: This journey is about discovering who you are. Embrace your unique interests, strengths, and even your weaknesses. Your value isn't defined by what others think of you.",
-      realWorldExample: "For example, dedicating time to a hobby like music or art ('Find Your Anchor') can be a great way to express yourself and de-stress. Or, talking to a school counselor ('Talk it Out') can give you strategies to manage the pressures you're feeling.",
-      diagramDescription: "A visual toolkit with four icons inside: one for talking (two speech bubbles), one for physical activity (a person running), one for an anchor (a literal anchor), and one for identity (a simple mirror)."
-    }
-  ],
-  summary: "This transformational journey is one of the most exciting and significant parts of your life. By understanding what's happening and using the right tools, you can not only survive it but truly thrive. Remember, every challenge you overcome now will prepare you for the even bigger goals you'll achieve in the future.",
-  adaptiveStory: {
-    title: "The Crossroads of Choice",
-    introduction: "Alex, a Grade 9 student, is feeling overwhelmed. A big math test is tomorrow, but friends are messaging about a movie tonight. Alex feels a mix of anxiety, excitement, and pressure.",
-    startNodeId: "start",
-    nodes: [
-        {
-            id: "start",
-            text: "You're staring at your math homework when your phone buzzes. It's your friends, inviting you to a movie that starts in an hour. The test is tomorrow and you haven't studied much. What do you do?",
-            isEnding: false,
-            choices: [
-                { text: "Go to the movie. I can cram for the test later tonight.", nextNodeId: "node_movie", feedback: "It's totally normal to want to hang out with friends! Socializing is important. However, sometimes our emotional brain (wanting fun now) wins over our reasoning brain (planning for the future). This can lead to stress later on. Recognizing this is a big step!" },
-                { text: "Stay home and study. I can't risk failing.", nextNodeId: "node_study_alone", feedback: "Discipline is a fantastic skill, and you should be proud of your focus! But it's also important to remember that mental well-being includes social connection. Completely isolating yourself can also lead to stress and burnout. It's all about finding a healthy balance." },
-                { text: "Maybe I can find a balance?", nextNodeId: "node_balance", feedback: "This is a great start! Recognizing the need for balance and communicating your needs is a huge part of navigating these years. It shows you're thinking with both your emotional and reasoning brain. This is a super-power!" }
-            ]
-        },
-        {
-            id: "node_movie",
-            text: "The movie was a blast! Laughing with friends felt great. But as the credits rolled, a wave of panic washed over you. 'The test!' you thought. You got home late, exhausted. You tried to study, but the words just blurred together. The next morning, you walked into the exam feeling unprepared and stressed.",
-            isEnding: true,
-            choices: []
-        },
-        {
-            id: "node_study_alone",
-            text: "You turned off your phone and forced yourself to focus. Hour after hour, you drilled math problems. You felt prepared for the test, but when you checked your phone later, you saw pictures of your friends having fun. A wave of sadness and FOMO (Fear Of Missing Out) hit you. You felt lonely and disconnected.",
-            isEnding: true,
-            choices: []
-        },
-        {
-            id: "node_balance",
-            text: "You took a deep breath. 'Okay,' you thought, 'there has to be a better way.' You decided to text your friends to see if there's a compromise.",
-            isEnding: false,
-            choices: [
-                { text: "Text: \"Hey, I have a big test. Can we hang out this weekend instead?\"", nextNodeId: "node_postpone", feedback: "Excellent choice! You communicated your priorities, respected your own needs (studying), and still made time for friends. This is a fantastic example of healthy boundary-setting and planning." },
-                { text: "Text: \"I can't go to the movie, but how about we all have a quick study session together?\"", nextNodeId: "node_study_group", feedback: "Amazing! You turned a stressful situation into a supportive and productive one. This shows great problem-solving and social skills. Using your friends as a support system for academics can be a powerful tool." }
-            ]
-        },
-        {
-            id: "node_postpone",
-            text: "Your friends replied, 'Totally understand! Good luck! Let's definitely do something Saturday.' A feeling of relief washed over you. You were able to focus on your studies without feeling like you were missing out. You aced the test and had an amazing time with your friends that weekend.",
-            isEnding: true,
-            choices: []
-        },
-        {
-            id: "node_study_group",
-            text: "A few of your friends thought it was a great idea! They came over, you all worked through the tough math problems for about an hour, and then rewarded yourselves with pizza. You felt connected, supported, and prepared for the test. It was the best of both worlds!",
-            isEnding: true,
-            choices: []
+// A centralized error handler for Gemini API calls to provide more specific user feedback.
+const handleGeminiError = (error: any, context: string): Error => {
+    console.error(`Error in ${context}:`, error);
+    let message = `Failed to ${context}. Please check your internet connection and try again.`;
+    
+    // Check for specific error messages from the Gemini SDK
+    if (error && typeof error.message === 'string') {
+        const lowerCaseMessage = error.message.toLowerCase();
+        if (lowerCaseMessage.includes('api key not valid')) {
+            // This is a server-side configuration issue, so the user can't fix it.
+            message = 'There is a configuration issue with the AI service. Please contact support.';
+        } else if (lowerCaseMessage.includes('quota')) {
+            message = `The daily usage limit for this AI feature has been reached. Please try again tomorrow. We apologize for the inconvenience.`;
+        } else if (lowerCaseMessage.includes('rate limit')) {
+            message = 'The AI service is currently experiencing high traffic. Please wait a moment and try again.';
+        } else if (lowerCaseMessage.includes('candidate was blocked')) {
+             message = 'The request was blocked due to safety settings. Please try rephrasing your request.';
+        } else if (lowerCaseMessage.includes('400 bad request')) {
+            message = 'The request sent to the AI service was invalid. This might be a temporary issue. Please try again.';
+        } else if (lowerCaseMessage.includes('500 internal server error') || lowerCaseMessage.includes('503 service unavailable')) {
+            message = 'The AI service is temporarily unavailable. Please try again later.';
         }
-    ]
-  }
+    }
+    
+    return new Error(message);
 };
 
-const THE_GREAT_TRANSFORMATION_HI: LearningModule = {
-  chapterTitle: 'महान परिवर्तन: किशोर से वयस्क तक की आपकी यात्रा',
-  introduction: "नमस्ते! क्या आपको कभी ऐसा महसूस होता है कि आप एक ऐसी रोलर कोस्टर पर हैं जिसका टिकट भी आपने नहीं खरीदा? एक पल आप बच्चे होते हैं, और अगले ही पल, आपका शरीर और दिमाग हर तरह की नई, भ्रमित करने वाली चीजें करने लगते हैं। 'महान परिवर्तन' में आपका स्वागत है, एक ऐसी यात्रा जिससे हम में से हर एक गुजरता है। यह न केवल शारीरिक रूप से, बल्कि भावनात्मक और मानसिक रूप से भी भारी बदलाव का समय है।\n\nयह चरण, जो लगभग कक्षा 7 से शुरू होता है, वह समय है जब आप अपनी बचपन की त्वचा को उतारना शुरू करते हैं और एक नई त्वचा में कदम रखते हैं। यह अजीब और थोड़ा डरावना महसूस हो सकता है, लेकिन हम पर विश्वास करें, आप अकेले नहीं हैं। इस खंड का लक्ष्य आपको यह समझने में मदद करना है कि आपके साथ क्या हो रहा है, ताकि आप इन परिवर्तनों को अपना सकें, अपने सपनों पर ध्यान केंद्रित रख सकें, और मजबूत और अधिक आत्मविश्वासी बनकर उभर सकें।",
-  learningObjectives: [
-    "किशोरावस्था के दौरान होने वाले प्रमुख शारीरिक, भावनात्मक और मानसिक परिवर्तनों को समझना।",
-    "यह पहचानना कि ध्यान भटकना और मिजाज में बदलाव जैसी आम मुश्किलें इस चरण में सामान्य हैं।",
-    "तनाव और भावनाओं के प्रबंधन के लिए स्वस्थ मुकाबला तंत्र और रणनीतियों की पहचान करना।",
-    "व्यक्तिगत विकास और पहचान निर्माण के प्रति सकारात्मक मानसिकता विकसित करना।"
-  ],
-  keyConcepts: [
-    {
-      conceptTitle: 'परिवर्तनों के पीछे का विज्ञान',
-      explanation: "तो, वास्तव में क्या हो रहा है? आपके मस्तिष्क में एक बड़ा पुनर्विन्यास हो रहा है। आपके मस्तिष्क का वह हिस्सा जो 'भावनाओं और जोखिम लेने' (लिम्बिक सिस्टम) के लिए जिम्मेदार है, वह उस हिस्से की तुलना में तेजी से विकसित हो रहा है जो 'तर्क और निर्णय लेने' (प्रीफ्रंटल कॉर्टेक्स) का काम करता है।\n\nयह विकासात्मक असंतुलन ही कारण है कि आप अधिक तीव्र भावनाएं महसूस कर सकते हैं, और क्यों कभी-कभी, एक छोटी सी बात बहुत बड़ी बात महसूस हो सकती है। साथ ही, आपका शरीर भी हार्मोन से गुलजार है जो आपको शारीरिक रूप से बढ़ने, बदलने और विकसित होने का कारण बन रहे हैं। इस विज्ञान को समझने से आपको अभिभूत महसूस होने पर खुद के प्रति थोड़ा दयालु होने में मदद मिल सकती है।",
-      realWorldExample: "सोचिए कि कोई उदास गीत अचानक आपको बहुत भावुक क्यों कर सकता है, या दोस्तों के साथ कुछ जोखिम भरा करने की अचानक इच्छा क्यों होती है। यह अक्सर आपका विकसित हो रहा भावनात्मक मस्तिष्क होता है जो आपके तर्कसंगत मस्तिष्क को पकड़ने का मौका मिलने से पहले ही नेतृत्व कर लेता है।",
-      diagramDescription: "मस्तिष्क का एक सरल चित्र। एक भाग, जिसे 'भावनात्मक केंद्र (लिम्बिक सिस्टम)' कहा जाता है, को उज्ज्वल रूप से प्रकाशित और बड़ा दिखाया गया है, जिस पर 'तेजी से विकसित हो रहा है!' का लेबल लगा है। दूसरा भाग, जिसे 'तर्क केंद्र (प्रीफ्रंटल कॉर्टेक्स)' कहा जाता है, को धुंधला और छोटा दिखाया गया है, जिस पर 'अभी भी विकसित हो रहा है' का लेबल लगा है।"
-    },
-    {
-      conceptTitle: 'केस स्टडी: दो छात्रों की कहानी',
-      explanation: "आइए दो छात्रों, रोहन और प्रिया से मिलते हैं, दोनों कक्षा 9 में हैं, जो समान चुनौतियों का सामना कर रहे हैं।\n\nरोहन की कहानी: रोहन एक शानदार छात्र था, लेकिन हाल ही में, वह आसानी से विचलित महसूस कर रहा है। वह अपने दोस्तों के साथ समय बिताने में अधिक रुचि रखता है, और फिट होने के लिए बहुत दबाव महसूस करता है। वह खुद को टालमटोल करते हुए पाता है, और उसके ग्रेड गिरने लगे हैं। वह दोषी महसूस करता है लेकिन यह नहीं जानता कि नियंत्रण कैसे वापस पाया जाए।\n\nप्रिया की कहानी: प्रिया के मिजाज में उतार-चढ़ाव हो रहा है। एक पल वह खुश होती है और अगले ही पल वह किसी छोटी सी बात पर रोने लगती है। वह अपनी परीक्षाओं में अच्छा करने के लिए अपने माता-पिता से बहुत अधिक दबाव महसूस करती है, और नई दोस्ती और सहकर्मी समूहों को भी नेविगेट कर रही है। वह थका हुआ महसूस करती है और अपनी पढ़ाई पर पहले की तरह ध्यान केंद्रित नहीं कर पाती है।\n\nउनकी भावनाएं पूरी तरह से सामान्य हैं। ये कमजोरी या ध्यान की कमी के संकेत नहीं हैं; वे उनके अंदर हो रहे परिवर्तनों का प्रत्यक्ष परिणाम हैं। कुंजी यह सीखना है कि 'इन नई भावनाओं को कैसे प्रबंधित किया जाए' और उस ऊर्जा को सही दिशा में कैसे लगाया जाए।",
-      realWorldExample: "यह केस स्टडी अपने आप में एक वास्तविक दुनिया का उदाहरण है। बहुत से छात्र स्कूल के दबाव, दोस्ती और आंतरिक परिवर्तनों को एक साथ नेविगेट करते समय बिल्कुल रोहन या प्रिया जैसा महसूस करते हैं।",
-      diagramDescription: "एक चित्रण जिसमें दो छात्र, रोहन और प्रिया, भ्रमित दिख रहे हैं। तीर उनसे 'टालमटोल' (एक घड़ी), 'सहकर्मी दबाव' (लोगों का एक समूह), 'मिजाज में बदलाव' (एक खुश और एक उदास मुखौटा), और 'परीक्षा तनाव' (कम ग्रेड वाली एक किताब) का प्रतिनिधित्व करने वाले आइकन की ओर इशारा करते हैं। एक अलग तीर समाधान का प्रतिनिधित्व करने वाले एक टूलकिट आइकन की ओर इशारा करता है।"
-    },
-    {
-      conceptTitle: 'आपकी सफलता की टूलकिट',
-      explanation: "तो, आप इसे कैसे संभालते हैं? यहाँ चार शक्तिशाली उपकरण दिए गए हैं जिनका आप उपयोग कर सकते हैं:\n\n1.  बात करें: किसी विश्वसनीय वयस्क से बात करें—एक माता-पिता, एक शिक्षक, एक परामर्शदाता। आप केवल अपने विचार साझा करके कितना बेहतर महसूस करेंगे, इस पर आपको आश्चर्य होगा।\n\n2.  सक्रिय रहें: शारीरिक गतिविधि तनाव और चिंता को प्रबंधित करने का एक शक्तिशाली उपकरण है। चाहे वह कोई खेल खेलना हो, नृत्य करना हो, या सिर्फ टहलने जाना हो, यह आपके दिमाग को साफ करने और आपके मूड को बेहतर बनाने में मदद करता है।\n\n3.  अपना एंकर खोजें: यह खोज का समय है, लेकिन ऐसी चीजें रखना मददगार होता है जो आपको स्थिर रखती हैं। यह आपका कोई पसंदीदा शौक हो सकता है, कोई ऐसा लक्ष्य जिसके प्रति आप जुनूनी हों, या बस आपके व्यक्तिगत मूल्य। जब आप अभिभूत महसूस करें, तो अपने एंकर से जुड़ें। एक गहरी सांस लें और खुद को याद दिलाएं कि आपके लिए वास्तव में क्या महत्वपूर्ण है।\n\n4.  अपनी पहचान को अपनाएं: यह यात्रा यह खोजने के बारे में है कि आप कौन हैं। अपनी अनूठी रुचियों, शक्तियों और यहां तक कि अपनी कमजोरियों को भी अपनाएं। आपका मूल्य इस बात से परिभाषित नहीं होता है कि दूसरे आपके बारे में क्या सोचते हैं।",
-      realWorldExample: "उदाहरण के लिए, संगीत या कला जैसे किसी शौक के लिए समय समर्पित करना ('अपना एंकर खोजें') खुद को अभिव्यक्त करने और तनाव दूर करने का एक शानदार तरीका हो सकता है। या, एक स्कूल परामर्शदाता से बात करना ('बात करें') आपको महसूस हो रहे दबावों को प्रबंधित करने के लिए रणनीतियाँ दे सकता है।",
-      diagramDescription: "एक दृश्य टूलकिट जिसके अंदर चार आइकन हैं: बात करने के लिए एक (दो भाषण बुलबुले), शारीरिक गतिविधि के लिए एक (एक दौड़ता हुआ व्यक्ति), एक एंकर के लिए एक (एक शाब्दिक एंकर), और पहचान के लिए एक (एक साधारण दर्पण)।"
-    }
-  ],
-  summary: "यह परिवर्तनकारी यात्रा आपके जीवन के सबसे रोमांचक और महत्वपूर्ण हिस्सों में से एक है। क्या हो रहा है, यह समझकर और सही उपकरणों का उपयोग करके, आप न केवल इससे बच सकते हैं, बल्कि वास्तव में फल-फूल सकते हैं। याद रखें, अब आप जिस भी चुनौती को पार करते हैं, वह आपको भविष्य में प्राप्त होने वाले और भी बड़े लक्ष्यों के लिए तैयार करेगी।",
-  adaptiveStory: {
-    title: "चुनाव का चौराहा",
-    introduction: "आरव, एक 9वीं कक्षा का छात्र, अभिभूत महसूस कर रहा है। कल एक बड़ी गणित की परीक्षा है, लेकिन दोस्त आज रात एक फिल्म के बारे में संदेश भेज रहे हैं। आरव चिंता, उत्साह और दबाव का मिश्रण महसूस करता है।",
-    startNodeId: "start",
-    nodes: [
-        {
-            id: "start",
-            text: "आप अपने गणित के होमवर्क को घूर रहे हैं जब आपका फोन बजता है। यह आपके दोस्त हैं, जो आपको एक घंटे में शुरू होने वाली फिल्म के लिए आमंत्रित कर रहे हैं। परीक्षा कल है और आपने ज्यादा पढ़ाई नहीं की है। आप क्या करते हैं?",
-            isEnding: false,
-            choices: [
-                { text: "फिल्म देखने जाता हूँ। मैं आज रात बाद में परीक्षा के लिए रट्टा मार सकता हूँ।", nextNodeId: "node_movie", feedback: "दोस्तों के साथ घूमना पूरी तरह से सामान्य है! सामाजिक मेलजोल महत्वपूर्ण है। हालांकि, कभी-कभी हमारा भावनात्मक मस्तिष्क (अभी मज़ा करना चाहता है) हमारे तर्क मस्तिष्क (भविष्य के लिए योजना बनाना) पर जीत जाता है। इससे बाद में तनाव हो सकता है। इसे पहचानना एक बड़ा कदम है!" },
-                { text: "घर पर रहकर पढ़ाई करता हूँ। मैं फेल होने का जोखिम नहीं उठा सकता।", nextNodeId: "node_study_alone", feedback: "अनुशासन एक शानदार कौशल है, और आपको अपने ध्यान पर गर्व होना चाहिए! लेकिन यह याद रखना भी महत्वपूर्ण है कि मानसिक कल्याण में सामाजिक संबंध भी शामिल हैं। खुद को पूरी तरह से अलग करना भी तनाव और बर्नआउट का कारण बन सकता है। यह सब एक स्वस्थ संतुलन खोजने के बारे में है।" },
-                { text: "शायद मैं संतुलन बना सकता हूँ?", nextNodeId: "node_balance", feedback: "यह एक शानदार शुरुआत है! संतुलन की आवश्यकता को पहचानना और अपनी जरूरतों को संप्रेषित करना इन वर्षों को नेविगेट करने का एक बड़ा हिस्सा है। यह दर्शाता है कि आप अपने भावनात्मक और तर्क दोनों मस्तिष्क से सोच रहे हैं। यह एक सुपर-पावर है!" }
-            ]
-        },
-        {
-            id: "node_movie",
-            text: "फिल्म शानदार थी! दोस्तों के साथ हंसना बहुत अच्छा लगा। लेकिन जैसे ही क्रेडिट रोल हुए, आप पर घबराहट की एक लहर दौड़ गई। 'परीक्षा!' आपने सोचा। आप देर से घर पहुंचे, थके हुए। आपने पढ़ने की कोशिश की, लेकिन शब्द बस धुंधले हो गए। अगली सुबह, आप बिना तैयारी और तनाव महसूस करते हुए परीक्षा में गए।",
-            isEnding: true,
-            choices: []
-        },
-        {
-            id: "node_study_alone",
-            text: "आपने अपना फोन बंद कर दिया और खुद को ध्यान केंद्रित करने के लिए मजबूर किया। घंटे दर घंटे, आपने गणित की समस्याओं का अभ्यास किया। आपने परीक्षा के लिए तैयार महसूस किया, लेकिन जब आपने बाद में अपना फोन देखा, तो आपने अपने दोस्तों की मौज-मस्ती की तस्वीरें देखीं। आप पर उदासी और FOMO (कुछ छूट जाने का डर) की एक लहर दौड़ गई। आपने अकेला और अलग-थलग महसूस किया।",
-            isEnding: true,
-            choices: []
-        },
-        {
-            id: "node_balance",
-            text: "आपने एक गहरी साँस ली। 'ठीक है,' आपने सोचा, 'कोई बेहतर तरीका होना चाहिए।' आपने अपने दोस्तों को यह देखने के लिए टेक्स्ट करने का फैसला किया कि क्या कोई समझौता हो सकता है।",
-            isEnding: false,
-            choices: [
-                { text: "टेक्स्ट: \"अरे, मेरी एक बड़ी परीक्षा है। क्या हम इसके बजाय इस सप्ताह के अंत में मिल सकते हैं?\"", nextNodeId: "node_postpone", feedback: "उत्कृष्ट विकल्प! आपने अपनी प्राथमिकताओं को संप्रेषित किया, अपनी जरूरतों (पढ़ाई) का सम्मान किया, और फिर भी दोस्तों के लिए समय निकाला। यह स्वस्थ सीमा-निर्धारण और योजना का एक शानदार उदाहरण है।" },
-                { text: "टेक्स्ट: \"मैं फिल्म देखने नहीं जा सकता, लेकिन क्या हम सब मिलकर एक छोटा अध्ययन सत्र कर सकते हैं?\"", nextNodeId: "node_study_group", feedback: "अद्भुत! आपने एक तनावपूर्ण स्थिति को एक सहायक और उत्पादक स्थिति में बदल दिया। यह महान समस्या-समाधान और सामाजिक कौशल दिखाता है। शिक्षाविदों के लिए अपने दोस्तों को एक समर्थन प्रणाली के रूप में उपयोग करना एक शक्तिशाली उपकरण हो सकता है।" }
-            ]
-        },
-        {
-            id: "node_postpone",
-            text: "आपके दोस्तों ने जवाब दिया, 'पूरी तरह से समझते हैं! शुभकामनाएँ! चलो निश्चित रूप से शनिवार को कुछ करते हैं।' आप पर राहत की भावना छा गई। आप बिना यह महसूस किए कि आप कुछ खो रहे हैं, अपनी पढ़ाई पर ध्यान केंद्रित करने में सक्षम थे। आपने परीक्षा में उत्कृष्ट प्रदर्शन किया और उस सप्ताहांत अपने दोस्तों के साथ एक अद्भुत समय बिताया।",
-            isEnding: true,
-            choices: []
-        },
-        {
-            id: "node_study_group",
-            text: "आपके कुछ दोस्तों को यह एक अच्छा विचार लगा! वे घर आए, आप सभी ने लगभग एक घंटे तक कठिन गणित की समस्याओं पर काम किया, और फिर पिज्जा के साथ खुद को पुरस्कृत किया। आपने जुड़ा हुआ, समर्थित और परीक्षा के लिए तैयार महसूस किया। यह दोनों दुनिया का सबसे अच्छा था!",
-            isEnding: true,
-            choices: []
-        }
-    ]
-  }
-};
 
 // --- Schemas for Learning Module ---
 
@@ -478,6 +342,9 @@ const quizSchema = {
             correctAnswer: { type: Type.STRING },
             explanation: { type: Type.STRING },
             conceptTitle: { type: Type.STRING },
+            type: { type: Type.STRING, enum: ['ACADEMIC', 'IQ', 'EQ'], nullable: true },
+            skill: { type: Type.STRING, nullable: true },
+            difficulty: { type: Type.STRING, enum: ['Easy', 'Medium', 'Hard'], nullable: true },
         },
         required: ['question', 'options', 'correctAnswer', 'explanation', 'conceptTitle']
     }
@@ -488,7 +355,7 @@ const recommendationSchema = {
     properties: {
         recommendationText: { type: Type.STRING },
         nextChapterTitle: { type: Type.STRING, nullable: true },
-        action: { type: Type.STRING, enum: ['REVIEW', 'CONTINUE', 'REVISE_PREREQUISITE'] },
+        action: { type: Type.STRING, enum: ['REVIEW', 'CONTINUE', 'REVISE_PREREQUISITE', 'START_CRITICAL_THINKING', 'START_WELLBEING'] },
         prerequisiteChapterTitle: { type: Type.STRING, nullable: true },
     },
     required: ['recommendationText', 'action']
@@ -579,47 +446,58 @@ const curriculumOutlineSchema = {
 };
 
 
-export const getChapterContent = async (gradeLevel: string, subject: string, chapter: string, studentName: string, language: string): Promise<LearningModule> => {
+export const getChapterContent = async (gradeLevel: string, subject: string, chapter: Chapter, studentName: string, language: string): Promise<LearningModule> => {
     
-    // Intercept for the static "Great Transformation" chapter
-    if (chapter === 'The Great Transformation: Navigating Your Journey from Teen to Adult') {
-        return language === 'hi' ? THE_GREAT_TRANSFORMATION_HI : THE_GREAT_TRANSFORMATION_EN;
+    let competitiveExamFocus = '';
+    if (chapter.tags && chapter.tags.length > 0) {
+        competitiveExamFocus = `
+        **COMPETITIVE EXAM FOCUS (MANDATORY):**
+        This chapter is critically important for competitive exams like **${chapter.tags.join(', ')}**. Therefore, the generated content, especially within 'keyConcepts', must reflect this with higher depth and rigor.
+        - **Depth & Nuance:** Explanations must go beyond standard textbook definitions. They MUST include 'inter-concept linkages', 'common student misconceptions', 'exam-level shortcuts or techniques', and 'nuanced edge cases'.
+        - **Problem-Solving Integration:** Directly integrate problem-solving techniques and shortcuts relevant to these exams into the concept explanations. For example, when explaining a Physics concept, demonstrate its application in a typical JEE/NEET-style numerical problem.
+        - **Terminology & Rigor:** Use precise, competitive-exam level terminology. The overall tone must be authoritative and geared towards enabling top performance.
+        - **Examples:** All examples provided MUST be non-trivial and reflect the complexity and multi-concept nature of questions found in these competitive exams.
+        `;
     }
 
     const prompt = `
         **SYSTEM ROLE:**
-        You are an expert educational content creator for the Indian K-12 CBSE curriculum. Your goal is to produce the foundational content for a learning module. Your entire response must be in the ${language} language.
+        You are a 'Chief Subject Matter Expert' for a top-tier Indian competitive exam coaching institute (e.g., FIITJEE, Aakash). Your expertise lies in distilling complex CBSE topics into highly detailed, insightful content tailored for students aiming for top ranks in JEE, NEET, and UPSC foundation. Your entire response must be in the ${language} language.
 
         **CONTENT MISSION:**
-        Create the core learning module for a ${gradeLevel} student named ${studentName} on the chapter "${chapter}" in ${subject}. The tone should be authoritative yet encouraging.
+        Create an exhaustive and deeply analytical learning module for a ${gradeLevel} student named ${studentName} on the chapter "${chapter.title}" in ${subject}. The content must be deeply insightful, not merely introductory.
+        ${competitiveExamFocus}
 
         **QUALITY STANDARDS (MANDATORY):**
-        1.  **Pedagogical Excellence & CBSE Alignment:** Align with the latest CBSE syllabus (2024-25) and NCERT textbooks.
-        2.  **Accuracy:** All information must be factually correct.
-        3.  **Clarity and Structure:** All theoretical text (introductions, explanations, summaries, etc.) MUST be structured for maximum readability. Use markdown-style bullet points (e.g., "- Point 1\\n- Point 2") for lists and double newlines ("\\n\\n") to separate paragraphs.
+        1.  **Pedagogical Excellence & CBSE Alignment:** Align with the latest CBSE syllabus (2024-25) and NCERT textbooks, but elevate the content for competitive exams.
+        2.  **Accuracy:** All information must be factually correct and precise.
+        3.  **Clarity and Structure:** All theoretical text (introductions, explanations, summaries, etc.) MUST be structured for maximum readability. Use markdown-style bullet points (e.g., "- Point 1\\n- Point 2") for lists and double newlines ("\\n\\n") to separate paragraphs. The explanations MUST be extremely comprehensive and detailed, providing in-depth knowledge suitable for a primary learning resource. Do not provide brief summaries; aim for substantial paragraphs.
         4.  **Cultural Sensitivity:** Use Indian contexts and examples where appropriate.
         5.  **Emphasis**: Do not use markdown for bolding (e.g., **text**). To emphasize a key term, enclose it in single quotes.
 
         **CONTENT GENERATION GUIDE (Generate ONLY these core sections):**
-        -   **chapterTitle**: Must be "${chapter}".
-        -   **introduction**: Start with a hook. Structure the content into short, digestible points or paragraphs using markdown-style lists ('- ') where appropriate.
-        -   **learningObjectives**: List the specific, measurable learning outcomes based on the CBSE syllabus.
-        -   **prerequisitesCheck**: A list of concepts the student should know before starting this chapter.
+        -   **chapterTitle**: Must be "${chapter.title}".
+        -   **introduction**: Start with a hook. Structure the content into short, digestible points or paragraphs using markdown-style lists ('- ') where appropriate. Provide a deep, insightful introduction.
+        -   **learningObjectives**: List the specific, measurable learning outcomes based on the CBSE syllabus, expanded for competitive depth.
+        -   **prerequisitesCheck**: A list of concepts the student must have mastered before starting this chapter.
         -   **keyConcepts**: This is the most critical part. For each concept, provide:
             -   \`conceptTitle\`: A clear title.
-            -   \`explanation\`: A step-by-step, easy-to-understand breakdown. Structure with markdown lists ('- ') for clarity.
-            -   \`realWorldExample\`: A relatable application, preferably in an Indian context. Structure with markdown lists ('- ') if multiple examples are given.
+            -   \`explanation\`: A step-by-step, deeply analytical breakdown. This must be very detailed and go beyond simple definitions.
+            -   \`realWorldExample\`: A complex, relatable application that mirrors competitive exam problem-solving, preferably in an Indian context.
             -   \`diagramDescription\`: A detailed description for a visual aid.
-        -   **formulaSheet**: For subjects like Mathematics, Physics, or Chemistry, generate a concise list of all relevant formulas. Each formula should have a brief, clear description. If the chapter has no formulas, this field can be null.
+        -   **formulaSheet**: For subjects like Mathematics, Physics, or Chemistry, generate a concise list of all relevant formulas. Each formula should have a brief, clear description of its variables and use case. If the chapter has no formulas, this field can be null.
         -   **summary**: A concise summary of the key takeaways. MUST be formatted as a list of bullet points using markdown ('- ').
         -   **conceptMap**: For complex chapters, generate a Mermaid.js graph definition (using 'graph TD' for Top-Down). This graph should visually connect the key concepts. Labels must be concise and in the ${language} language. The entire output for this field must be ONLY the Mermaid code string (e.g., "graph TD; A[Start] --> B(Process);"). For simple chapters or when a visual map is not relevant, this field must be null.
-        -   **interactiveVideoSimulation**: For one key concept that is highly visual or hard to explain with text, generate an engaging video simulation section. The \`videoPrompt\` should be a detailed prompt for a model like Google VEO. For other chapters, this can be null.
+        -   **interactiveVideoSimulation**: You MUST generate this section for every chapter. For one key concept that is highly visual or hard to explain with text, generate an engaging video simulation section. The \`videoPrompt\` must be a detailed, rich prompt for a model like Google VEO to create a short, engaging, visually-rich animated video (around 30-60 seconds) that explains this key concept from the chapter.
+        -   **virtualLab**: For Science or Math chapters with a hands-on experiment (e.g., Physics, Chemistry), generate a virtual lab. The variables should allow students to explore cause-and-effect. If not applicable, this field MUST be null.
+        -   **adaptiveStory**: For History, Social Studies, or chapters with ethical/decision-making components (like in Political Science or Biology), generate a short, branching narrative. The story should place the student in a scenario related to the chapter and let them make choices. If not applicable, this field MUST be null.
         -   **culturalContext**: Where relevant (especially for Science, Social Studies, History, and languages), generate a section that connects the chapter's concepts to Indian culture, festivals, historical events, or daily life. For example, connect 'Light and Reflection' in Physics to Diwali, or 'Geometry' to Rangoli patterns. If no strong connection exists, this field MUST be null.
         -   **moralScienceCorner**: Where appropriate, generate a short, simple story with a clear moral that relates to the chapter's core theme (e.g., perseverance for a tough math chapter, curiosity for a science chapter, honesty for a history chapter). The story should be engaging for the student's grade level. If a story is not relevant, this field MUST be null.
+        -   **interactiveExplainer**: For a different key concept that involves cause-and-effect relationships or changing variables, generate an interactive explainer. The \`videoPromptTemplate\` MUST use placeholders that match the 'name' of your variables, e.g., 'An animated video explaining {{variable_name}}'. If no concept is suitable for this, this field MUST be null.
 
 
         **DO NOT GENERATE THE FOLLOWING SECTIONS IN THIS REQUEST:**
-        - Do not generate \`categorizedProblems\`, \`experiments\`, \`commonMistakes\`, \`interactiveExplainer\`, \`virtualLab\`, \`adaptiveStory\`, or any other deep pedagogical sections. These will be generated on-demand later.
+        - Do not generate \`categorizedProblems\`, \`experiments\`, \`commonMistakes\`, or any other deep pedagogical sections. These will be generated on-demand later.
 
         **FINAL INSTRUCTION:**
         Your entire output MUST be a JSON object that strictly follows the 'LearningModule' schema, but only containing the core fields listed above. Ensure all text fields are complete. No markdown headers (like ##), just paragraphs and bullet points.
@@ -635,12 +513,15 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
             keyConcepts: { type: Type.ARRAY, items: conceptSchema },
             summary: { type: Type.STRING },
             conceptMap: { type: Type.STRING, nullable: true },
-            interactiveVideoSimulation: { ...interactiveVideoSimulationSchema, nullable: true },
+            interactiveVideoSimulation: { ...interactiveVideoSimulationSchema },
+            virtualLab: { ...virtualLabSchema, nullable: true },
+            adaptiveStory: { ...adaptiveStorySchema, nullable: true },
+            interactiveExplainer: { ...interactiveExplainerSchema, nullable: true },
             culturalContext: { ...culturalContextSchema, nullable: true },
             moralScienceCorner: { ...moralScienceCornerSchema, nullable: true },
             formulaSheet: { type: Type.ARRAY, items: formulaSchema, nullable: true },
         },
-        required: ['chapterTitle', 'introduction', 'learningObjectives', 'keyConcepts', 'summary']
+        required: ['chapterTitle', 'introduction', 'learningObjectives', 'keyConcepts', 'summary', 'interactiveVideoSimulation']
     };
 
     try {
@@ -657,8 +538,7 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
         const jsonText = response.text.trim();
         return JSON.parse(jsonText) as LearningModule;
     } catch (error) {
-        console.error("Error generating chapter content:", error);
-        throw new Error("Failed to generate learning content from AI. Please try again.");
+        throw handleGeminiError(error, 'generate learning content');
     }
 };
 
@@ -698,7 +578,7 @@ const sectionSchemaMap: { [key: string]: any } = {
 export const generateSectionContent = async (
     gradeLevel: string, 
     subject: string, 
-    chapter: string, 
+    chapter: Chapter, 
     language: string, 
     sectionKey: keyof LearningModule,
     chapterContext: string
@@ -709,39 +589,50 @@ export const generateSectionContent = async (
         throw new Error(`No schema defined for section: ${sectionKey}`);
     }
 
+    let competitiveExamInstructions = '';
+    if (sectionKey === 'categorizedProblems' && chapter.tags && chapter.tags.length > 0) {
+        competitiveExamInstructions = `
+        **COMPETITIVE EXAM QUESTION STYLE (CRITICAL):**
+        This chapter is crucial for **${chapter.tags.join(', ')}**. The generated questions MUST reflect the style, difficulty, and patterns of these exams.
+        - **Difficulty & Bloom's Taxonomy:** Generate a higher proportion of 'Hard' and 'Medium' questions. At least 50% should be 'Hard'. Focus on 'Applying', 'Analyzing', and 'Evaluating' levels of Bloom's Taxonomy. Ensure questions often require integrating multiple concepts.
+        - **Question Formats:**
+          - If the tags include 'JEE', include some MCQs formatted for multi-correct answers (e.g., question text says "one or more options may be correct"). The 'explanation' must clarify all correct options.
+          - If the tags include 'NEET', include several "Assertion-Reason" style questions. Format these as 'MCQ' type: The 'questionText' MUST contain both the Assertion (A) and the Reason (R). The 'options' MUST be the four standard choices (e.g., "Both A and R are true and R is the correct explanation of A.").
+          - If the tags include 'Civil Services' or 'NDA', ensure 'Short Answer' and 'Long Answer' questions are analytical and require structured, comprehensive answers.
+        - **Previous Year Questions (PYQs):** A significant number of questions should have \`isPreviousYearQuestion: true\` and be modeled closely on actual questions from past papers of these exams.
+        - **Answer Writing Guidance (UPSC Focus):** For 'Long Answer' questions relevant to 'Civil Services', the 'answerWritingGuidance' MUST be exceptionally detailed. Provide guidance on structuring an answer for mains exams, including introduction, body with subheadings, conclusion, and use of keywords.
+        `;
+    }
+
     const prompt = `
         **SYSTEM ROLE:**
-        You are an expert educational content creator for the Indian K-12 CBSE curriculum. Your task is to generate a specific, detailed pedagogical section for an existing learning module. Your entire response must be in the ${language} language.
+        You are a 'Chief Subject Matter Expert' for a top-tier Indian competitive exam coaching institute. Your task is to generate a specific, deeply detailed pedagogical section for an existing learning module. Your entire response must be in the ${language} language.
 
         **MISSION CONTEXT:**
         -   **Grade:** ${gradeLevel}
         -   **Subject:** ${subject}
-        -   **Chapter:** "${chapter}"
+        -   **Chapter:** "${chapter.title}"
         -   **Chapter Core Content:** ${chapterContext}
 
         **TASK:**
-        Generate the content ONLY for the section named "${sectionKey}". Your output must be comprehensive, pedagogically sound, and aligned with the latest CBSE standards (2024-25). For all theoretical content, structure your response as a series of clear, concise points using markdown-style bullet points ('- '). Use double newlines ('\\n\\n') to separate distinct ideas or paragraphs.
+        Generate the content ONLY for the section named "${sectionKey}". Your output must be comprehensive, deeply insightful, and aligned with the latest CBSE standards (2024-25) but elevated for competitive exam preparation. For all theoretical content, use markdown-style bullet points ('- ') for clarity. Ensure the generated content is substantial and provides a deep understanding.
+        ${competitiveExamInstructions}
         **Emphasis**: Do not use markdown for bolding (e.g., **text**). To emphasize a key term, enclose it in single quotes.
 
-        **Mathematical Formatting (MANDATORY):**
-        For any mathematical derivations, solved problems, or solutions (especially in 'formulaDerivations', 'solvedNumericalProblems', and 'categorizedProblems'), you MUST format them exactly as they would appear in a textbook or on an answer sheet. Adhere strictly to the following structure:
-        - Start with a 'Given:' label for the initial problem statement.
-        - Follow with a 'Solution:' label.
-        - Break down the entire working process into numbered steps (e.g., 'Step 1:', 'Step 2:'). Each step must be on a new line.
-        - For equations, the equals sign (=) must be the separator.
-        - Use proper mathematical symbols (e.g., ÷ for division, × for multiplication).
-        - Conclude with an 'Answer:' or 'Therefore:' label followed by the final result.
-        - Use newline characters (\\n) to separate each part.
+        **HORIZONTAL STEP-BY-STEP FORMATTING (CRITICAL):**
+        For any content that involves a sequence of steps (e.g., numerical problem solutions in 'solvedNumericalProblems' or 'modelAnswer', formula derivations in 'formulaDerivations', proofs in 'keyTheoremsAndProofs'), you MUST format it as a single, continuous string. Each logical step MUST be separated by the '=>' symbol. This creates a clear, horizontal flow for students to follow. Do NOT use numbered lists or newlines for steps.
         
         Example Format:
-        Given: Solve for x in the equation 3x + 5 = 17.\\nSolution:\\nStep 1: 3x + 5 = 17\\nStep 2: 3x = 17 - 5\\nStep 3: 3x = 12\\nStep 4: x = 12 ÷ 3\\nStep 5: x = 4\\nAnswer: x = 4
+        Given: Solve for x in the equation 3x + 5 = 17 => Step 1: Subtract 5 from both sides => 3x = 17 - 5 => Step 2: Simplify the right side => 3x = 12 => Step 3: Divide by 3 => x = 12 / 3 => Answer: x = 4
 
         **SPECIAL INSTRUCTIONS:**
-        -   **For 'categorizedProblems':** Generate a SUFFICIENT and comprehensive set of practice questions. The quantity MUST BE LARGER for students in Grade 6 and above to provide ample practice. The complexity must align with CBSE standards.
-            -   Grades 6-8: Generate 15-20 questions (mix of MCQ, Short Answer, Long Answer).
-            -   Grades 9-10: Generate 25-30 questions (mix of MCQ, Short Answer, Long Answer, Case-Based).
-            -   Grades 11-12: Generate 30-40+ questions based on the last 10 years of CBSE exam patterns (MCQ, Short/Long Answer, Case-Based, Assertion-Reasoning).
-            -   **For ALL Short and Long Answer questions, the 'answerWritingGuidance' field is MANDATORY and MUST be detailed and helpful.** It must give students actionable, step-by-step tips on how to structure their answer to get full marks in CBSE exams, which keywords to include, and common mistakes to avoid. Also provide a detailed 'modelAnswer' and 'markingScheme'.
+        -   **For 'categorizedProblems':** 
+            -   **CRITICAL:** The mix of question types MUST be diverse. Ensure a healthy mix, with AT LEAST 40% of the questions being MCQs. For every 10 questions, aim for approximately 4 MCQs, 4 Short Answer, and 2 Long Answer questions. The questions should be complex and often require multiple concepts to solve.
+            -   Generate a SUFFICIENT and comprehensive set of practice questions. The quantity MUST BE LARGER for students in Grade 6 and above.
+            -   Grades 6-8: Generate 25-30 questions.
+            -   Grades 9-10: Generate 35-40 questions.
+            -   Grades 11-12: Generate 45-50+ questions based on the last 10 years of CBSE exam patterns and competitive exam styles.
+            -   **For ALL Short and Long Answer questions, the 'answerWritingGuidance' field is MANDATORY and MUST be detailed and helpful.** It must give students actionable, step-by-step tips on how to structure their answer to get full marks in CBSE exams, which keywords to include, and common mistakes to avoid for that specific question. Also provide a detailed 'modelAnswer' and 'markingScheme'.
         -   **For 'competitiveExamMapping':** Provide a detailed mapping of the chapter's concepts to the syllabus of major competitive exams like JEE (Main & Advanced), NEET, CUET, and relevant Olympiads. The structure should be:
             -   A brief introduction about the chapter's importance for these exams.
             -   A markdown list where each item maps a specific 'concept' from the chapter to the 'exam(s)' it's relevant for.
@@ -776,74 +667,22 @@ export const generateSectionContent = async (
         return JSON.parse(jsonText) as Partial<LearningModule>;
 
     } catch (error) {
-        console.error(`Error generating section content for "${sectionKey}":`, error);
-        throw new Error(`Failed to generate the "${sectionKey}" section from AI. Please try again.`);
+        throw handleGeminiError(error, `generate the "${sectionKey}" section`);
     }
 };
-
-export const generateQuestionBankQuestions = async (grade: string, subject: string, chapter: string, language: string): Promise<QuestionBankItem[]> => {
-    // Determine question count based on grade
-    const gradeNumber = parseInt(grade.match(/\d+/)?.[0] || '0');
-    let questionCount = 30; // Default
-    if (gradeNumber >= 9 && gradeNumber <= 10) {
-        questionCount = 35;
-    } else if (gradeNumber >= 11) {
-        questionCount = 40;
-    }
-
-    const prompt = `
-        Act as an expert question paper setter for the Indian CBSE curriculum. Your task is to generate a comprehensive and diverse question bank of at least ${questionCount} questions.
-        The questions must be for a ${grade} student, studying the chapter "${chapter}" in the subject "${subject}".
-        The entire response, including all text, explanations, and answers, must be in the ${language} language and adhere to the specified JSON schema.
-
-        **CRITICAL REQUIREMENTS:**
-        1.  **COVERAGE:** Ensure questions cover ALL major topics and sub-topics within the chapter.
-        2.  **DIVERSITY:** Provide a balanced mix of question types ('MCQ', 'Short Answer', 'Long Answer'), difficulties ('Easy', 'Medium', 'Hard'), and Bloom's Taxonomy levels ('Remembering' through 'Creating').
-        3.  **CBSE ALIGNMENT:** Questions, especially for 'Short Answer' and 'Long Answer', must be in the style of CBSE board exams. Include competency-based and previous year style questions where appropriate.
-        4.  **AUTHENTICITY:** All content must be factually correct and pedagogically sound.
-        5.  **ANSWER WRITING GUIDANCE (MANDATORY for Short/Long Answer):** For every 'Short Answer' and 'Long Answer' question, the 'answerWritingGuidance' field is MANDATORY. It MUST provide actionable, step-by-step tips for students on how to structure their answer to get full marks in CBSE exams. This should include which keywords to use, how to present points, and common mistakes to avoid for that specific question.
-        6.  **MODEL ANSWERS (MANDATORY for Short/Long Answer):** Provide a detailed, ideal 'modelAnswer' and a clear 'markingScheme'.
-
-        Your final output must be a JSON array of question objects.
-    `;
-    
-    const questionBankSchema = {
-        type: Type.ARRAY,
-        items: questionBankItemSchema
-    };
-
-    try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: questionBankSchema,
-                temperature: 0.8,
-            },
-        });
-
-        const jsonText = response.text.trim();
-        return JSON.parse(jsonText) as QuestionBankItem[];
-    } catch (error) {
-        console.error("Error generating question bank questions:", error);
-        throw new Error("Failed to generate questions from AI. Please try again.");
-    }
-};
-
 
 export const generateQuiz = async (keyConcepts: Concept[], language: string, count: number = 5): Promise<QuizQuestion[]> => {
     const conceptTitles = keyConcepts.map(c => c.conceptTitle);
     const prompt = `
         Based on the following key concepts, create a ${count}-question multiple-choice quiz. The questions
-        should test conceptual understanding and application of knowledge. The entire response, including all
+        should test conceptual understanding and application of knowledge, not just rote memorization. The entire response, including all
         questions, options, answers, explanations, and concept titles, must be in the ${language} language.
 
         For each question:
-        1.  Provide a clear question.
-        2.  Provide four distinct options, with one being the correct answer.
+        1.  Provide a clear, high-quality question that requires some thought.
+        2.  Provide four distinct and plausible options, with one being the correct answer.
         3.  Indicate the correct answer.
-        4.  Provide a brief explanation for why the correct answer is right.
+        4.  Provide a thorough explanation for why the correct answer is right and the others are wrong.
         5.  **Crucially, you must associate each question with one of the provided concept titles.** Use the 'conceptTitle' field for this.
 
         Key Concepts:
@@ -868,8 +707,7 @@ export const generateQuiz = async (keyConcepts: Concept[], language: string, cou
         return JSON.parse(jsonText) as QuizQuestion[];
 
     } catch (error) {
-        console.error("Error generating quiz:", error);
-        throw new Error("Failed to generate quiz from AI. Please try again.");
+        throw handleGeminiError(error, 'generate quiz');
     }
 };
 
@@ -878,7 +716,7 @@ export const generatePracticeExercises = async (concept: Concept, grade: string,
         Generate 3 multiple-choice questions for a ${grade} student to practice and drill the specific concept of "${concept.conceptTitle}".
         The entire response, including all questions, options, answers, explanations, and concept titles, must be in the ${language} language.
 
-        The questions should be focused on reinforcing the core skill of the concept, not on broad, complex problem-solving. They should be direct and clear.
+        The questions should be focused on reinforcing the core skill of the concept with high-quality, clear examples. They should be direct and clear.
         For example, if the concept is 'Simple Addition', questions should be direct calculations like '5 + 7 = ?'.
         If the concept is 'Identifying Nouns', questions should be like 'Which word in the following sentence is a noun?'.
 
@@ -886,7 +724,7 @@ export const generatePracticeExercises = async (concept: Concept, grade: string,
         1. Provide a clear question.
         2. Provide four distinct options, with one being the correct answer.
         3. Indicate the correct answer.
-        4. Provide a brief explanation for the answer.
+        4. Provide a helpful, brief explanation for the answer.
         5. **Crucially, for the 'conceptTitle' field, you must use the exact title provided: "${concept.conceptTitle}"**.
 
         Concept Details for context:
@@ -908,8 +746,7 @@ export const generatePracticeExercises = async (concept: Concept, grade: string,
         return JSON.parse(jsonText) as QuizQuestion[];
 
     } catch (error) {
-        console.error("Error generating practice exercises:", error);
-        throw new Error("Failed to generate practice exercises from AI. Please try again.");
+        throw handleGeminiError(error, 'generate practice exercises');
     }
 };
 
@@ -941,10 +778,110 @@ export const generateDiagnosticTest = async (grade: string, subject: string, lan
         return JSON.parse(jsonText) as QuizQuestion[];
 
     } catch (error) {
-        console.error("Error generating diagnostic test:", error);
-        throw new Error("Failed to generate diagnostic test from AI.");
+        throw handleGeminiError(error, 'generate diagnostic test');
     }
 }
+
+export const generateChapterDiagnosticTest = async (grade: string, subject: string, chapter: string, language: string): Promise<QuizQuestion[]> => {
+    const prompt = `
+        Create a 5-question multiple-choice diagnostic quiz for a ${grade} student about to start the chapter "${chapter}" in the subject "${subject}".
+        The quiz must test the essential prerequisite knowledge required to understand this chapter. DO NOT ask questions about the content of the chapter "${chapter}" itself. Focus only on foundational concepts from previous chapters or grades.
+        For the 'conceptTitle' field in the JSON response, specify the prerequisite concept being tested (e.g., 'Linear Equations', 'Atomic Structure').
+        The entire response, including all text, must be in the ${language} language.
+    `;
+     try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: quizSchema,
+                temperature: 0.8,
+            },
+        });
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText) as QuizQuestion[];
+    } catch (error) {
+        throw handleGeminiError(error, 'generate chapter diagnostic test');
+    }
+}
+
+export const generateComprehensiveDiagnosticTest = async (grade: string, subject: string, chapter: string, language: string): Promise<QuizQuestion[]> => {
+    const prompt = `
+        As an expert educational psychologist, create a 10-question comprehensive diagnostic test for a ${grade} student preparing to study the chapter "${chapter}" in ${subject}. The entire response must be in ${language}.
+
+        The test MUST include a mix of the following three types of questions:
+        1.  **ACADEMIC (5 questions):** Test essential prerequisite knowledge for the chapter "${chapter}". These should be 'Easy' or 'Medium' difficulty.
+        2.  **IQ (3 questions):** Test cognitive skills relevant to the subject. For ${subject}, focus on skills like logical reasoning, pattern recognition, or spatial awareness. These can be 'Medium' or 'Hard'.
+        3.  **EQ (2 questions):** Test emotional intelligence through relatable scenarios. For example, a scenario about feeling stuck on a tough problem or dealing with exam stress. These are typically 'Easy' or 'Medium'.
+
+        For EACH question, you MUST provide all fields specified in the schema, including:
+        - \`type\`: 'ACADEMIC', 'IQ', or 'EQ'.
+        - \`conceptTitle\`: For ACADEMIC, name the prerequisite concept. For IQ/EQ, name the specific skill tested (e.g., 'Logical Reasoning', 'Resilience').
+        - \`skill\`: For IQ/EQ, repeat the skill name.
+        - \`difficulty\`: 'Easy', 'Medium', or 'Hard'.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: quizSchema,
+                temperature: 0.8,
+            },
+        });
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText) as QuizQuestion[];
+    } catch (error) {
+        throw handleGeminiError(error, 'generate comprehensive diagnostic test');
+    }
+};
+
+
+export const generateEducationalTips = async (topic: string, language: string): Promise<string[]> => {
+    const fallbackTips = language === 'hi'
+        ? [
+            "क्या आप जानते हैं? प्रकाश की गति लगभग 299,792 किलोमीटर प्रति सेकंड है!",
+            "एकल बिजली के बोल्ट में 100,000 ब्रेड के स्लाइस को टोस्ट करने के लिए पर्याप्त ऊर्जा होती है।",
+            "मानव मस्तिष्क में लगभग 86 बिलियन न्यूरॉन्स होते हैं।"
+          ]
+        : [
+            "Did you know? The speed of light is about 299,792 kilometers per second!",
+            "A single bolt of lightning contains enough energy to toast 100,000 slices of bread.",
+            "The human brain contains approximately 86 billion neurons."
+        ];
+
+    const prompt = `
+        Generate 5 short, interesting, and educational facts or tips related to the following topic: "${topic}".
+        The tips should be engaging for a K-12 student. Keep each tip to a single, concise sentence.
+        The entire response must be in the ${language} language.
+        Your output MUST be a JSON array of strings. For example: ["fact 1", "fact 2", "fact 3"]
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                },
+                temperature: 0.8,
+            },
+        });
+        const jsonText = response.text.trim();
+        const tips = JSON.parse(jsonText) as string[];
+        return tips.length > 0 ? tips : fallbackTips;
+    } catch (error) {
+        console.error(`Failed to generate educational tips for topic "${topic}":`, error);
+        return fallbackTips; // Return fallback on any error
+    }
+};
+
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -976,7 +913,7 @@ export const generateDiagram = async (description: string, subject: string): Pro
 -   Confusing or abstract metaphors.`;
     
     const MAX_RETRIES = 3;
-    let lastError: Error | null = null;
+    let lastError: any = null;
 
     for (let i = 0; i < MAX_RETRIES; i++) {
         try {
@@ -985,14 +922,14 @@ export const generateDiagram = async (description: string, subject: string): Pro
                 prompt: prompt,
                 config: {
                   numberOfImages: 1,
-                  outputMimeType: 'image/png',
-                  aspectRatio: '16:9',
+                  outputMimeType: 'image/jpeg',
+                  aspectRatio: '4:3',
                 },
             });
 
             if (response.generatedImages && response.generatedImages.length > 0) {
                 const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
-                return `data:image/png;base64,${base64ImageBytes}`;
+                return `data:image/jpeg;base64,${base64ImageBytes}`;
             } else {
                 throw new Error("No image was generated by the AI.");
             }
@@ -1000,27 +937,21 @@ export const generateDiagram = async (description: string, subject: string): Pro
             lastError = error;
             const errorMessage = (error.message || '').toLowerCase();
             
-            // Production-ready fix: Identify quota errors and fail fast.
             if (errorMessage.includes('quota')) {
-                console.error("Gemini API daily quota exceeded for image generation.");
-                throw new Error("QUOTA_EXCEEDED"); // Custom error identifier for the UI to catch.
+                throw handleGeminiError(error, 'generate diagram');
             }
 
-            if (errorMessage.includes('rate limit') || (error.status === 'RESOURCE_EXHAUSTED')) {
-                if (i < MAX_RETRIES - 1) {
-                    const delayTime = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                    console.warn(`Rate limit hit. Retrying in ${Math.round(delayTime / 1000)}s...`);
-                    await delay(delayTime);
-                    continue; 
-                }
+            if ((errorMessage.includes('rate limit') || (error.status === 'RESOURCE_EXHAUSTED')) && i < MAX_RETRIES - 1) {
+                const delayTime = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                console.warn(`Rate limit hit. Retrying in ${Math.round(delayTime / 1000)}s...`);
+                await delay(delayTime);
+                continue; 
             }
-            // For other, non-retriable errors, break the loop.
             break;
         }
     }
     
-    console.error("Error generating diagram after multiple retries:", lastError);
-    throw new Error("Failed to generate diagram from AI after multiple attempts.");
+    throw handleGeminiError(lastError, 'generate diagram');
 };
 
 export const generateVideoFromPrompt = async (prompt: string): Promise<Blob> => {
@@ -1054,20 +985,7 @@ export const generateVideoFromPrompt = async (prompt: string): Promise<Blob> => 
         return videoBlob;
 
     } catch (error: any) {
-        console.error("Error generating video:", error);
-        
-        // Check for specific quota/rate limit errors from the Gemini API
-        const errorMessage = (error.message || '').toLowerCase();
-        // The Gemini SDK might also throw an error object with a status field
-        const errorStatus = (error.status || '');
-
-        if (errorMessage.includes('quota') || errorStatus === 'RESOURCE_EXHAUSTED') {
-            console.error("Gemini API daily quota exceeded for video generation.");
-            // Throw a specific, simplified error message for the UI to catch
-            throw new Error("QUOTA_EXCEEDED");
-        }
-
-        throw new Error("Failed to generate video from AI. Please try again.");
+        throw handleGeminiError(error, 'generate video');
     }
 };
 
@@ -1127,10 +1045,138 @@ export const generateNextStepRecommendation = async (grade: string, subject: str
         const jsonText = response.text.trim();
         return JSON.parse(jsonText) as NextStepRecommendation;
     } catch (error) {
-        console.error("Error generating recommendation:", error);
-        throw new Error("Failed to generate recommendation from AI.");
+        throw handleGeminiError(error, 'generate recommendation');
     }
 }
+
+export const generateComprehensiveDiagnosticRecommendation = async (
+    grade: string, 
+    subject: string, 
+    chapter: string, 
+    scores: { academic: number; iq: number; eq: number; },
+    language: string
+): Promise<NextStepRecommendation> => {
+    
+    const prompt = `
+        Act as an expert educational psychologist for a ${grade} student. The student has just completed a comprehensive diagnostic test for the chapter "${chapter}" in ${subject}.
+        Their performance is as follows:
+        - Academic Prerequisite Score: ${scores.academic}%
+        - IQ (Cognitive Skills) Score: ${scores.iq}%
+        - EQ (Emotional Intelligence) Score: ${scores.eq}%
+        
+        Your task is to provide a single, most impactful recommendation for the student's next step. The entire response must be in ${language} and in the specified JSON format.
+        Follow these rules in strict priority order:
+
+        1.  **If Academic score is below 50%:** The student is not ready.
+            - **action**: "REVISE_PREREQUISITE"
+            - **recommendationText**: Gently explain that a strong foundation is crucial. Strongly recommend reviewing the most likely prerequisite chapter first to make learning "${chapter}" much easier and more successful.
+            - **prerequisiteChapterTitle**: [Identify the most likely prerequisite chapter title before "${chapter}" from a typical curriculum for ${subject}].
+            - **nextChapterTitle**: "${chapter}"
+        
+        2.  **If IQ score is below 60% (and Academic score is >= 50%):** The student may struggle with problem-solving.
+            - **action**: "START_CRITICAL_THINKING"
+            - **recommendationText**: Praise their academic readiness but suggest a fun 'brain workout' in the Critical Thinking Gym to sharpen their logical reasoning skills before starting the new chapter.
+            - **nextChapterTitle**: "${chapter}"
+            - **prerequisiteChapterTitle**: null
+
+        3.  **If EQ score is below 60% (and Academic >= 50% and IQ >= 60%):** The student may need help with learning mindset.
+            - **action**: "START_WELLBEING"
+            - **recommendationText**: Acknowledge their strong skills but suggest exploring the Personal Growth & Well-being module to build resilience and a positive mindset for tackling new academic challenges.
+            - **nextChapterTitle**: "${chapter}"
+            - **prerequisiteChapterTitle**: null
+
+        4.  **If all scores are good (Academic >= 50%, IQ >= 60%, EQ >= 60%):** The student is fully prepared.
+            - **action**: "CONTINUE"
+            - **recommendationText**: Congratulate them on their excellent all-around preparation and state that they are fully ready to begin the new chapter, "${chapter}".
+            - **nextChapterTitle**: "${chapter}"
+            - **prerequisiteChapterTitle**: null
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: recommendationSchema,
+                temperature: 0.6,
+            },
+        });
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText) as NextStepRecommendation;
+    } catch (error) {
+        throw handleGeminiError(error, 'generate comprehensive diagnostic recommendation');
+    }
+};
+
+
+export const generateDiagnosticRecommendation = async (grade: string, subject: string, chapter: string, score: number, totalQuestions: number, subjectChapters: {title: string}[], language: string): Promise<NextStepRecommendation> => {
+    const percentage = Math.round((score / totalQuestions) * 100);
+    const chapterTitles = subjectChapters.map(c => c.title).join('", "');
+
+    const prompt = `
+        Act as an expert, encouraging learning coach for a ${grade} student studying ${subject}.
+        The student has just completed a 5-question PREREQUISITE knowledge quiz for the chapter "${chapter}" and scored ${score} out of ${totalQuestions} (${percentage}%).
+        The available chapters in this subject are: ["${chapterTitles}"].
+        The entire response must be in the ${language} language.
+
+        Based on this performance on prerequisite knowledge, provide a personalized recommendation for their next step. Your response must be in a specific JSON format.
+        
+        1.  **If the score is 80% or higher (${percentage}%):**
+            - The student is well-prepared.
+            - **action**: "CONTINUE"
+            - **recommendationText**: Praise them for their strong foundation and state that they are ready to start the chapter "${chapter}".
+            - **nextChapterTitle**: "${chapter}"
+            - **prerequisiteChapterTitle**: null
+        
+        2.  **If the score is between 40% and 79% (inclusive of ${percentage}%):**
+            - The student has some gaps in their prerequisite knowledge.
+            - **action**: "REVISE_PREREQUISITE"
+            - **recommendationText**: Gently point out that there might be a few gaps and suggest a quick review of the most likely prerequisite chapter before diving into "${chapter}". This will make the new chapter easier to understand.
+            - **prerequisiteChapterTitle**: Identify the most likely single prerequisite chapter from the available chapter list. For example, if the current chapter is "Trigonometry", you should identify "Triangles".
+            - **nextChapterTitle**: "${chapter}"
+        
+        3.  **If the score is below 40% (${percentage}%):**
+            - The student has significant gaps and is likely not ready.
+            - **action**: "REVISE_PREREQUISITE"
+            - **recommendationText**: In a supportive tone, strongly recommend that they build a stronger foundation by thoroughly reviewing the prerequisite chapter first. Explain that this will prevent frustration and make learning "${chapter}" much more successful.
+            - **prerequisiteChapterTitle**: Identify the most likely single prerequisite chapter from the available chapter list.
+            - **nextChapterTitle**: "${chapter}"
+    `;
+    
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: recommendationSchema,
+                temperature: 0.6,
+            },
+        });
+        const jsonText = response.text.trim();
+        const result = JSON.parse(jsonText) as NextStepRecommendation;
+
+        if (result.action === 'REVISE_PREREQUISITE' && result.prerequisiteChapterTitle) {
+            const prereqExists = subjectChapters.some(c => c.title === result.prerequisiteChapterTitle);
+            if (!prereqExists) {
+                console.warn(`AI recommended non-existent prerequisite: ${result.prerequisiteChapterTitle}. Falling back.`);
+                const currentChapterIndex = subjectChapters.findIndex(c => c.title === chapter);
+                if (currentChapterIndex > 0) {
+                    result.prerequisiteChapterTitle = subjectChapters[currentChapterIndex - 1].title;
+                } else {
+                    result.action = 'CONTINUE'; 
+                    result.recommendationText = `You're almost ready! It would be a good idea to quickly review the previous topics in ${subject} before starting '${chapter}'.`;
+                }
+            }
+        }
+        
+        return result;
+    } catch (error) {
+        throw handleGeminiError(error, 'generate diagnostic recommendation');
+    }
+}
+
 
 // --- New Functions for Teacher/Parent Reports ---
 
@@ -1148,9 +1194,10 @@ export const generateTeacherReport = async (student: Student, language: string):
         2.  HEADING: Identified Strengths: A bulleted list of subjects or chapters where the student has excelled (scores > 85%). Be specific.
         3.  HEADING: Areas for Improvement: A bulleted list of subjects or chapters where the student is struggling (scores < 70%). Frame this constructively.
         4.  HEADING: Study Patterns & Trends: A detailed analysis using bullet points for specific observations. Analyze:
-            - Quiz vs. Practice Frequency.
-            - Response to Difficulty (e.g., using exercises after a low quiz score).
-            - Pacing and Consistency from timestamps.
+            - **Quiz vs. Practice Frequency:** Does the student test themselves with quizzes or prefer practice exercises?
+            - **Response to Difficulty:** After a low quiz score on a chapter, does the student follow up with practice exercises on that same chapter?
+            - **Pacing and Consistency:** Based on the 'completedDate' timestamps, is the student studying consistently (e.g., daily) or in irregular bursts?
+            - **Topic Preference:** Are there subjects or chapters the student revisits often, or avoids?
         5.  HEADING: Actionable Recommendations: A bulleted list of concrete, pedagogical suggestions for the teacher.
 
         Student Performance Data (includes quizzes and practice exercises):
@@ -1168,8 +1215,7 @@ export const generateTeacherReport = async (student: Student, language: string):
         });
         return response.text;
     } catch (error) {
-        console.error("Error generating teacher report:", error);
-        throw new Error("Failed to generate teacher report from AI.");
+        throw handleGeminiError(error, 'generate teacher report');
     }
 };
 
@@ -1203,8 +1249,7 @@ export const generateParentReport = async (student: Student, language: string): 
         });
         return response.text;
     } catch (error) {
-        console.error("Error generating parent report:", error);
-        throw new Error("Failed to generate parent report from AI.");
+        throw handleGeminiError(error, 'generate parent report');
     }
 };
 
@@ -1226,15 +1271,9 @@ export const analyzeStudentQuestionForTeacher = async (question: StudentQuestion
           - Key vocabulary or concepts to emphasize when explaining the answer.
           - A suggestion for a follow-up question or a simple activity to check for understanding.
 
-      **Mathematical Formatting (MANDATORY):**
-      If the 'modelAnswer' involves a mathematical calculation, you MUST format it exactly as it would appear in a textbook. Adhere strictly to the following structure:
-      - Start with a 'Given:' label for the initial problem statement.
-      - Follow with a 'Solution:' label.
-      - Break down the entire working process into numbered steps (e.g., 'Step 1:', 'Step 2:'). Each step must be on a new line.
-      - For equations, the equals sign (=) must be the separator.
-      - Use proper mathematical symbols (e.g., ÷ for division, × for multiplication).
-      - Conclude with an 'Answer:' or 'Therefore:' label followed by the final result.
-      - Use newline characters (\\n) to separate each part.
+      **HORIZONTAL STEP-BY-STEP FORMATTING (CRITICAL):**
+      If the 'modelAnswer' involves a sequence of steps (e.g., a mathematical calculation), you MUST format it as a single, continuous string where each step is separated by the '=>' symbol.
+      Example: Given: 3x + 5 = 17 => Step 1: Subtract 5 from both sides => 3x = 17 - 5 => Step 2: Simplify => 3x = 12 => Answer: x = 4
     `;
   
     try {
@@ -1251,8 +1290,7 @@ export const analyzeStudentQuestionForTeacher = async (question: StudentQuestion
       const jsonText = response.text.trim();
       return JSON.parse(jsonText) as AIAnalysis;
     } catch (error) {
-      console.error("Error analyzing student question:", error);
-      throw new Error("Failed to get AI analysis for the question.");
+        throw handleGeminiError(error, 'get AI analysis for the question');
     }
 };
 
@@ -1292,54 +1330,87 @@ export const getFittoAnswer = async (question: StudentQuestion, language: string
         const jsonText = response.text.trim();
         return JSON.parse(jsonText) as FittoResponse;
     } catch (error) {
-        console.error("Error getting Fitto's answer:", error);
-        throw new Error("Fitto is having trouble thinking right now. Please try again in a moment.");
+        throw handleGeminiError(error, "getting Fitto's answer");
     }
 };
 
 // --- New Functions for Adaptive Learning Engine ---
 
 export const getAdaptiveNextStep = async (student: Student, language: string): Promise<AdaptiveAction> => {
+    
+    const studentGradeCurriculum = CURRICULUM.find(g => g.level === student.grade);
+    let curriculumContext = '';
+    if (studentGradeCurriculum) {
+        curriculumContext = `
+        **Available Curriculum for ${student.grade}:**
+        Here is the complete list of available subjects and chapters for this student. When choosing an 'ACADEMIC_NEW' action, you MUST pick the next uncompleted chapter from this list. Do not invent chapter titles.
+        ${studentGradeCurriculum.subjects.map(subject => `
+        - Subject: "${subject.name}"
+          Chapters: ["${subject.chapters.map(c => c.title).join('", "')}"]
+        `).join('')}
+        `;
+    }
+
     const prompt = `
-        Act as an expert adaptive learning AI specializing in personalized K-12 education. Your goal is to determine the single most impactful next action for a student based on their complete performance history. The entire response must be in the ${language} language and adhere to the specified JSON schema.
+        Act as an expert adaptive learning AI specializing in personalized K-12 education for the Indian CBSE curriculum. Your goal is to determine the single most impactful next action for a student based on their complete performance history, which includes academic quizzes, practice exercises, IQ challenges, and EQ exercises. The entire response must be in the ${language} language and adhere to the specified JSON schema.
 
         Student Profile:
         - Name: ${student.name}
         - Grade: ${student.grade}
 
-        Performance History (includes quizzes, practice exercises, and potentially cognitive tests):
+        Performance History (a JSON array of records with type, subject, chapter, score, etc.):
         ---
         ${JSON.stringify(student.performance, null, 2)}
         ---
+        
+        ${curriculumContext}
 
-        Your decision-making process MUST follow these rules in strict order of priority:
+        Your decision-making process MUST follow these rules in strict order of priority to generate a balanced and effective 10-question mixed assessment for the student's daily mission.
 
-        **Priority 1: Address Foundational Weaknesses (Highest Priority)**
-        - First, you MUST scan the entire performance history for any academic chapter (type 'quiz' or 'exercise') with a score below 70%.
-        - IF you find one or more such chapters, you MUST select the one with the lowest score as your target.
-        - IF the score for that chapter is below 60%, your action type MUST be 'ACADEMIC_REVIEW'.
-        - IF the score is between 60% and 70% (inclusive), your action type MUST be 'ACADEMIC_PRACTICE'.
-        - **Reasoning Requirement:** The 'reasoning' field MUST be an encouraging, user-facing sentence explicitly mentioning the chapter and why reviewing or practicing it is the most important step right now. Example for a low score: "Building a strong foundation in 'Chapter X' is key to success. Let's review it together to make sure we've got it!"
-        - **Confidence Score:** Because this is based on clear data, set the 'confidence' score high, between 0.9 and 1.0.
+        **Priority 1: Critical Academic Intervention**
+        - Scan the performance history for any ACADEMIC chapter (type 'quiz' or 'exercise') with a score BELOW 60%.
+        - If found, select the one with the LOWEST score.
+        - Your action type MUST be 'ACADEMIC_REVIEW'.
+        - **Reasoning:** Explain that mastering this foundational topic is crucial. Example: "Building a strong foundation in 'Chapter X' is key to success. Let's review it together to make sure we've got it!"
+        - **Confidence Score:** This is a high-priority, data-driven intervention. Set confidence between 0.95 and 1.0.
 
-        **Priority 2: Build on Strengths and Advance**
-        - You will ONLY consider this priority IF there are NO academic scores below 70% in the performance history.
+        **Priority 2: Cognitive Skill Development**
+        - If there are no academic scores below 60%, scan for IQ or EQ exercise scores BELOW 70%.
+        - If found, select the one with the LOWEST score.
+        - If the lowest is an IQ score, your action type MUST be 'IQ_EXERCISE'.
+        - If the lowest is an EQ score, your action type MUST be 'EQ_EXERCISE'.
+        - **Reasoning:** Explain the importance of this cognitive skill. Example: "Problem-solving is a superpower! Let's do some fun brain teasers to sharpen your logical skills." or "Understanding emotions helps us connect better. Let's explore a scenario together."
+        - **Confidence Score:** This is a targeted, data-driven intervention. Set confidence between 0.85 and 0.95.
+
+        **Priority 3: Focused Academic Practice**
+        - If priorities 1 and 2 are not met, scan for any ACADEMIC chapter with a score between 60% and 75% (inclusive).
+        - If found, select the one with the LOWEST score.
+        - Your action type MUST be 'ACADEMIC_PRACTICE'.
+        - **Reasoning:** Frame this as an opportunity to turn good understanding into great mastery. Example: "You're doing well in 'Chapter X'! A little more practice will make you an expert."
+        - **Confidence Score:** This is a data-driven recommendation for improvement. Set confidence between 0.8 and 0.9.
+        
+        **Priority 4: Spaced Repetition to Combat the Forgetting Curve**
+        - If priorities 1-3 are not met, analyze the timestamps ('completedDate') of ACADEMIC chapters that have been mastered (score > 85%).
+        - Identify a mastered chapter that has not been practiced for the longest time (e.g., more than 14 days ago).
+        - If such a chapter is found, your action type MUST be 'ACADEMIC_PRACTICE'.
+        - **Reasoning:** Explain the importance of spaced repetition. Example: "You've already mastered 'Chapter X'! Revisiting it briefly will help lock it into your long-term memory and fight the 'forgetting curve'."
+        - **Confidence Score:** This is a key pedagogical strategy. Set confidence between 0.85 and 0.9.
+
+        **Priority 5: Strategic Advancement**
+        - If all prior conditions are not met (meaning all recent work is good and spaced repetition is not needed), the student is ready to advance.
         - Identify the academic subject where the student has the highest average score.
-        - Your action type MUST be 'ACADEMIC_NEW'. You should recommend the next uncompleted chapter in that subject.
-        - **Reasoning Requirement:** The 'reasoning' field MUST be a positive, user-facing sentence praising their strength in the subject and encouraging them to tackle the next challenge. Example: "You're doing brilliantly in 'Subject Y'! Let's keep the momentum going with the next chapter."
-        - **Confidence Score:** Since this is a logical progression, set the 'confidence' score between 0.8 and 0.9.
+        - Your action type MUST be 'ACADEMIC_NEW'. You must recommend the next logical, uncompleted chapter in that subject. **CRITICAL: You MUST select the chapter title from the 'Available Curriculum' provided above.**
+        - **Reasoning:** Praise their hard work and encourage them to tackle the next challenge. Example: "You're doing brilliantly in 'Subject Y'! Let's keep the momentum going with the next chapter."
+        - **Confidence Score:** This is a logical progression based on strong performance. Set confidence between 0.75 and 0.85.
 
-        **Priority 3: Foster Holistic Skills (Balanced Development)**
-        - You will ONLY consider this priority IF the student has no scores below 70% AND has completed all chapters in their strongest subject, or if academic progress is generally very strong across the board.
-        - Your action type MUST be either 'IQ_EXERCISE' or 'EQ_EXERCISE'. Alternate between them for variety if possible (check the history for the last cognitive exercise type).
-        - **Reasoning Requirement:** The 'reasoning' field MUST be a light, engaging, user-facing sentence that explains the benefit of the cognitive exercise. Example: "Time for a fun brain teaser to sharpen your problem-solving skills!" or "Let's explore a scenario to boost our emotional intelligence."
-        - **Confidence Score:** As this is a more general recommendation, set the 'confidence' score between 0.7 and 0.8.
-
+        **Priority 6: Holistic Enrichment (Default/Fallback)**
+        - If none of the above conditions are met (e.g., student is new with no data, or has mastered everything), your action MUST be to foster holistic skills.
+        - Your action type MUST be 'IQ_EXERCISE'.
+        - **Reasoning:** Provide a light, engaging reason. Example: "Let's start with a fun brain workout to get warmed up!"
+        - **Confidence Score:** This is a general recommendation. Set confidence between 0.7 and 0.8.
 
         **MANDATORY FINAL INSTRUCTION:**
-        The 'reasoning' and 'confidence' fields in the output JSON are the most critical parts of this task. They are NOT optional. The 'reasoning' must be a clear, user-facing string. The 'confidence' MUST be a number between 0.0 and 1.0 based on the rules above.
-
-        Generate the JSON output now.
+        Your output must be a single JSON object. The 'reasoning' field is critical and must be a user-facing string. The 'confidence' field is also mandatory and must be a number following the rules above. For academic actions, you MUST provide the subject and chapter in the 'details' object. For IQ/EQ actions, provide the skill if available in the data, otherwise it can be null.
     `;
     try {
         const response = await ai.models.generateContent({
@@ -1354,8 +1425,7 @@ export const getAdaptiveNextStep = async (student: Student, language: string): P
         const jsonText = response.text.trim();
         return JSON.parse(jsonText) as AdaptiveAction;
     } catch (error) {
-        console.error("Error getting adaptive next step:", error);
-        throw new Error("Failed to generate a personalized path. Please try again.");
+        throw handleGeminiError(error, 'generate a personalized path');
     }
 };
 
@@ -1385,8 +1455,7 @@ export const generateIQExercises = async (grade: string, language: string, count
         const jsonText = response.text.trim();
         return JSON.parse(jsonText) as IQExercise[];
     } catch (error) {
-        console.error("Error generating IQ exercises:", error);
-        throw new Error("Failed to generate IQ exercises.");
+        throw handleGeminiError(error, 'generate IQ exercises');
     }
 };
 
@@ -1417,8 +1486,7 @@ export const generateEQExercises = async (grade: string, language: string, count
         const jsonText = response.text.trim();
         return JSON.parse(jsonText) as EQExercise[];
     } catch (error) {
-        console.error("Error generating EQ exercises:", error);
-        throw new Error("Failed to generate EQ exercises.");
+        throw handleGeminiError(error, 'generate EQ exercises');
     }
 };
 
@@ -1452,8 +1520,7 @@ export const generateCurriculumOutline = async (grade: string, subject: string, 
         const jsonText = response.text.trim();
         return JSON.parse(jsonText) as CurriculumOutlineChapter[];
     } catch (error) {
-        console.error("Error generating curriculum outline:", error);
-        throw new Error("Failed to generate curriculum outline from AI. Please try again.");
+        throw handleGeminiError(error, 'generate curriculum outline');
     }
 };
 
@@ -1501,8 +1568,7 @@ export const validateCurriculumOutline = async (
         });
         return response.text;
     } catch (error) {
-        console.error("Error validating curriculum outline:", error);
-        throw new Error("Failed to get validation report from AI. Please try again.");
+        throw handleGeminiError(error, 'get validation report');
     }
 };
 
@@ -1526,6 +1592,28 @@ export const createTutorChat = (grade: string, subject: string, chapter: string,
     Start the conversation by greeting the student warmly and mentioning the chapter topic ("${chapter}"). Then, on new lines, provide 2-3 specific questions a student might ask, each prefixed with "SUGGESTION:". For example:
     SUGGESTION: Can you explain 'photosynthesis' in a simple way?
     SUGGESTION: What is the formula for calculating area?`;
+
+    const chat: Chat = ai.chats.create({
+        model: 'gemini-2.5-flash',
+        config: {
+            systemInstruction: systemInstruction,
+            temperature: 0.8,
+        },
+    });
+    return chat;
+};
+
+export const createGeneralChatbot = (student: Student, language: string): Chat => {
+    const systemInstruction = `You are Fitto, an expert, friendly, and encouraging AI Tutor available 24/7 for a ${student.grade} student named ${student.name}. Your entire communication must be in the ${language} language.
+
+    **Your Core Directives:**
+    1.  **Be a Conceptual Expert:** Your primary goal is to answer conceptual questions across any subject in the student's curriculum (Maths, Science, History, etc.).
+    2.  **Provide Step-by-Step Explanations:** When a concept is complex, break it down into simple, logical, numbered steps or bullet points.
+    3.  **Use Examples and Analogies:** Make learning easier by providing clear examples and relatable analogies suitable for a ${student.grade} student.
+    4.  **Guide, Don't Just Answer:** If a student asks for a direct answer to a homework problem, gently guide them through the steps to solve it themselves instead of giving the answer away.
+    5.  **Stay On Topic:** Politely decline to answer questions that are not related to academic subjects. Gently guide the student back to learning.
+    6.  **Personalize:** Acknowledge the student's grade level in your explanations, keeping the complexity appropriate.
+    7.  **Format for Clarity:** Enclose key terms in single quotes (e.g., 'photosynthesis'). Use markdown-style lists ('- ' or '1. ') for clarity.`;
 
     const chat: Chat = ai.chats.create({
         model: 'gemini-2.5-flash',
@@ -1605,8 +1693,7 @@ export const generatePrintableResource = async (
         `;
 
     } catch (error) {
-        console.error(`Error generating printable resource of type ${type}:`, error);
-        throw new Error(`Failed to generate the ${resourceType} from AI. Please try again.`);
+        throw handleGeminiError(error, `generate the ${resourceType}`);
     }
 };
 
@@ -1648,8 +1735,7 @@ export const generateAptitudeTest = async (grade: string, language: string): Pro
         const jsonText = response.text.trim();
         return JSON.parse(jsonText) as AptitudeQuestion[];
     } catch (error) {
-        console.error("Error generating aptitude test:", error);
-        throw new Error("Failed to generate aptitude test from AI.");
+        throw handleGeminiError(error, 'generate aptitude test');
     }
 };
 
@@ -1666,8 +1752,7 @@ export const generateAptitudeTestSummary = async (results: Record<string, { corr
         });
         return response.text;
     } catch (error) {
-        console.error("Error generating aptitude test summary:", error);
-        throw new Error("Failed to generate test summary from AI.");
+        throw handleGeminiError(error, 'generate test summary');
     }
 };
 
@@ -1723,8 +1808,7 @@ export const generateStreamGuidance = async (student: Student, aptitudeResults: 
         const jsonText = response.text.trim();
         return JSON.parse(jsonText) as CareerGuidance;
     } catch (error) {
-        console.error("Error generating stream guidance:", error);
-        throw new Error("Failed to generate career guidance from AI.");
+        throw handleGeminiError(error, 'generate career guidance');
     }
 };
 

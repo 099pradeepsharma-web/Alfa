@@ -3,6 +3,8 @@ import { User, Student, Achievement, PerformanceRecord } from '../types';
 import * as authService from '../services/authService';
 import * as pineconeService from '../services/pineconeService';
 import * as db from '../services/databaseService';
+import { createAvatar } from '@dicebear/core';
+import { lorelei } from '@dicebear/collection';
 
 interface AuthContextType {
   currentUser: Student | null;
@@ -12,6 +14,15 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string, grade: string) => Promise<void>;
   logout: () => void;
+  updateStudentPoints: (pointsToAdd: number) => void;
+  updateUserProfile: (updatedData: { 
+      name: string; 
+      grade: string; 
+      school: string;
+      city: string;
+      board: string;
+      avatarSeed: string;
+  }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +43,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             name: user.name,
             grade: user.grade,
             avatarUrl: user.avatarUrl,
+            avatarSeed: user.avatarSeed || user.name,
+            school: user.school || '',
+            city: user.city || '',
+            board: user.board || '',
             performance: performance,
             achievements: achievements,
             points: totalPoints,
@@ -88,7 +103,76 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         sessionStorage.removeItem('alfanumrik-userId');
         setError(null);
     };
+
+    const updateStudentPoints = (pointsToAdd: number) => {
+        setCurrentUser(prevUser => {
+            if (!prevUser) return null;
+            const newPoints = prevUser.points + pointsToAdd;
+            return { ...prevUser, points: newPoints };
+        });
+    };
     
+    const updateUserProfile = async (updatedData: { 
+        name: string; 
+        grade: string; 
+        school: string;
+        city: string;
+        board: string;
+        avatarSeed: string;
+    }) => {
+        if (!currentUser) return;
+        
+        setLoading(true);
+        setError(null);
+    
+        try {
+            const userFromDb = await db.findUserById(currentUser.id);
+            if (!userFromDb) throw new Error("User not found");
+    
+            const seed = updatedData.avatarSeed.trim() || updatedData.name.trim();
+            const hasSeedChanged = (userFromDb.avatarSeed || userFromDb.name) !== seed;
+    
+            let newAvatarUrl = userFromDb.avatarUrl;
+            if (hasSeedChanged) {
+                const avatar = createAvatar(lorelei, { seed });
+                newAvatarUrl = await avatar.toDataUri();
+            }
+    
+            const updatedUser: User = {
+                ...userFromDb,
+                name: updatedData.name.trim(),
+                grade: updatedData.grade,
+                school: updatedData.school.trim(),
+                city: updatedData.city.trim(),
+                board: updatedData.board.trim(),
+                avatarUrl: newAvatarUrl,
+                avatarSeed: seed,
+            };
+    
+            await db.updateUser(updatedUser);
+    
+            setCurrentUser(prevUser => {
+                if (!prevUser) return null;
+                return {
+                    ...prevUser,
+                    name: updatedUser.name,
+                    grade: updatedUser.grade,
+                    school: updatedUser.school,
+                    city: updatedUser.city,
+                    board: updatedUser.board,
+                    avatarUrl: updatedUser.avatarUrl,
+                    avatarSeed: updatedUser.avatarSeed,
+                };
+            });
+    
+        } catch (err: any) {
+            setError(err.message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const value = {
         currentUser,
         isLoggedIn: !!currentUser,
@@ -96,7 +180,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         error,
         login,
         signup,
-        logout
+        logout,
+        updateStudentPoints,
+        updateUserProfile
     };
 
     return (

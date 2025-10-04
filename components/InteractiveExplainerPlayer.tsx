@@ -93,11 +93,7 @@ const InteractiveExplainerPlayer: React.FC<InteractiveExplainerPlayerProps> = ({
             setStatus('ready');
         } catch (e: any) {
             console.error("Interactive explainer video generation failed:", e);
-            if (e.message === "QUOTA_EXCEEDED") {
-                setError(t('videoQuotaError'));
-            } else {
-                setError(e.message || "Failed to generate video.");
-            }
+            setError(e.message || "Failed to generate video.");
             setStatus('error');
         }
     }, [selectedOptions, explainerData, areAllOptionsSelected, grade, subject, chapter, videoUrl, t]);
@@ -110,7 +106,7 @@ const InteractiveExplainerPlayer: React.FC<InteractiveExplainerPlayerProps> = ({
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 {explainerData.variables.map(variable => (
                     <div key={variable.name}>
-                        <label htmlFor={`var-explainer-${variable.name}`} className="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">
+                        <label htmlFor={`var-explainer-${variable.name}`} className="block text-sm font-bold text-text-primary mb-2">
                             {variable.name}
                         </label>
                         <div className="relative">
@@ -118,12 +114,12 @@ const InteractiveExplainerPlayer: React.FC<InteractiveExplainerPlayerProps> = ({
                                 id={`var-explainer-${variable.name}`}
                                 value={selectedOptions[variable.name] || ''}
                                 onChange={e => setSelectedOptions(prev => ({ ...prev, [variable.name]: e.target.value }))}
-                                className="w-full pl-4 pr-10 py-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition appearance-none"
+                                className="w-full"
                             >
                                 <option value="" disabled>{t('selectAnOption')}</option>
                                 {variable.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                             </select>
-                             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 dark:text-slate-400">
+                             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-secondary">
                                 <ChevronDownIcon className="h-5 w-5" />
                             </div>
                         </div>
@@ -133,8 +129,7 @@ const InteractiveExplainerPlayer: React.FC<InteractiveExplainerPlayerProps> = ({
                     <button
                         onClick={handleVisualizeScenario}
                         disabled={!areAllOptionsSelected || status === 'generating'}
-                        className="w-full flex items-center justify-center px-6 py-3 bg-primary text-white font-bold rounded-lg shadow-md hover:bg-primary-dark transition-transform transform hover:scale-105 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed disabled:scale-100"
-                        style={{backgroundColor: areAllOptionsSelected && status !== 'generating' ? 'rgb(var(--c-primary))' : ''}}
+                        className="w-full flex items-center justify-center btn-accent"
                     >
                         {status === 'generating' ? <LoadingSpinner /> : <PlayCircleIcon className="h-6 w-6" />}
                         <span className="ml-2">{t('visualizeScenario')}</span>
@@ -150,17 +145,20 @@ const InteractiveExplainerPlayer: React.FC<InteractiveExplainerPlayerProps> = ({
                     </div>
                 )}
                 {status === 'error' && (
-                    <div className="text-center p-4 bg-red-100 dark:bg-red-900/50 w-full h-full flex flex-col items-center justify-center rounded-lg">
-                        <ExclamationTriangleIcon className="h-10 w-10 text-red-500" />
-                        <p className="mt-3 font-semibold text-red-700 dark:text-red-300">{t('videoGenerationError')}</p>
-                        <p className="text-sm text-red-600 dark:text-red-400 max-w-sm">{error}</p>
+                    <div className="text-center p-4 bg-red-900/50 w-full h-full flex flex-col items-center justify-center rounded-lg">
+                        <ExclamationTriangleIcon className="h-10 w-10 text-red-400" />
+                        <p className="mt-3 font-semibold text-red-300">{t('videoGenerationError')}</p>
+                        <p className="text-sm text-red-400 max-w-sm">{error}</p>
+                        <button onClick={handleVisualizeScenario} className="mt-4 px-4 py-2 text-sm btn-accent">
+                            {t('retryButton')}
+                        </button>
                     </div>
                 )}
                 {status === 'ready' && videoUrl && (
                     <video src={videoUrl} controls autoPlay className="w-full h-full object-contain" />
                 )}
                 {status === 'idle' && (
-                    <div className="text-center p-4 text-slate-400 dark:text-slate-500">
+                    <div className="text-center p-4 text-text-secondary">
                         <FilmIcon className="h-12 w-12 mx-auto" />
                         <p className="mt-2 font-semibold">{t('configureExplainer')}</p>
                     </div>

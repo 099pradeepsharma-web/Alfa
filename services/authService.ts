@@ -1,11 +1,19 @@
 import { User } from '../types';
 import * as db from './databaseService';
+import { createAvatar } from '@dicebear/core';
+import { lorelei } from '@dicebear/collection';
 
 export const signup = async (name: string, email: string, password: string, grade: string): Promise<User> => {
     const existingUser = await db.findUserByEmail(email);
     if (existingUser) {
         throw new Error("An account with this email already exists.");
     }
+    const seed = name.trim();
+    const avatar = createAvatar(lorelei, {
+      seed: seed,
+    });
+
+    const avatarDataUri = await avatar.toDataUri();
 
     const newUser: User = {
         id: Date.now(), // Simple unique ID for simulation
@@ -13,7 +21,11 @@ export const signup = async (name: string, email: string, password: string, grad
         email: email.trim().toLowerCase(),
         password_plaintext: password,
         grade: grade,
-        avatarUrl: `https://i.pravatar.cc/150?u=${encodeURIComponent(email.trim())}`
+        avatarUrl: avatarDataUri,
+        avatarSeed: seed,
+        school: '',
+        city: '',
+        board: '',
     };
 
     await db.addUser(newUser);

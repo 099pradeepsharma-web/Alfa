@@ -15,7 +15,7 @@ interface PeerPediaScreenProps {
 }
 
 const PeerPediaScreen: React.FC<PeerPediaScreenProps> = ({ onBack }) => {
-    const { t, tCurriculum } = useLanguage();
+    const { t, tCurriculum, language } = useLanguage();
     const { currentUser } = useAuth();
 
     const [curriculum, setCurriculum] = React.useState<any[]>([]);
@@ -44,13 +44,13 @@ const PeerPediaScreen: React.FC<PeerPediaScreenProps> = ({ onBack }) => {
         const fetchModule = async () => {
             if (selectedChapter && selectedSubject && currentUser) {
                 setIsLoadingModule(true);
-                const { content } = await contentService.getChapterContent(currentUser.grade, selectedSubject.name, selectedChapter.title, currentUser, 'en');
+                const { content } = await contentService.getChapterContent(currentUser.grade, selectedSubject.name, selectedChapter, currentUser, language);
                 setLearningModule(content);
                 setIsLoadingModule(false);
             }
         };
         fetchModule();
-    }, [selectedChapter, selectedSubject, currentUser]);
+    }, [selectedChapter, selectedSubject, currentUser, language]);
 
     const handleSubjectSelect = (subject: Subject) => {
         setSelectedSubject(subject);

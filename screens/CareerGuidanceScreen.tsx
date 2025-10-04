@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLanguage } from '../contexts/Language-context';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowLeftIcon, SparklesIcon, DocumentTextIcon, LightBulbIcon, ChatBubbleLeftRightIcon, AcademicCapIcon, BriefcaseIcon, CheckCircleIcon, TrophyIcon, PaperAirplaneIcon, MicrophoneIcon, StopCircleIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon, SparklesIcon, DocumentTextIcon, LightBulbIcon, ChatBubbleLeftRightIcon, AcademicCapIcon, BriefcaseIcon, CheckCircleIcon, TrophyIcon, PaperAirplaneIcon, MicrophoneIcon, StopCircleIcon, PlayCircleIcon, PauseCircleIcon } from '@heroicons/react/24/solid';
 import { AptitudeQuestion, AptitudeTrait, CareerGuidance, Student, ChatMessage } from '../types';
 import * as geminiService from '../services/geminiService';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -99,7 +99,7 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
     const [isThinking, setIsThinking] = useState(false);
     const [chatInput, setChatInput] = useState('');
     const chatHistoryRef = useRef<HTMLDivElement>(null);
-    const { isSpeaking, play, stop } = useTTS();
+    const { isSpeaking, isPaused, currentlyPlayingId, play, pause, resume, stop } = useTTS();
 
      useEffect(() => {
         if (chatHistoryRef.current) {
@@ -128,14 +128,11 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
     const handleStartCounseling = async () => {
         if (!student) return;
         setView('counseling');
-        setIsThinking(true);
         const chat = geminiService.createCareerCounselorChat(student, language);
         setCounselorChat(chat);
 
         const welcomeMessage: ChatMessage = { id: 'counselor-welcome', role: 'model', text: t('counselorWelcome') };
         setChatMessages([welcomeMessage]);
-        play(welcomeMessage.text);
-        setIsThinking(false);
     };
 
     const handleSendChatMessage = async (text: string) => {
@@ -158,7 +155,6 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
             setChatMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, text: fullResponse } : m));
         }
 
-        play(fullResponse);
         setChatMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, state: undefined } : m));
         setIsThinking(false);
     };
@@ -228,16 +224,30 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
         <div className="flex flex-col h-[calc(100vh-250px)]">
              <h3 className="text-2xl font-bold text-slate-700 dark:text-slate-200 mb-4">{t('counselorChatTitle')}</h3>
             <div ref={chatHistoryRef} className="flex-grow p-4 space-y-4 overflow-y-auto bg-slate-100 dark:bg-slate-900/50 rounded-t-lg">
-                {chatMessages.map(msg => (
-                     msg.role === 'user' ? (
+                {chatMessages.map(msg => {
+                    const isCurrentAudio = currentlyPlayingId === msg.id;
+                    const avatarState: FittoState = isThinking ? 'thinking' : (isSpeaking && isCurrentAudio ? 'speaking' : 'idle');
+                    return msg.role === 'user' ? (
                         <div key={msg.id} className="flex justify-end"><div className="chat-bubble user-bubble">{msg.text}</div></div>
                      ) : (
                          <div key={msg.id} className="flex items-end gap-2">
-                            <FittoAvatar size={32} state={isThinking ? 'thinking' : (isSpeaking ? 'speaking' : 'idle')} />
+                            <FittoAvatar size={32} state={avatarState} />
                             {msg.state === 'thinking' ? <div className="chat-bubble fitto-bubble"><div className="typing-indicator"><span></span><span></span><span></span></div></div> : <div className="chat-bubble fitto-bubble">{msg.text}</div>}
+                            {!msg.state && msg.text && (
+                                <div className="flex-shrink-0">
+                                    {(!isSpeaking || !isCurrentAudio) ? (
+                                        <button onClick={() => play(msg.text, msg.id)} className="p-2 rounded-full bg-slate-200 dark:bg-slate-600 hover:bg-primary-light text-slate-600 dark:text-slate-200 hover:text-primary-dark transition" aria-label="Play audio response"><PlayCircleIcon className="h-5 w-5"/></button>
+                                    ) : (
+                                        <div className="flex items-center gap-1">
+                                            <button onClick={isPaused ? resume : pause} className="p-2 rounded-full bg-slate-200 dark:bg-slate-600 hover:bg-primary-light text-slate-600 dark:text-slate-200 hover:text-primary-dark transition" aria-label={isPaused ? "Resume audio" : "Pause audio"}>{isPaused ? <PlayCircleIcon className="h-5 w-5"/> : <PauseCircleIcon className="h-5 w-5"/>}</button>
+                                            <button onClick={stop} className="p-2 rounded-full bg-slate-200 dark:bg-slate-600 hover:bg-red-100 dark:hover:bg-red-800/50 text-slate-600 dark:text-slate-200 hover:text-red-500 dark:hover:text-red-400 transition" aria-label="Stop speaking"><StopCircleIcon className="h-5 w-5"/></button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                          </div>
                      )
-                ))}
+                })}
             </div>
              <form onSubmit={(e) => { e.preventDefault(); handleSendChatMessage(chatInput); }} className="p-4 bg-white dark:bg-slate-800 rounded-b-lg border-t">
                  <div className="flex items-center gap-2">

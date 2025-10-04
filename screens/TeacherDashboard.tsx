@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Student } from '../types';
-import { ArrowLeftIcon, ChevronRightIcon, CircleStackIcon, SparklesIcon, CloudArrowUpIcon, CheckBadgeIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon, ChevronRightIcon, CircleStackIcon, SparklesIcon, CloudArrowUpIcon, CheckBadgeIcon, ChartPieIcon, WrenchScrewdriverIcon, AcademicCapIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from '../contexts/Language-context';
 import QuestionBankScreen from './QuestionBankScreen';
 import CurriculumGeneratorScreen from './CurriculumGeneratorScreen';
@@ -44,29 +44,29 @@ const BulkOnboard: React.FC = () => {
     };
     
     return (
-        <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-700 mt-8">
-            <h3 className="text-xl font-bold text-slate-700 dark:text-slate-200">Bulk Student Onboarding</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        <div className="bg-slate-800/50 p-6 rounded-xl border border-border mt-8">
+            <h3 className="text-xl font-bold text-text-primary">Bulk Student Onboarding</h3>
+            <p className="text-sm text-text-secondary mt-1">
                 Upload a CSV file with student data (columns: name, email, password, grade) to create multiple student accounts at once.
             </p>
             <div className="mt-4">
-                <label htmlFor="csv-upload" className="w-full cursor-pointer bg-white dark:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-lg p-6 flex flex-col items-center justify-center hover:border-primary dark:hover:border-primary-light transition">
-                    <CloudArrowUpIcon className="h-10 w-10 text-slate-400 dark:text-slate-500" />
-                    <span className="mt-2 font-semibold text-primary dark:text-primary-light text-center">
+                <label htmlFor="csv-upload" className="w-full cursor-pointer bg-surface border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center hover:border-primary transition">
+                    <CloudArrowUpIcon className="h-10 w-10 text-text-secondary" />
+                    <span className="mt-2 font-semibold text-text-primary text-center">
                         {fileName ? `File: ${fileName}` : 'Choose a CSV file to upload'}
                     </span>
                     <input id="csv-upload" type="file" accept=".csv" className="sr-only" onChange={handleFileChange} />
                 </label>
             </div>
             {isProcessing && (
-                <div className="mt-4 flex items-center justify-center gap-2 text-slate-600 dark:text-slate-300">
+                <div className="mt-4 flex items-center justify-center gap-2 text-text-secondary">
                     <LoadingSpinner />
                     <span>Processing file... This may take a moment.</span>
                 </div>
             )}
-            {error && <p className="mt-4 text-center text-red-600 dark:text-red-400 font-semibold">{error}</p>}
+            {error && <p className="mt-4 text-center text-red-400 font-semibold">{error}</p>}
             {result && (
-                <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/40 text-green-800 dark:text-green-200 rounded-lg font-semibold text-center">
+                <div className="mt-4 p-3 bg-slate-700 text-text-primary rounded-lg font-semibold text-center">
                     Processing Complete: {result.success} students onboarded successfully, {result.failed} failed.
                 </div>
             )}
@@ -74,7 +74,52 @@ const BulkOnboard: React.FC = () => {
     )
 }
 
-const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ students, onSelectStudent, onBack }) => {
+const ImplementationFramework: React.FC = () => {
+    const { t } = useLanguage();
+
+    const frameworkSteps = [
+        {
+            icon: ChartPieIcon,
+            title: t('implementationStep1Title'),
+            description: t('implementationStep1Desc'),
+        },
+        {
+            icon: WrenchScrewdriverIcon,
+            title: t('implementationStep2Title'),
+            description: t('implementationStep2Desc'),
+        },
+        {
+            icon: AcademicCapIcon,
+            title: t('implementationStep3Title'),
+            description: t('implementationStep3Desc'),
+        },
+    ];
+
+    return (
+        <div className="bg-slate-800/50 p-6 rounded-xl border border-border mt-8">
+            <h3 className="text-xl font-bold text-text-primary">{t('implementationFrameworkTitle')}</h3>
+            <p className="text-sm text-text-secondary mt-1">
+                {t('implementationFrameworkDesc')}
+            </p>
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                {frameworkSteps.map((step, index) => (
+                    <div key={index} className="flex items-start gap-4">
+                        <div className="flex-shrink-0 p-3 bg-slate-700 rounded-full">
+                            <step.icon className="h-6 w-6 text-text-secondary" />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-text-primary">{step.title}</h4>
+                            <p className="text-sm text-text-secondary mt-1">{step.description}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+
+const TeacherDashboard: React.FC<TeacherDashboardProps> = React.memo(({ students, onSelectStudent, onBack }) => {
   const { t, tCurriculum } = useLanguage();
   const [view, setView] = useState<'students' | 'questionBank' | 'curriculumGenerator'>('students');
 
@@ -88,29 +133,27 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ students, onSelectS
 
   return (
     <div className="animate-fade-in">
-      <button onClick={onBack} className="flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-semibold transition mb-6">
+      <button onClick={onBack} className="flex items-center text-text-secondary hover:text-text-primary font-semibold transition mb-6">
           <ArrowLeftIcon className="h-5 w-5 mr-2" />
           {t('backToRoleSelection')}
       </button>
-      <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg">
-        <div className="border-b dark:border-slate-600 pb-4 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="dashboard-highlight-card p-8">
+        <div className="border-b border-border pb-4 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">{t('teacherDashboard')}</h2>
-            <p className="text-slate-600 dark:text-slate-300 mt-1">{t('teacherDashboardPrompt')}</p>
+            <h2 className="text-3xl font-bold text-text-primary">{t('teacherDashboard')}</h2>
+            <p className="text-text-secondary mt-1">{t('teacherDashboardPrompt')}</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <button 
               onClick={() => setView('questionBank')}
-              className="flex-shrink-0 flex items-center justify-center px-4 py-2 bg-white dark:bg-slate-700 border border-primary/50 text-primary-dark font-semibold rounded-lg shadow-sm hover:bg-primary-light dark:hover:bg-slate-600 transition"
-              style={{borderColor: 'rgba(var(--c-primary), 0.5)', color: 'rgb(var(--c-primary-dark))'}}
+              className="flex-shrink-0 flex items-center justify-center px-4 py-2 bg-surface border border-border text-text-primary font-semibold rounded-lg shadow-sm hover:bg-bg-primary transition"
             >
               <CircleStackIcon className="h-5 w-5 mr-2" />
               {t('accessQuestionBank')}
             </button>
             <button 
               onClick={() => setView('curriculumGenerator')}
-              className="flex-shrink-0 flex items-center justify-center px-4 py-2 bg-white dark:bg-slate-700 border border-primary/50 text-primary-dark font-semibold rounded-lg shadow-sm hover:bg-primary-light dark:hover:bg-slate-600 transition"
-              style={{borderColor: 'rgba(var(--c-primary), 0.5)', color: 'rgb(var(--c-primary-dark))'}}
+              className="flex-shrink-0 flex items-center justify-center px-4 py-2 bg-surface border border-border text-text-primary font-semibold rounded-lg shadow-sm hover:bg-bg-primary transition"
             >
               <SparklesIcon className="h-5 w-5 mr-2" />
               {t('curriculumGenerator')}
@@ -118,14 +161,14 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ students, onSelectS
           </div>
         </div>
 
-        <div className="mb-6 bg-blue-50 dark:bg-blue-900/40 p-6 rounded-xl border border-blue-200 dark:border-blue-700">
+        <div className="mb-6 bg-slate-800/50 p-6 rounded-xl border border-border">
             <div className="flex items-center gap-4">
-                <div className="p-2 bg-white/50 dark:bg-slate-900/50 rounded-full">
-                    <CheckBadgeIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                <div className="p-2 bg-surface rounded-full">
+                    <CheckBadgeIcon className="h-8 w-8 text-text-secondary" />
                 </div>
                 <div>
-                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('curriculumAlignmentTitle')}</h3>
-                    <p className="text-slate-600 dark:text-slate-300 mt-1">{t('curriculumAlignmentDesc')}</p>
+                    <h3 className="text-xl font-bold text-text-primary">{t('curriculumAlignmentTitle')}</h3>
+                    <p className="text-text-secondary mt-1">{t('curriculumAlignmentDesc')}</p>
                 </div>
             </div>
         </div>
@@ -135,25 +178,27 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ students, onSelectS
             <button
               key={student.id}
               onClick={() => onSelectStudent(student)}
-              className="w-full flex items-center justify-between bg-slate-50 dark:bg-slate-700 p-4 rounded-lg hover:bg-indigo-50 dark:hover:bg-slate-600 hover:shadow-sm transition-all duration-200"
+              className="w-full flex items-center justify-between bg-surface p-4 rounded-lg hover:bg-bg-primary hover:shadow-sm transition-all duration-200"
             >
               <div className="flex items-center">
                 <img src={student.avatarUrl} alt={student.name} className="h-12 w-12 rounded-full mr-4" />
                 <div>
-                  <p className="font-bold text-slate-800 dark:text-slate-100 text-lg">{student.name}</p>
-                  <p className="text-slate-500 dark:text-slate-400">{tCurriculum(student.grade)}</p>
+                  <p className="font-bold text-text-primary text-lg">{student.name}</p>
+                  <p className="text-text-secondary">{tCurriculum(student.grade)}</p>
                 </div>
               </div>
-              <ChevronRightIcon className="h-6 w-6 text-slate-400 dark:text-slate-500" />
+              <ChevronRightIcon className="h-6 w-6 text-text-secondary" />
             </button>
           ))}
         </div>
+        
+        <ImplementationFramework />
 
         <BulkOnboard />
 
       </div>
     </div>
   );
-};
+});
 
 export default TeacherDashboard;

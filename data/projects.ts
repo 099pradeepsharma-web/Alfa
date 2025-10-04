@@ -6,6 +6,7 @@ export const MOCK_PROJECTS: Project[] = [
     title: 'Design a Solar-Powered Phone Charger',
     subject: 'Science',
     grade: 'Grade 10',
+    priority: 'High',
     problemStatement: 'Many rural areas in India face inconsistent electricity. Design and create a blueprint for a simple, cost-effective solar-powered phone charger that can be built using locally available materials.',
     objectives: [
       'Apply principles of electricity and solar energy from the chapter "Sources of Energy".',
@@ -34,6 +35,7 @@ export const MOCK_PROJECTS: Project[] = [
     title: 'Village Palampur: A Modern Analysis',
     subject: 'Economics',
     grade: 'Grade 9',
+    priority: 'Medium',
     problemStatement: 'The textbook describes the economy of the fictional village Palampur. Research and create a presentation on how a modern-day Indian village\'s economy might differ, considering technology, government schemes, and market access.',
     objectives: [
       'Analyze the factors of production in a modern village context.',
@@ -54,6 +56,7 @@ export const MOCK_PROJECTS: Project[] = [
     title: 'My Region\'s Freedom Struggle',
     subject: 'History',
     grade: 'Grade 8',
+    priority: 'Low',
     problemStatement: 'The national freedom struggle had many local heroes and movements that aren\'t always in textbooks. Create a digital scrapbook or a short documentary about a lesser-known freedom fighter or event from your own state or region.',
     objectives: [
         'Conduct primary or secondary research on local history.',

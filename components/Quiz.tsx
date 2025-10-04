@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { QuizQuestion } from '../types';
 import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon, LightBulbIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from '../contexts/Language-context';
@@ -10,14 +10,17 @@ interface QuizProps {
   onFinish?: (result: { score: number, answers: {[key: number]: string} }) => void;
 }
 
-const Quiz: React.FC<QuizProps> = ({ questions, onBack, chapterTitle, onFinish }) => {
+const Quiz: React.FC<QuizProps> = React.memo(({ questions, onBack, chapterTitle, onFinish }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<{[key: number]: string}>({});
   const [showResults, setShowResults] = useState(false);
   const { t } = useLanguage();
+  const [showIncorrectOnly, setShowIncorrectOnly] = useState(false);
+  
+  const isCurrentQuestionAnswered = useMemo(() => selectedAnswers.hasOwnProperty(currentQuestionIndex), [selectedAnswers, currentQuestionIndex]);
 
   const handleAnswerSelect = (option: string) => {
-    if (showResults) return;
+    if (isCurrentQuestionAnswered) return;
     setSelectedAnswers({
       ...selectedAnswers,
       [currentQuestionIndex]: option,
@@ -43,50 +46,109 @@ const Quiz: React.FC<QuizProps> = ({ questions, onBack, chapterTitle, onFinish }
   }
 
   const handleFinish = () => {
+    const finalScore = Math.round((calculateScore() / questions.length) * 100);
+    setShowResults(true);
     if (onFinish) {
-      onFinish({ score: calculateScore(), answers: selectedAnswers });
-    } else {
-      setShowResults(true);
+      onFinish({ score: finalScore, answers: selectedAnswers });
     }
   };
+
+  type ResultsByConceptType = Record<string, { correct: number, total: number, questions: (QuizQuestion & { userAnswer?: string, isCorrect: boolean })[] }>;
+  
+  const resultsByConcept = useMemo(() => {
+      if (!showResults) return {};
+      // FIX: Added type annotation to accumulator to resolve implicit 'any' error.
+      return questions.reduce((acc: ResultsByConceptType, question, index) => {
+          const concept = question.conceptTitle;
+          if (!acc[concept]) {
+              acc[concept] = { correct: 0, total: 0, questions: [] };
+          }
+          acc[concept].total++;
+          const isCorrect = selectedAnswers[index] === question.correctAnswer;
+          if (isCorrect) {
+              acc[concept].correct++;
+          }
+          acc[concept].questions.push({ ...question, userAnswer: selectedAnswers[index], isCorrect });
+          return acc;
+      }, {} as ResultsByConceptType);
+  }, [questions, selectedAnswers, showResults]);
+
+  const questionsToReview = useMemo(() => {
+      if (!showResults) return [];
+      const allQuestions = questions.map((q, index) => ({
+          ...q,
+          userAnswer: selectedAnswers[index],
+          isCorrect: selectedAnswers[index] === q.correctAnswer
+      }));
+      return showIncorrectOnly ? allQuestions.filter(q => !q.isCorrect) : allQuestions;
+  }, [showIncorrectOnly, questions, selectedAnswers, showResults]);
+
 
   const renderResults = () => {
     const score = calculateScore();
     const percentage = Math.round((score / questions.length) * 100);
-
+    
     return (
-        <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg animate-fade-in text-center border border-slate-200 dark:border-slate-700">
-            <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">{t('quizResults')}</h2>
-            <p className="text-lg text-slate-500 dark:text-slate-400 mt-1">{t('chapter')}: {chapterTitle}</p>
-            <div className={`mt-8 text-6xl font-bold ${percentage >= 70 ? 'text-green-500' : 'text-orange-500'}`}>
-                {percentage}%
+        <div className="dashboard-highlight-card p-8 animate-fade-in">
+            <h2 className="text-3xl font-bold text-text-primary text-center">{t('masteryCheckpointTitle')}</h2>
+            <p className="text-lg text-text-secondary mt-1 text-center">{t('chapter')}: {chapterTitle}</p>
+            
+            <div className="text-center my-8">
+                <div className="text-6xl font-bold text-text-primary">{percentage}%</div>
+                <p className="text-xl text-text-secondary mt-2">{t('quizScoreSummary', { score, total: questions.length })}</p>
             </div>
-            <p className="text-xl text-slate-600 dark:text-slate-300 mt-2">{t('quizScoreSummary', { score, total: questions.length })}</p>
 
             <div className="mt-10 text-left">
-                <h3 className="text-2xl font-bold text-slate-700 dark:text-slate-200 mb-4">{t('reviewAnswers')}</h3>
-                {questions.map((q, index) => (
-                    <div key={index} className="mb-6 p-4 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                        <p className="font-semibold text-slate-800 dark:text-slate-100">{index + 1}. {q.question}</p>
-                        <p className="text-sm text-primary dark:text-indigo-400 font-medium my-1" style={{color: 'rgb(var(--c-primary))'}}>{t('concept')}: {q.conceptTitle}</p>
-                        <p className={`mt-2 flex items-center ${selectedAnswers[index] === q.correctAnswer ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                           {selectedAnswers[index] === q.correctAnswer ? <CheckCircleIcon aria-hidden="true" className="h-5 w-5 mr-2"/> : <XCircleIcon aria-hidden="true" className="h-5 w-5 mr-2"/>}
-                           {t('yourAnswer')}: {selectedAnswers[index] || t('notAnswered')}
+                <h3 className="text-2xl font-bold text-text-primary mb-4">{t('performanceByConcept')}</h3>
+                <div className="space-y-4 bg-slate-800/50 p-4 rounded-lg">
+                    {Object.keys(resultsByConcept).map((concept) => {
+                        const data = resultsByConcept[concept];
+                        const conceptScore = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+                        return (
+                            <div key={concept}>
+                                <div className="flex justify-between mb-1">
+                                    <span className="font-semibold text-text-secondary">{concept}</span>
+                                    <span className="font-bold text-text-primary">{data.correct}/{data.total}</span>
+                                </div>
+                                <div className="w-full bg-slate-700 rounded-full h-2.5">
+                                    <div className="h-2.5 rounded-full" style={{ width: `${conceptScore}%`, backgroundColor: 'rgb(var(--c-primary))' }}></div>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
+
+            <div className="mt-10 text-left">
+                 <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-2xl font-bold text-text-primary">{t('reviewAnswers')}</h3>
+                    <label className="flex items-center text-sm font-semibold cursor-pointer">
+                        <input type="checkbox" checked={showIncorrectOnly} onChange={() => setShowIncorrectOnly(!showIncorrectOnly)} className="h-4 w-4 rounded mr-2 bg-slate-700 border-slate-500 text-primary focus:ring-primary" />
+                        {t('showIncorrectOnly')}
+                    </label>
+                </div>
+                {questionsToReview.map((q, index) => (
+                    <div key={index} className="mb-6 p-4 border border-border-color rounded-lg bg-bg-primary">
+                        <p className="font-semibold text-text-primary">{index + 1}. {q.question}</p>
+                        <p className="text-sm text-text-secondary font-medium my-1">{t('concept')}: {q.conceptTitle}</p>
+                        <p className={`mt-2 flex items-center ${q.isCorrect ? 'text-text-primary' : 'text-text-secondary'}`}>
+                           {q.isCorrect ? <CheckCircleIcon aria-hidden="true" className="h-5 w-5 mr-2 text-green-400"/> : <XCircleIcon aria-hidden="true" className="h-5 w-5 mr-2 text-red-400"/>}
+                           {t('yourAnswer')}: {q.userAnswer || t('notAnswered')}
                         </p>
-                        {selectedAnswers[index] !== q.correctAnswer && (
-                            <p className="mt-1 flex items-center text-green-700 dark:text-green-400">
-                                <CheckCircleIcon aria-hidden="true" className="h-5 w-5 mr-2"/>
+                        {!q.isCorrect && (
+                            <p className="mt-1 flex items-center text-text-primary">
+                                <CheckCircleIcon aria-hidden="true" className="h-5 w-5 mr-2 text-green-400"/>
                                 {t('correctAnswerLabel')}: {q.correctAnswer}
                             </p>
                         )}
-                        <div className="mt-2 p-3 bg-primary-light dark:bg-slate-900/50 rounded-md text-primary-dark/80 dark:text-slate-300 flex items-start" style={{backgroundColor: 'rgb(var(--c-primary-light))', color: 'rgba(var(--c-primary-dark), 0.9)'}}>
-                          <LightBulbIcon className="h-5 w-5 mr-2 flex-shrink-0 mt-1"/>
-                          <span><span className="font-semibold">{t('explanation')}:</span> {q.explanation}</span>
+                        <div className="mt-2 p-3 bg-surface rounded-md text-text-secondary flex items-start">
+                          <LightBulbIcon className="h-5 w-5 mr-2 flex-shrink-0 mt-1 text-primary"/>
+                          <span><span className="font-semibold text-text-primary">{t('explanation')}:</span> {q.explanation}</span>
                         </div>
                     </div>
                 ))}
             </div>
-             <button onClick={onBack} className="mt-8 flex items-center justify-center mx-auto px-6 py-3 text-white font-bold rounded-lg btn-primary-gradient">
+             <button onClick={onBack} className="mt-8 flex items-center justify-center mx-auto px-6 py-3 btn-accent">
                 <ArrowLeftIcon className="h-5 w-5 mr-2" />
                 {t('backToLesson')}
             </button>
@@ -100,75 +162,83 @@ const Quiz: React.FC<QuizProps> = ({ questions, onBack, chapterTitle, onFinish }
 
   return (
     <div className="animate-fade-in">
-        <button onClick={onBack} className="flex items-center text-primary hover:text-primary-dark font-semibold transition mb-6" style={{color: 'rgb(var(--c-primary))'}}>
+        <button onClick={onBack} className="flex items-center text-text-secondary hover:text-text-primary font-semibold transition mb-6">
             <ArrowLeftIcon className="h-5 w-5 mr-2" />
             {t('backToLesson')}
         </button>
-        <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
-            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-4 mb-6">
+        <div className="dashboard-highlight-card p-8">
+            <div className="flex justify-between items-center border-b border-border-color pb-4 mb-6">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t('adaptiveQuiz')}</h2>
-                    <p className="text-slate-500 dark:text-slate-400">{chapterTitle}</p>
+                    <h2 className="text-2xl font-bold text-text-primary">{t('adaptiveQuiz')}</h2>
+                    <p className="text-text-secondary">{chapterTitle}</p>
                 </div>
-                <div className="text-lg font-semibold text-slate-600 dark:text-slate-300">
-                    {t('question')} {currentQuestionIndex + 1} <span className="text-slate-400 dark:text-slate-500">/ {questions.length}</span>
+                <div className="text-lg font-semibold text-text-secondary">
+                    {t('question')} {currentQuestionIndex + 1} <span className="text-slate-600">/ {questions.length}</span>
                 </div>
             </div>
 
             <div>
-                <p className="text-sm text-primary dark:text-indigo-400 font-medium mb-2" style={{color: 'rgb(var(--c-primary))'}}>{t('testingConcept')}: {currentQuestion.conceptTitle}</p>
-                <p className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-6">{currentQuestion.question}</p>
+                <p className="text-sm text-text-secondary font-medium mb-2">{t('testingConcept')}: {currentQuestion.conceptTitle}</p>
+                <p className="text-xl font-semibold text-text-primary mb-6">{currentQuestion.question}</p>
                 <div className="space-y-4">
                     {currentQuestion.options.map((option, index) => (
                         <button
                             key={index}
                             onClick={() => handleAnswerSelect(option)}
+                            disabled={isCurrentQuestionAnswered}
                             aria-pressed={selectedAnswers[currentQuestionIndex] === option}
-                            className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 flex items-center text-slate-800 dark:text-slate-200
-                                ${selectedAnswers[currentQuestionIndex] === option 
-                                    ? 'bg-primary-light/50 dark:bg-slate-900/50 border-primary ring-2 ring-primary/50' 
-                                    : 'bg-white dark:bg-slate-800/50 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-primary'}
-                            `}
-                            style={{
-                                borderColor: selectedAnswers[currentQuestionIndex] === option ? 'rgb(var(--c-primary))' : '',
-                            }}
+                            className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 flex items-center ${
+                                isCurrentQuestionAnswered
+                                ? (option === currentQuestion.correctAnswer
+                                    ? 'bg-green-900/50 border-green-500 text-green-200'
+                                    : (selectedAnswers[currentQuestionIndex] === option
+                                        ? 'bg-red-900/50 border-red-500 text-red-300'
+                                        : 'bg-surface border-border-color opacity-60'))
+                                : 'bg-surface border-border-color text-text-primary hover:border-primary'
+                            }`}
                         >
-                            <span className={`h-6 w-6 rounded-full border-2 ${selectedAnswers[currentQuestionIndex] === option ? 'border-primary bg-primary' : 'border-slate-400 dark:border-slate-500'} mr-4 flex-shrink-0`} style={{borderColor: selectedAnswers[currentQuestionIndex] === option ? 'rgb(var(--c-primary))' : '', backgroundColor: selectedAnswers[currentQuestionIndex] === option ? 'rgb(var(--c-primary))' : 'transparent'}}></span>
                             {option}
                         </button>
                     ))}
                 </div>
+
+                {isCurrentQuestionAnswered && (
+                     <div className="mt-4 p-3 bg-surface rounded-md text-text-secondary flex items-start animate-fade-in">
+                      <LightBulbIcon className="h-5 w-5 mr-2 flex-shrink-0 mt-1 text-primary"/>
+                      <span><span className="font-semibold text-text-primary">{t('explanation')}:</span> {currentQuestion.explanation}</span>
+                    </div>
+                )}
             </div>
 
-            <div className="flex justify-between items-center mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex justify-between items-center mt-8">
                 <button
                     onClick={handlePrev}
                     disabled={currentQuestionIndex === 0}
-                    className="px-6 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    className="px-6 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm border border-border-color hover:bg-bg-primary transition disabled:opacity-50"
                 >
                     {t('previous')}
                 </button>
-                {currentQuestionIndex < questions.length - 1 ? (
+                {currentQuestionIndex === questions.length - 1 ? (
                     <button
-                        onClick={handleNext}
-                        disabled={!selectedAnswers[currentQuestionIndex]}
-                        className="px-6 py-2 text-white font-semibold rounded-lg btn-primary-gradient disabled:opacity-70 disabled:cursor-not-allowed"
+                        onClick={handleFinish}
+                        disabled={!isCurrentQuestionAnswered}
+                        className="px-6 py-2 btn-accent disabled:opacity-50"
                     >
-                        {t('next')}
+                        {t('finishQuiz')}
                     </button>
                 ) : (
                     <button
-                        onClick={handleFinish}
-                        disabled={!selectedAnswers[currentQuestionIndex]}
-                        className="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:-translate-y-0.5 transform transition disabled:opacity-70 disabled:cursor-not-allowed"
+                        onClick={handleNext}
+                        disabled={!isCurrentQuestionAnswered}
+                        className="px-6 py-2 btn-accent disabled:opacity-50"
                     >
-                        {t('finishQuiz')}
+                        {t('next')}
                     </button>
                 )}
             </div>
         </div>
     </div>
   );
-};
+});
 
 export default Quiz;
