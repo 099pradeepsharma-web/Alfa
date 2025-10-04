@@ -12,10 +12,10 @@
     <style>
       /******************************************************************
        * Alfanumrik Design System & Style Guide
-       * Version: 10.0 (High-Tech Adventure Theme)
+       * Version: 11.0 (Unified Theming)
        *
-       * A sophisticated dark theme with energetic accents, designed to
-       * feel like a student's personal command center for learning.
+       * A sophisticated theme system ensuring full compatibility
+       * between light and dark modes for all components.
        ******************************************************************/
 
       /* 1. DESIGN TOKENS (CSS VARIABLES) */
@@ -96,7 +96,37 @@
         font-weight: 700;
       }
       
-      /* 3. CORE COMPONENTS */
+      /* 3. CORE COMPONENTS & UTILITIES */
+      
+      /* Theme-aware Typography via Tailwind Prose Overrides */
+      .prose {
+        /* DEFAULT (LIGHT THEME) PROSE COLORS */
+        --tw-prose-body: rgb(var(--c-text-secondary));
+        --tw-prose-headings: rgb(var(--c-text-primary));
+        --tw-prose-links: rgb(var(--c-primary-dark));
+        --tw-prose-bold: rgb(var(--c-text-primary));
+        --tw-prose-quotes: rgb(var(--c-text-primary));
+        --tw-prose-code: rgb(var(--c-text-primary));
+        --tw-prose-pre-code: #e5e7eb; /* gray-200 */
+        --tw-prose-pre-bg: #1f2937; /* gray-800 */
+        
+        /* INVERTED (DARK THEME) PROSE COLORS */
+        --tw-prose-invert-body: rgb(var(--c-text-secondary));
+        --tw-prose-invert-headings: rgb(var(--c-text-primary));
+        --tw-prose-invert-links: rgb(var(--c-primary));
+        --tw-prose-invert-bold: rgb(var(--c-text-primary));
+        --tw-prose-invert-quotes: rgb(var(--c-text-primary));
+        --tw-prose-invert-code: rgb(var(--c-text-primary));
+        --tw-prose-invert-pre-code: #d1d5db; /* gray-300 */
+        --tw-prose-invert-pre-bg: rgb(31 41 55 / 50%);
+        
+        /* Common styles */
+        --tw-prose-hr: rgb(var(--c-border-color));
+        --tw-prose-quote-borders: rgb(var(--c-border-color));
+        --tw-prose-invert-hr: rgb(var(--c-border-color));
+        --tw-prose-invert-quote-borders: rgb(var(--c-border-color));
+      }
+
       header {
           position: sticky;
           top: 0;
@@ -106,8 +136,7 @@
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 2px rgba(0, 0, 0, 0.1);
       }
       
-      .dashboard-highlight-card,
-      .bg-white\.dark\\:bg-slate-800 {
+      .dashboard-highlight-card {
         background-color: rgb(var(--c-surface));
         border: var(--border-width) solid rgba(var(--c-border-color), 1);
         border-radius: var(--radius-card);
@@ -210,6 +239,26 @@
       .user-bubble { background-color: rgb(var(--c-surface)); border-bottom-right-radius: 0.5rem; }
       .fitto-bubble { background-color: transparent; border: 1px solid rgb(var(--c-border-color)); border-bottom-left-radius: 0.5rem; }
       
+      /* Theme-aware utility classes */
+      .text-text-primary { color: rgb(var(--c-text-primary)); }
+      .text-text-secondary { color: rgb(var(--c-text-secondary)); }
+      .text-primary { color: rgb(var(--c-primary)); }
+      .text-primary-dark { color: rgb(var(--c-primary-dark)); }
+      .bg-surface { background-color: rgb(var(--c-surface)); }
+      .bg-bg-primary { background-color: rgb(var(--c-bg-primary)); }
+      .bg-primary-light { background-color: rgb(var(--c-primary-light)); }
+      .border-border { border-color: rgb(var(--c-border-color)); }
+      .border-primary { border-color: rgb(var(--c-primary)); }
+
+      /* Status colors for quizzes and reports */
+      .bg-status-success { background-color: rgba(var(--c-success), 0.1); }
+      .text-status-success { color: #16a34a; } .dark .text-status-success { color: #4ade80; }
+      .border-status-success { border-color: rgba(var(--c-success), 0.5); }
+      
+      .bg-status-danger { background-color: rgba(var(--c-error), 0.1); }
+      .text-status-danger { color: #dc2626; } .dark .text-status-danger { color: #f87171; }
+      .border-status-danger { border-color: rgba(var(--c-error), 0.5); }
+
       .tts-highlight { background-color: rgba(var(--c-primary), 0.4); color: rgb(var(--c-text-primary)); padding: 1px 3px; border-radius: 4px; }
       .chapter-tag {
           padding: 4px 12px;

@@ -94,13 +94,13 @@ const Quiz: React.FC<QuizProps> = React.memo(({ questions, onBack, chapterTitle,
             <p className="text-lg text-text-secondary mt-1 text-center">{t('chapter')}: {chapterTitle}</p>
             
             <div className="text-center my-8">
-                <div className="text-6xl font-bold text-text-primary">{percentage}%</div>
+                <div className={`text-6xl font-bold ${percentage > 70 ? 'text-status-success' : 'text-status-danger'}`}>{percentage}%</div>
                 <p className="text-xl text-text-secondary mt-2">{t('quizScoreSummary', { score, total: questions.length })}</p>
             </div>
 
             <div className="mt-10 text-left">
                 <h3 className="text-2xl font-bold text-text-primary mb-4">{t('performanceByConcept')}</h3>
-                <div className="space-y-4 bg-slate-800/50 p-4 rounded-lg">
+                <div className="bg-bg-primary p-4 rounded-lg">
                     {Object.keys(resultsByConcept).map((concept) => {
                         const data = resultsByConcept[concept];
                         const conceptScore = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
@@ -110,8 +110,8 @@ const Quiz: React.FC<QuizProps> = React.memo(({ questions, onBack, chapterTitle,
                                     <span className="font-semibold text-text-secondary">{concept}</span>
                                     <span className="font-bold text-text-primary">{data.correct}/{data.total}</span>
                                 </div>
-                                <div className="w-full bg-slate-700 rounded-full h-2.5">
-                                    <div className="h-2.5 rounded-full" style={{ width: `${conceptScore}%`, backgroundColor: 'rgb(var(--c-primary))' }}></div>
+                                <div className="w-full bg-surface rounded-full h-2.5">
+                                    <div className="bg-primary h-2.5 rounded-full" style={{ width: `${conceptScore}%`, backgroundColor: 'rgb(var(--c-primary))' }}></div>
                                 </div>
                             </div>
                         )
@@ -122,22 +122,22 @@ const Quiz: React.FC<QuizProps> = React.memo(({ questions, onBack, chapterTitle,
             <div className="mt-10 text-left">
                  <div className="flex justify-between items-center mb-4">
                     <h3 className="text-2xl font-bold text-text-primary">{t('reviewAnswers')}</h3>
-                    <label className="flex items-center text-sm font-semibold cursor-pointer">
-                        <input type="checkbox" checked={showIncorrectOnly} onChange={() => setShowIncorrectOnly(!showIncorrectOnly)} className="h-4 w-4 rounded mr-2 bg-slate-700 border-slate-500 text-primary focus:ring-primary" />
+                    <label className="flex items-center text-sm font-semibold cursor-pointer text-text-secondary">
+                        <input type="checkbox" checked={showIncorrectOnly} onChange={() => setShowIncorrectOnly(!showIncorrectOnly)} className="h-4 w-4 rounded mr-2 bg-surface border-border text-primary focus:ring-primary" />
                         {t('showIncorrectOnly')}
                     </label>
                 </div>
                 {questionsToReview.map((q, index) => (
-                    <div key={index} className="mb-6 p-4 border border-border-color rounded-lg bg-bg-primary">
+                    <div key={index} className="mb-6 p-4 border border-border rounded-lg bg-bg-primary">
                         <p className="font-semibold text-text-primary">{index + 1}. {q.question}</p>
                         <p className="text-sm text-text-secondary font-medium my-1">{t('concept')}: {q.conceptTitle}</p>
                         <p className={`mt-2 flex items-center ${q.isCorrect ? 'text-text-primary' : 'text-text-secondary'}`}>
-                           {q.isCorrect ? <CheckCircleIcon aria-hidden="true" className="h-5 w-5 mr-2 text-green-400"/> : <XCircleIcon aria-hidden="true" className="h-5 w-5 mr-2 text-red-400"/>}
+                           {q.isCorrect ? <CheckCircleIcon aria-hidden="true" className="h-5 w-5 mr-2 text-status-success"/> : <XCircleIcon aria-hidden="true" className="h-5 w-5 mr-2 text-status-danger"/>}
                            {t('yourAnswer')}: {q.userAnswer || t('notAnswered')}
                         </p>
                         {!q.isCorrect && (
                             <p className="mt-1 flex items-center text-text-primary">
-                                <CheckCircleIcon aria-hidden="true" className="h-5 w-5 mr-2 text-green-400"/>
+                                <CheckCircleIcon aria-hidden="true" className="h-5 w-5 mr-2 text-status-success"/>
                                 {t('correctAnswerLabel')}: {q.correctAnswer}
                             </p>
                         )}
@@ -159,6 +159,18 @@ const Quiz: React.FC<QuizProps> = React.memo(({ questions, onBack, chapterTitle,
   if (showResults) return renderResults();
 
   const currentQuestion = questions[currentQuestionIndex];
+  
+  const getOptionStyle = (option: string) => {
+      if (!isCurrentQuestionAnswered) {
+          return 'bg-surface border-border text-text-primary hover:border-primary';
+      }
+      const isCorrect = option === currentQuestion.correctAnswer;
+      const isSelected = selectedAnswers[currentQuestionIndex] === option;
+
+      if (isCorrect) return 'bg-status-success border-status-success text-status-success';
+      if (isSelected && !isCorrect) return 'bg-status-danger border-status-danger text-status-danger';
+      return 'bg-surface border-border opacity-60';
+  };
 
   return (
     <div className="animate-fade-in">
@@ -187,15 +199,7 @@ const Quiz: React.FC<QuizProps> = React.memo(({ questions, onBack, chapterTitle,
                             onClick={() => handleAnswerSelect(option)}
                             disabled={isCurrentQuestionAnswered}
                             aria-pressed={selectedAnswers[currentQuestionIndex] === option}
-                            className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 flex items-center ${
-                                isCurrentQuestionAnswered
-                                ? (option === currentQuestion.correctAnswer
-                                    ? 'bg-green-900/50 border-green-500 text-green-200'
-                                    : (selectedAnswers[currentQuestionIndex] === option
-                                        ? 'bg-red-900/50 border-red-500 text-red-300'
-                                        : 'bg-surface border-border-color opacity-60'))
-                                : 'bg-surface border-border-color text-text-primary hover:border-primary'
-                            }`}
+                            className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 flex items-center ${getOptionStyle(option)}`}
                         >
                             {option}
                         </button>

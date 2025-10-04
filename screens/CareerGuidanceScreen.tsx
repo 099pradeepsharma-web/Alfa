@@ -55,29 +55,29 @@ const AptitudeTest: React.FC<{ student: Student, onFinish: (results: any) => voi
         }
     };
     
-    if (isLoading) return <div className="flex flex-col items-center justify-center p-8"><LoadingSpinner /><p className="mt-2 font-semibold">{t('generatingAptitudeTest')}</p></div>;
-    if (!questions || questions.length === 0) return <p>{t('errorOccurred')}</p>;
+    if (isLoading) return <div className="flex flex-col items-center justify-center p-8"><LoadingSpinner /><p className="mt-2 font-semibold text-text-secondary">{t('generatingAptitudeTest')}</p></div>;
+    if (!questions || questions.length === 0) return <p className="text-text-secondary">{t('errorOccurred')}</p>;
     
     const currentQ = questions[currentIndex];
     const isLastQuestion = currentIndex === questions.length - 1;
 
     return (
         <div className="p-6">
-            <h3 className="text-2xl font-bold text-slate-700 dark:text-slate-200">{t('aptitudeTestHeader')}</h3>
+            <h3 className="text-2xl font-bold text-text-primary">{t('aptitudeTestHeader')}</h3>
             <div className="flex justify-between items-center my-2">
-                <p className="font-semibold text-primary" style={{color: 'rgb(var(--c-primary))'}}>{currentQ.trait}</p>
-                <p className="font-semibold text-slate-500">{currentIndex + 1} / {questions.length}</p>
+                <p className="font-semibold text-primary">{currentQ.trait}</p>
+                <p className="font-semibold text-text-secondary">{currentIndex + 1} / {questions.length}</p>
             </div>
-            <p className="font-semibold text-slate-800 dark:text-slate-100 text-lg my-4">{currentQ.question}</p>
+            <p className="font-semibold text-text-primary text-lg my-4">{currentQ.question}</p>
             <div className="space-y-3">
                 {currentQ.options.map(opt => (
-                    <button key={opt} onClick={() => handleAnswer(opt)} className={`w-full text-left p-3 rounded-lg border-2 transition ${answers[currentIndex] === opt ? 'bg-primary-light border-primary' : 'bg-white dark:bg-slate-700 hover:border-primary/50'}`}>
+                    <button key={opt} onClick={() => handleAnswer(opt)} className={`w-full text-left p-3 rounded-lg border-2 transition ${answers[currentIndex] === opt ? 'bg-primary-light border-primary' : 'bg-bg-primary hover:border-primary/50'}`}>
                         {opt}
                     </button>
                 ))}
             </div>
             <div className="mt-6 text-right">
-                <button onClick={handleNext} disabled={!answers[currentIndex]} className="px-6 py-2 bg-primary text-white font-bold rounded-lg shadow disabled:opacity-50">
+                <button onClick={handleNext} disabled={!answers[currentIndex]} className="px-6 py-2 btn-accent disabled:opacity-50">
                     {isLastQuestion ? t('finishTest') : t('nextQuestion')}
                 </button>
             </div>
@@ -174,18 +174,18 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
         const scores = aptitudeResults.scores;
         const strongestTrait = Object.keys(scores).reduce((a, b) => (scores[a].correct / scores[a].total) > (scores[b].correct / scores[b].total) ? a : b);
         return (
-            <div className="text-center p-6 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
-                <h3 className="text-2xl font-bold">{t('aptitudeResultsTitle')}</h3>
+            <div className="text-center p-6 bg-bg-primary rounded-lg">
+                <h3 className="text-2xl font-bold text-text-primary">{t('aptitudeResultsTitle')}</h3>
                 {isLoading ? <LoadingSpinner/> : (
                     <>
-                        <div className="my-4 p-4 bg-white dark:bg-slate-700 rounded-lg shadow">
+                        <div className="my-4 p-4 bg-surface rounded-lg shadow">
                             <h4 className="font-semibold text-primary">{t('resultsSummary')}</h4>
-                            <p className="italic">"{aptitudeResults.summary}"</p>
+                            <p className="italic text-text-secondary">"{aptitudeResults.summary}"</p>
                         </div>
-                        <p className="font-semibold">{t('strongestTrait')}: <span className="text-xl font-bold text-green-600">{strongestTrait}</span></p>
+                        <p className="font-semibold text-text-secondary">{t('strongestTrait')}: <span className="text-xl font-bold text-status-success">{strongestTrait}</span></p>
                         <div className="mt-6 flex gap-4 justify-center">
-                            <button onClick={handleViewGuidance} className="px-5 py-2 bg-primary text-white font-bold rounded-lg">{t('viewStreamGuidance')}</button>
-                            <button onClick={() => setView('idle')} className="px-5 py-2 bg-slate-200 font-bold rounded-lg">{t('back')}</button>
+                            <button onClick={handleViewGuidance} className="px-5 py-2 btn-accent">{t('viewStreamGuidance')}</button>
+                            <button onClick={() => setView('idle')} className="px-5 py-2 bg-border font-bold rounded-lg">{t('back')}</button>
                         </div>
                     </>
                 )}
@@ -195,26 +195,26 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
 
     const renderGuidance = () => (
         <div>
-            {isLoading ? <div className="flex justify-center p-8"><LoadingSpinner /> <p className="ml-2">{t('generatingGuidance')}</p></div> : (
+            {isLoading ? <div className="flex justify-center p-8"><LoadingSpinner /> <p className="ml-2 text-text-secondary">{t('generatingGuidance')}</p></div> : (
                 guidance && <div className="space-y-6">
-                    <p>{guidance.introduction}</p>
+                    <p className="text-text-secondary">{guidance.introduction}</p>
                     {guidance.streamRecommendations.map(rec => (
-                        <div key={rec.streamName} className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border">
+                        <div key={rec.streamName} className="p-4 bg-bg-primary rounded-lg border border-border">
                             <h4 className="text-xl font-bold text-primary">{t(rec.streamName.toLowerCase())}</h4>
-                            <p className="font-semibold my-2">{t('recommendationReason')}</p>
-                            <p className="italic">"{rec.recommendationReason}"</p>
-                            <h5 className="font-bold mt-4">{t('suggestedCareers')}</h5>
+                            <p className="font-semibold my-2 text-text-primary">{t('recommendationReason')}</p>
+                            <p className="italic text-text-secondary">"{rec.recommendationReason}"</p>
+                            <h5 className="font-bold mt-4 text-text-primary">{t('suggestedCareers')}</h5>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
                                 {rec.suggestedCareers.map(career => (
-                                    <div key={career.careerName} className="p-2 bg-white dark:bg-slate-700 rounded shadow-sm">
-                                        <p className="font-semibold">{career.careerName}</p>
-                                        <p className="text-xs">{t('requiredSubjects')}: {career.requiredSubjects.join(', ')}</p>
+                                    <div key={career.careerName} className="p-2 bg-surface rounded shadow-sm">
+                                        <p className="font-semibold text-text-primary">{career.careerName}</p>
+                                        <p className="text-xs text-text-secondary">{t('requiredSubjects')}: {career.requiredSubjects.join(', ')}</p>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     ))}
-                    <p>{guidance.conclusion}</p>
+                    <p className="text-text-secondary">{guidance.conclusion}</p>
                 </div>
             )}
         </div>
@@ -222,8 +222,8 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
     
     const renderCounseling = () => (
         <div className="flex flex-col h-[calc(100vh-250px)]">
-             <h3 className="text-2xl font-bold text-slate-700 dark:text-slate-200 mb-4">{t('counselorChatTitle')}</h3>
-            <div ref={chatHistoryRef} className="flex-grow p-4 space-y-4 overflow-y-auto bg-slate-100 dark:bg-slate-900/50 rounded-t-lg">
+             <h3 className="text-2xl font-bold text-text-primary mb-4">{t('counselorChatTitle')}</h3>
+            <div ref={chatHistoryRef} className="flex-grow p-4 space-y-4 overflow-y-auto bg-bg-primary rounded-t-lg border border-b-0 border-border">
                 {chatMessages.map(msg => {
                     const isCurrentAudio = currentlyPlayingId === msg.id;
                     const avatarState: FittoState = isThinking ? 'thinking' : (isSpeaking && isCurrentAudio ? 'speaking' : 'idle');
@@ -236,11 +236,11 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
                             {!msg.state && msg.text && (
                                 <div className="flex-shrink-0">
                                     {(!isSpeaking || !isCurrentAudio) ? (
-                                        <button onClick={() => play(msg.text, msg.id)} className="p-2 rounded-full bg-slate-200 dark:bg-slate-600 hover:bg-primary-light text-slate-600 dark:text-slate-200 hover:text-primary-dark transition" aria-label="Play audio response"><PlayCircleIcon className="h-5 w-5"/></button>
+                                        <button onClick={() => play(msg.text, msg.id)} className="p-2 rounded-full bg-surface hover:bg-bg-primary text-text-secondary transition" aria-label="Play audio response"><PlayCircleIcon className="h-5 w-5"/></button>
                                     ) : (
                                         <div className="flex items-center gap-1">
-                                            <button onClick={isPaused ? resume : pause} className="p-2 rounded-full bg-slate-200 dark:bg-slate-600 hover:bg-primary-light text-slate-600 dark:text-slate-200 hover:text-primary-dark transition" aria-label={isPaused ? "Resume audio" : "Pause audio"}>{isPaused ? <PlayCircleIcon className="h-5 w-5"/> : <PauseCircleIcon className="h-5 w-5"/>}</button>
-                                            <button onClick={stop} className="p-2 rounded-full bg-slate-200 dark:bg-slate-600 hover:bg-red-100 dark:hover:bg-red-800/50 text-slate-600 dark:text-slate-200 hover:text-red-500 dark:hover:text-red-400 transition" aria-label="Stop speaking"><StopCircleIcon className="h-5 w-5"/></button>
+                                            <button onClick={isPaused ? resume : pause} className="p-2 rounded-full bg-surface hover:bg-bg-primary text-text-secondary transition" aria-label={isPaused ? "Resume audio" : "Pause audio"}>{isPaused ? <PlayCircleIcon className="h-5 w-5"/> : <PauseCircleIcon className="h-5 w-5"/>}</button>
+                                            <button onClick={stop} className="p-2 rounded-full bg-surface hover:bg-bg-primary text-text-secondary hover:text-status-danger transition" aria-label="Stop speaking"><StopCircleIcon className="h-5 w-5"/></button>
                                         </div>
                                     )}
                                 </div>
@@ -249,10 +249,10 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
                      )
                 })}
             </div>
-             <form onSubmit={(e) => { e.preventDefault(); handleSendChatMessage(chatInput); }} className="p-4 bg-white dark:bg-slate-800 rounded-b-lg border-t">
+             <form onSubmit={(e) => { e.preventDefault(); handleSendChatMessage(chatInput); }} className="p-4 bg-surface rounded-b-lg border border-t-0 border-border">
                  <div className="flex items-center gap-2">
-                    <input type="text" value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder={t('typeYourQuestion')} className="w-full p-2 border rounded" />
-                    <button type="submit" disabled={isThinking || !chatInput} className="p-2 bg-primary text-white rounded-lg disabled:opacity-50"><PaperAirplaneIcon className="h-5 w-5"/></button>
+                    <input type="text" value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder={t('typeYourQuestion')} className="w-full p-2" />
+                    <button type="submit" disabled={isThinking || !chatInput} className="p-2 btn-accent disabled:opacity-50"><PaperAirplaneIcon className="h-5 w-5"/></button>
                  </div>
             </form>
         </div>
@@ -276,12 +276,12 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
                 {view === 'idle' ? t('backToDashboard') : t('back')}
             </button>
 
-            <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+            <div className="dashboard-highlight-card p-8">
                 {view === 'idle' && (
                     <div className="text-center mb-8">
                         <BriefcaseIcon className="h-12 w-12 mx-auto text-primary" />
-                        <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mt-2">{t('careerGuidanceTitle')}</h2>
-                        <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-2xl mx-auto">{t('careerGuidanceDesc')}</p>
+                        <h2 className="text-3xl font-bold text-text-primary mt-2">{t('careerGuidanceTitle')}</h2>
+                        <p className="text-text-secondary mt-1 max-w-2xl mx-auto">{t('careerGuidanceDesc')}</p>
                     </div>
                 )}
                 {renderContent()}
@@ -291,13 +291,13 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) =
 };
 
 const FeatureCard: React.FC<{ title: string, description: string, icon: React.ElementType, buttonText: string, onClick: () => void }> = ({ title, description, icon: Icon, buttonText, onClick }) => (
-    <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col items-center text-center">
+    <div className="bg-bg-primary p-6 rounded-xl border border-border flex flex-col items-center text-center">
         <div className="p-3 bg-primary-light rounded-full mb-3">
             <Icon className="h-8 w-8 text-primary-dark" />
         </div>
-        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{title}</h3>
-        <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm flex-grow">{description}</p>
-        <button onClick={onClick} className="mt-4 w-full py-2 px-4 bg-primary text-white font-bold rounded-lg shadow hover:bg-primary-dark transition">{buttonText}</button>
+        <h3 className="text-xl font-bold text-text-primary">{title}</h3>
+        <p className="text-text-secondary mt-1 text-sm flex-grow">{description}</p>
+        <button onClick={onClick} className="mt-4 w-full py-2 px-4 btn-accent">{buttonText}</button>
     </div>
 );
 

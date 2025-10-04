@@ -11,7 +11,8 @@ interface ParentDashboardProps {
   onBack: () => void;
 }
 
-const ParentDashboard: React.FC<ParentDashboardProps> = React.memo(({ child, onSelectStudent, onBack }) => {
+// FIX: Exported the component to make it available for lazy loading in App.tsx.
+export const ParentDashboard: React.FC<ParentDashboardProps> = React.memo(({ child, onSelectStudent, onBack }) => {
   const { t, tCurriculum } = useLanguage();
   const [agreed, setAgreed] = useState(false);
   const [isAssigned, setIsAssigned] = useState(false);
@@ -34,52 +35,52 @@ const ParentDashboard: React.FC<ParentDashboardProps> = React.memo(({ child, onS
 
   return (
     <div className="animate-fade-in">
-        <button onClick={onBack} className="flex items-center text-slate-600 hover:text-slate-900 font-semibold transition mb-6">
+        <button onClick={onBack} className="flex items-center text-text-secondary hover:text-text-primary font-semibold transition mb-6">
             <ArrowLeftIcon className="h-5 w-5 mr-2" />
             {t('backToRoleSelection')}
         </button>
-        <div className="bg-white p-8 rounded-2xl shadow-lg">
-            <h2 className="text-3xl font-bold text-slate-800 border-b border-slate-200 pb-4 mb-6">{t('parentDashboard')}</h2>
-            <p className="text-slate-600 mb-6">{t('parentDashboardPrompt')}</p>
+        <div className="dashboard-highlight-card p-8">
+            <h2 className="text-3xl font-bold text-text-primary border-b border-border pb-4 mb-6">{t('parentDashboard')}</h2>
+            <p className="text-text-secondary mb-6">{t('parentDashboardPrompt')}</p>
             <div className="space-y-4">
                 <button
                 onClick={() => onSelectStudent(child)}
-                className="w-full flex items-center justify-between bg-slate-50 p-4 rounded-lg hover:bg-slate-100 hover:shadow-sm transition-all duration-200"
+                className="w-full flex items-center justify-between bg-bg-primary p-4 rounded-lg hover:bg-surface hover:shadow-sm transition-all duration-200"
                 >
                 <div className="flex items-center">
                     <img src={child.avatarUrl} alt={child.name} className="h-12 w-12 rounded-full mr-4" />
                     <div>
-                    <p className="font-bold text-slate-800 text-lg">{child.name}</p>
-                    <p className="text-slate-500">{tCurriculum(child.grade)}</p>
+                    <p className="font-bold text-text-primary text-lg">{child.name}</p>
+                    <p className="text-text-secondary">{tCurriculum(child.grade)}</p>
                     </div>
                 </div>
-                <ChevronRightIcon className="h-6 w-6 text-slate-400" />
+                <ChevronRightIcon className="h-6 w-6 text-text-secondary" />
                 </button>
             </div>
 
-            <div className="mt-8 bg-slate-50 p-6 rounded-xl border border-slate-200">
+            <div className="mt-8 bg-bg-primary p-6 rounded-xl border border-border">
                 <div className="flex items-center gap-4">
-                    <div className="p-2 bg-white/50 rounded-full">
-                        <CheckBadgeIcon className="h-8 w-8 text-slate-500" />
+                    <div className="p-2 bg-surface rounded-full">
+                        <CheckBadgeIcon className="h-8 w-8 text-text-secondary" />
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold text-slate-800">{t('curriculumAlignmentTitle')}</h3>
-                        <p className="text-slate-600 mt-1">{t('curriculumAlignmentDesc')}</p>
+                        <h3 className="text-xl font-bold text-text-primary">{t('curriculumAlignmentTitle')}</h3>
+                        <p className="text-text-secondary mt-1">{t('curriculumAlignmentDesc')}</p>
                     </div>
                 </div>
             </div>
 
-            <div className="mt-8 bg-slate-50 p-6 rounded-xl border border-slate-200">
-                <h3 className="text-xl font-bold text-slate-700">Special Module: Personal Growth & Well-being</h3>
-                <p className="text-sm text-slate-500 mt-1">
+            <div className="mt-8 bg-bg-primary p-6 rounded-xl border border-border">
+                <h3 className="text-xl font-bold text-text-primary">Special Module: Personal Growth & Well-being</h3>
+                <p className="text-sm text-text-secondary mt-1">
                     Assign the "The Great Transformation" module to help your child navigate their journey from teen to adult.
                 </p>
 
                 {isLoading ? (
                     <div className="mt-4 flex justify-center"><LoadingSpinner /></div>
                 ) : isAssigned ? (
-                    <div className="mt-4 p-3 bg-slate-100 text-slate-800 rounded-lg font-semibold text-center flex items-center justify-center gap-2">
-                        <CheckCircleIcon className="h-5 w-5" />
+                    <div className="mt-4 p-3 bg-surface text-text-primary rounded-lg font-semibold text-center flex items-center justify-center gap-2">
+                        <CheckCircleIcon className="h-5 w-5 text-status-success" />
                         Module has been assigned to {child.name}.
                     </div>
                 ) : (
@@ -88,11 +89,11 @@ const ParentDashboard: React.FC<ParentDashboardProps> = React.memo(({ child, onS
                             <input
                                 id="terms-agree"
                                 type="checkbox"
-                                className="h-5 w-5 rounded border-gray-300 text-slate-600 focus:ring-slate-500 mt-0.5"
+                                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary mt-0.5"
                                 checked={agreed}
                                 onChange={(e) => setAgreed(e.target.checked)}
                             />
-                            <label htmlFor="terms-agree" className="text-sm text-slate-600">
+                            <label htmlFor="terms-agree" className="text-sm text-text-secondary">
                                 I have reviewed the module's objectives and agree to assign this sensitive but important content to my child. I understand it covers topics related to adolescent development.
                             </label>
                         </div>
@@ -100,7 +101,7 @@ const ParentDashboard: React.FC<ParentDashboardProps> = React.memo(({ child, onS
                             <button
                                 onClick={handleAssignModule}
                                 disabled={!agreed}
-                                className="px-4 py-2 bg-slate-700 text-white font-semibold rounded-lg shadow-sm hover:bg-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm hover:bg-bg-primary transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Assign to {child.name}
                             </button>
@@ -113,5 +114,3 @@ const ParentDashboard: React.FC<ParentDashboardProps> = React.memo(({ child, onS
     </div>
   );
 });
-
-export default ParentDashboard;

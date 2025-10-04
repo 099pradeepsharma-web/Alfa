@@ -265,7 +265,7 @@ const ConceptCard: React.FC<ConceptCardProps> = React.memo(({ concept, grade, su
         <ProgressBadge status={progressStatus} />
       </div>
       
-      <div className="prose prose-lg max-w-none prose-indigo dark:prose-invert text-slate-600 dark:text-slate-300 mb-4"><StructuredText text={concept.explanation} renderText={renderText} /></div>
+      <div className="prose prose-lg max-w-none prose-indigo dark:prose-invert mb-4"><StructuredText text={concept.explanation} renderText={renderText} /></div>
       
        {progressStatus === 'not-started' && (
         <div className="text-right mb-4">
@@ -283,7 +283,7 @@ const ConceptCard: React.FC<ConceptCardProps> = React.memo(({ concept, grade, su
             <BeakerIcon className="h-5 w-5 mr-2" />
             {t('stemConnection')}
         </h4>
-        <div className="text-primary-dark/80 prose prose-lg max-w-none prose-indigo dark:prose-invert" style={{color: 'rgba(var(--c-primary-dark), 0.8)'}}><StructuredText text={concept.realWorldExample} renderText={renderText} /></div>
+        <div className="prose prose-lg max-w-none dark:prose-invert" style={{color: 'rgba(var(--c-primary-dark), 0.8)'}}><StructuredText text={concept.realWorldExample} renderText={renderText} /></div>
       </div>
       
       <div className="mt-6">

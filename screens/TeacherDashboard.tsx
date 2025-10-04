@@ -44,7 +44,7 @@ const BulkOnboard: React.FC = () => {
     };
     
     return (
-        <div className="bg-slate-800/50 p-6 rounded-xl border border-border mt-8">
+        <div className="bg-bg-primary p-6 rounded-xl border border-border mt-8">
             <h3 className="text-xl font-bold text-text-primary">Bulk Student Onboarding</h3>
             <p className="text-sm text-text-secondary mt-1">
                 Upload a CSV file with student data (columns: name, email, password, grade) to create multiple student accounts at once.
@@ -64,9 +64,9 @@ const BulkOnboard: React.FC = () => {
                     <span>Processing file... This may take a moment.</span>
                 </div>
             )}
-            {error && <p className="mt-4 text-center text-red-400 font-semibold">{error}</p>}
+            {error && <p className="mt-4 text-center text-status-danger font-semibold">{error}</p>}
             {result && (
-                <div className="mt-4 p-3 bg-slate-700 text-text-primary rounded-lg font-semibold text-center">
+                <div className="mt-4 p-3 bg-surface text-text-primary rounded-lg font-semibold text-center">
                     Processing Complete: {result.success} students onboarded successfully, {result.failed} failed.
                 </div>
             )}
@@ -96,7 +96,7 @@ const ImplementationFramework: React.FC = () => {
     ];
 
     return (
-        <div className="bg-slate-800/50 p-6 rounded-xl border border-border mt-8">
+        <div className="bg-bg-primary p-6 rounded-xl border border-border mt-8">
             <h3 className="text-xl font-bold text-text-primary">{t('implementationFrameworkTitle')}</h3>
             <p className="text-sm text-text-secondary mt-1">
                 {t('implementationFrameworkDesc')}
@@ -104,7 +104,7 @@ const ImplementationFramework: React.FC = () => {
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                 {frameworkSteps.map((step, index) => (
                     <div key={index} className="flex items-start gap-4">
-                        <div className="flex-shrink-0 p-3 bg-slate-700 rounded-full">
+                        <div className="flex-shrink-0 p-3 bg-surface rounded-full">
                             <step.icon className="h-6 w-6 text-text-secondary" />
                         </div>
                         <div>
@@ -161,7 +161,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = React.memo(({ students
           </div>
         </div>
 
-        <div className="mb-6 bg-slate-800/50 p-6 rounded-xl border border-border">
+        <div className="mb-6 bg-bg-primary p-6 rounded-xl border border-border">
             <div className="flex items-center gap-4">
                 <div className="p-2 bg-surface rounded-full">
                     <CheckBadgeIcon className="h-8 w-8 text-text-secondary" />

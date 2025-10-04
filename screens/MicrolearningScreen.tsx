@@ -98,7 +98,7 @@ const MicrolearningScreen: React.FC<MicrolearningScreenProps> = ({ learningModul
                         </span>
                     )}
                 </div>
-                 <div className="prose prose-lg max-w-none prose-indigo dark:prose-invert text-slate-600 dark:text-slate-300">
+                 <div className="prose prose-lg max-w-none prose-indigo dark:prose-invert">
                     <p>{currentConcept.explanation}</p>
                 </div>
                 

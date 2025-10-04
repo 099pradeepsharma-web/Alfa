@@ -117,10 +117,10 @@ const MissionQuiz: React.FC<MissionQuizProps> = ({ tasks, adaptiveAction, onFini
             return 'bg-surface border-border hover:bg-bg-primary hover:border-primary';
         }
         if (option === correctAnswer) {
-            return 'bg-green-900/30 border-green-500 ring-2 ring-green-400/50';
+            return 'bg-status-success border-status-success text-status-success';
         }
         if (option === selectedOption && option !== correctAnswer) {
-            return 'bg-red-900/30 border-red-500 ring-2 ring-red-400/50';
+            return 'bg-status-danger border-status-danger text-status-danger';
         }
         return 'bg-surface border-border opacity-60 cursor-not-allowed';
     };
@@ -187,9 +187,9 @@ const MissionQuiz: React.FC<MissionQuizProps> = ({ tasks, adaptiveAction, onFini
                             onClick={() => handleAnswerSelect(option)}
                             disabled={!!selectedOption}
                             aria-pressed={selectedOption === option}
-                            className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 flex items-center text-text-primary ${getOptionStyle(option)}`}
+                            className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 flex items-center font-medium ${getOptionStyle(option)}`}
                         >
-                             <span className={`h-6 w-6 rounded-full border-2 ${selectedOption === option ? 'border-primary bg-primary' : 'border-slate-500'} mr-4 flex-shrink-0`}></span>
+                             <span className={`h-6 w-6 rounded-full border-2 ${selectedOption === option ? 'border-current bg-current' : 'border-current'} mr-4 flex-shrink-0`}></span>
                             {option}
                         </button>
                     ))}
@@ -199,12 +199,12 @@ const MissionQuiz: React.FC<MissionQuizProps> = ({ tasks, adaptiveAction, onFini
             {selectedOption && (
                  <div className="mt-6 animate-fade-in">
                      {selectedOption === correctAnswer ? (
-                         <div className="flex items-center text-green-400 font-bold text-lg">
+                         <div className="flex items-center text-status-success font-bold text-lg">
                             <CheckCircleIcon aria-hidden="true" className="h-6 w-6 mr-2" /> {t('correct')}
                          </div>
                     ) : (
                         <div className="flex flex-col gap-2">
-                            <div className="flex items-center text-red-400 font-bold text-lg">
+                            <div className="flex items-center text-status-danger font-bold text-lg">
                                 <XCircleIcon aria-hidden="true" className="h-6 w-6 mr-2" /> {t('incorrect')}
                             </div>
                             <p className="text-text-secondary">{t(isEQ(currentTask) ? 'bestResponse' : 'correctAnswerLabel')}: {correctAnswer}</p>

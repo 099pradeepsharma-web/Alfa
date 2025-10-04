@@ -8,7 +8,7 @@ const ThemeToggle: React.FC = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="p-2.5 rounded-lg border-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-50 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+      className="p-2.5 rounded-lg border-2 bg-surface text-text-primary transition-colors duration-200 hover:bg-bg-primary"
       style={{
         borderColor: 'rgba(var(--c-border-color), 1)'
       }}

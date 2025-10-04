@@ -25,7 +25,7 @@ const ProjectCard: React.FC<{
     };
 
     return (
-        <div className={`bg-white dark:bg-slate-800 rounded-2xl shadow-lg border-2 transition-all duration-300 ${isSelected ? 'border-primary shadow-primary/20' : 'border-slate-200 dark:border-slate-700'}`}>
+        <div className={`bg-surface rounded-2xl shadow-lg border-2 transition-all duration-300 ${isSelected ? 'border-primary shadow-primary/20' : 'border-border'}`}>
             <div className="p-6">
                 <div className="flex justify-between items-start">
                     <div>
@@ -33,13 +33,13 @@ const ProjectCard: React.FC<{
                             <p className="font-bold text-sm text-primary" style={{color: 'rgb(var(--c-primary))'}}>{tCurriculum(project.subject)}</p>
                             <span className={`priority-tag ${priorityClasses[priority]}`}>{priority}</span>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mt-1">{project.title}</h3>
+                        <h3 className="text-xl font-bold text-text-primary mt-1">{project.title}</h3>
                     </div>
                      <div className="flex-shrink-0 ml-4 p-3 bg-primary-light rounded-full" style={{backgroundColor: 'rgb(var(--c-primary-light))'}}>
                         <CubeIcon className="h-7 w-7 text-primary-dark" style={{color: 'rgb(var(--c-primary-dark))'}} />
                     </div>
                 </div>
-                <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">{project.problemStatement}</p>
+                <p className="text-text-secondary mt-2 text-sm">{project.problemStatement}</p>
                  <div className="flex justify-between items-center mt-4">
                     <button onClick={onSelect} className="text-sm font-bold text-primary hover:text-primary-dark flex items-center" style={{color: 'rgb(var(--c-primary))'}}>
                         {t('viewProject')}
@@ -86,45 +86,45 @@ const ProjectDetailView: React.FC<{ project: Project, onNewSubmission: (submissi
     };
     
     return (
-        <div className="bg-slate-50 dark:bg-slate-800/50 p-6 mt-[-8px] rounded-b-2xl border-x-2 border-b-2 border-primary">
+        <div className="bg-bg-primary p-6 mt-[-8px] rounded-b-2xl border-x-2 border-b-2 border-primary">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div>
-                    <h4 className="font-bold text-lg text-slate-700 dark:text-slate-200 mb-2">{t('objectives')}</h4>
-                    <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-300">
+                    <h4 className="font-bold text-lg text-text-primary mb-2">{t('objectives')}</h4>
+                    <ul className="list-disc list-inside space-y-1 text-text-secondary">
                         {project.objectives.map((obj, i) => <li key={i}>{obj}</li>)}
                     </ul>
-                    <h4 className="font-bold text-lg text-slate-700 dark:text-slate-200 mt-6 mb-2">{t('guidingQuestions')}</h4>
-                     <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-300">
+                    <h4 className="font-bold text-lg text-text-primary mt-6 mb-2">{t('guidingQuestions')}</h4>
+                     <ul className="list-disc list-inside space-y-1 text-text-secondary">
                         {project.guidingQuestions.map((q, i) => <li key={i}>{q}</li>)}
                     </ul>
                 </div>
                 <div>
-                    <h4 className="font-bold text-lg text-slate-700 dark:text-slate-200 mb-2">{t('submitYourProject')}</h4>
+                    <h4 className="font-bold text-lg text-text-primary mb-2">{t('submitYourProject')}</h4>
                     <form onSubmit={handleSubmit} className="space-y-3">
-                        <textarea value={solutionText} onChange={e => setSolutionText(e.target.value)} required rows={4} placeholder={t('solutionDescription')} className="w-full p-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 rounded-md focus:ring-1 focus:ring-primary"></textarea>
-                        <input type="url" value={solutionUrl} onChange={e => setSolutionUrl(e.target.value)} placeholder={t('solutionLink')} className="w-full p-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/50 text-slate-800 dark:text-slate-100 rounded-md focus:ring-1 focus:ring-primary" />
-                        <button type="submit" className="w-full flex items-center justify-center py-2 px-4 bg-primary text-white font-bold rounded-lg shadow-sm hover:bg-primary-dark transition"><PaperAirplaneIcon className="h-5 w-5 mr-2" /> {t('submitSolution')}</button>
+                        <textarea value={solutionText} onChange={e => setSolutionText(e.target.value)} required rows={4} placeholder={t('solutionDescription')} className="w-full"></textarea>
+                        <input type="url" value={solutionUrl} onChange={e => setSolutionUrl(e.target.value)} placeholder={t('solutionLink')} className="w-full" />
+                        <button type="submit" className="w-full flex items-center justify-center py-2 px-4 btn-accent"><PaperAirplaneIcon className="h-5 w-5 mr-2" /> {t('submitSolution')}</button>
                     </form>
                 </div>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-slate-300 dark:border-slate-600">
-                <h4 className="font-bold text-lg text-slate-700 dark:text-slate-200 mb-4">{t('showcase')}</h4>
+            <div className="mt-8 pt-6 border-t border-border">
+                <h4 className="font-bold text-lg text-text-primary mb-4">{t('showcase')}</h4>
                 <div className="space-y-4">
                     {project.submissions.map(sub => (
-                        <div key={sub.studentId} className="bg-white dark:bg-slate-700/50 p-4 rounded-lg shadow">
+                        <div key={sub.studentId} className="bg-surface p-4 rounded-lg shadow">
                             <div className="flex items-center mb-2">
                                 <img src={sub.studentAvatarUrl} alt={sub.studentName} className="h-8 w-8 rounded-full mr-3" />
                                 <div>
-                                    <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">{sub.studentName}</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(sub.submittedDate).toLocaleDateString()}</p>
+                                    <p className="font-bold text-text-primary text-sm">{sub.studentName}</p>
+                                    <p className="text-xs text-text-secondary">{new Date(sub.submittedDate).toLocaleDateString()}</p>
                                 </div>
                             </div>
-                            <p className="text-slate-600 dark:text-slate-300 text-sm">{sub.solutionText}</p>
+                            <p className="text-text-secondary text-sm">{sub.solutionText}</p>
                             {sub.solutionUrl && <a href={sub.solutionUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm font-semibold mt-2 inline-flex items-center"><LinkIcon className="h-4 w-4 mr-1"/> View Work</a>}
                         </div>
                     ))}
-                    {project.submissions.length === 0 && <p className="text-slate-500 dark:text-slate-400 text-sm text-center italic">Be the first to submit a solution!</p>}
+                    {project.submissions.length === 0 && <p className="text-text-secondary text-sm text-center italic">Be the first to submit a solution!</p>}
                 </div>
             </div>
         </div>
@@ -183,17 +183,17 @@ const ProjectHubScreen: React.FC<ProjectHubScreenProps> = ({ onBack }) => {
                 {t('backToDashboard')}
             </button>
 
-            <div className="bg-slate-50 dark:bg-slate-900/50 p-8 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+            <div className="dashboard-highlight-card p-8">
                 <div className="text-center">
                     <LightBulbIcon className="h-12 w-12 mx-auto text-primary" style={{color: 'rgb(var(--c-primary))'}} />
-                    <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mt-2">{t('projectHubTitleScreen')}</h2>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-2xl mx-auto">{t('projectHubDescScreen')}</p>
+                    <h2 className="text-3xl font-bold text-text-primary mt-2">{t('projectHubTitleScreen')}</h2>
+                    <p className="text-text-secondary mt-1 max-w-2xl mx-auto">{t('projectHubDescScreen')}</p>
                 </div>
 
                 <div className="my-6 flex flex-wrap items-center gap-4">
                     <label htmlFor="subject-filter" className="sr-only">{t('filterBySubject')}</label>
                     <select id="subject-filter" value={subjectFilter} onChange={e => setSubjectFilter(e.target.value)}
-                     className="w-full md:w-auto px-4 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-lg focus:ring-1 focus:ring-primary">
+                     className="w-full md:w-auto">
                         {subjects.map(s => <option key={s} value={s}>{s === 'all' ? t('allSubjects') : tCurriculum(s)}</option>)}
                     </select>
 
@@ -201,7 +201,7 @@ const ProjectHubScreen: React.FC<ProjectHubScreenProps> = ({ onBack }) => {
                         onClick={() => setSortByPriority(prev => !prev)}
                         className={`px-4 py-2 border rounded-lg font-semibold text-sm transition ${sortByPriority 
                             ? 'bg-primary-light text-primary-dark border-primary' 
-                            : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200'}`
+                            : 'bg-surface border-border text-text-primary'}`
                         }
                     >
                         Sort by Priority: {sortByPriority ? 'On' : 'Off'}

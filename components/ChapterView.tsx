@@ -90,6 +90,39 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
     const [showTutorAlert, setShowTutorAlert] = useState<Concept | null>(null);
     const [activeRemediation, setActiveRemediation] = useState<string | null>(null);
 
+    // New state for dynamic loading messages
+    const [loadingMessage, setLoadingMessage] = useState(t('aiGeneratingLesson'));
+    const wasLoading = useRef(false);
+
+    // Effect to cycle through loading messages for better UX
+    useEffect(() => {
+        let interval: number | undefined;
+        // Only start the interval if we are transitioning into a loading state
+        if (isLoading && !wasLoading.current) {
+            const messages = [
+                t('loadingMessage1'),
+                t('loadingMessage2'),
+                t('loadingMessage3'),
+                t('loadingMessage4'),
+                t('loadingMessage5')
+            ];
+            let messageIndex = 0;
+            setLoadingMessage(messages[0]);
+            interval = window.setInterval(() => {
+                messageIndex = (messageIndex + 1) % messages.length;
+                setLoadingMessage(messages[messageIndex]);
+            }, 2500); // Change message every 2.5 seconds
+        }
+        
+        // Update the ref to the current loading state for the next render
+        wasLoading.current = isLoading;
+
+        // Cleanup function
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isLoading, t]);
+
     const renderTextWithTTS = useCallback((text: string, key: string) => {
         const sentences = getSentences(text);
         const isCurrentlyPlaying = isSpeaking && currentlyPlayingId === key;
@@ -251,8 +284,16 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
         }
     };
 
-    if (isLoading) return <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]"><LoadingSpinner /><p className="mt-4 text-text-secondary text-lg">{t('aiGeneratingLesson')}</p><p className="text-sm text-slate-500 mt-1">{tCurriculum(chapter.title)}</p></div>;
-    if (error) return <div className="text-center p-8 bg-red-900/20 rounded-lg max-w-2xl mx-auto"><h3 className="text-xl font-bold text-red-400 mt-4">{t('errorOccurred')}</h3><p className="text-red-400 mt-2">{error}</p><button onClick={loadChapter} className="mt-6 flex items-center justify-center mx-auto px-6 py-2 bg-red-600 text-white font-bold rounded-lg shadow-md hover:bg-red-700 transition"><ArrowPathIcon className="h-5 w-5 mr-2" />{t('tryAgain')}</button></div>;
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] text-center">
+                <LoadingSpinner />
+                <p className="mt-4 text-text-secondary text-lg font-semibold animate-pulse">{loadingMessage}</p>
+                <p className="text-sm text-text-secondary mt-1">{tCurriculum(chapter.title)}</p>
+            </div>
+        );
+    }
+    if (error) return <div className="text-center p-8 bg-status-danger rounded-lg max-w-2xl mx-auto"><h3 className="text-xl font-bold text-status-danger mt-4">{t('errorOccurred')}</h3><p className="text-status-danger mt-2">{error}</p><button onClick={loadChapter} className="mt-6 flex items-center justify-center mx-auto px-6 py-2 bg-status-danger text-white font-bold rounded-lg shadow-md hover:opacity-80 transition" style={{ backgroundColor: 'rgb(var(--c-error))' }}><ArrowPathIcon className="h-5 w-5 mr-2" />{t('tryAgain')}</button></div>;
     if (!learningModule) return <div className="text-center"><p>{t('noContent')}</p></div>;
     if (showQuiz) return <Quiz questions={quizQuestions!} onBack={() => setShowQuiz(false)} chapterTitle={tCurriculum(learningModule.chapterTitle)} onFinish={handleQuizFinish} />;
 
@@ -266,7 +307,7 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
         {showRemediation && (
             <div className="modal-overlay">
                 <div className="modal-content text-center">
-                    <XCircleIcon className="h-16 w-16 mx-auto text-amber-400"/>
+                    <XCircleIcon className="h-16 w-16 mx-auto text-status-warning"/>
                     <h2 className="text-2xl font-bold mt-4 text-text-primary">{t('remediationTitle')}</h2>
                     <p className="text-text-secondary mt-2">{t('remediationDesc', { concept: tCurriculum(showRemediation.conceptTitle) })}</p>
                     <div className="space-y-3 mt-6 text-left">
@@ -276,7 +317,7 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
                                 <h3 className="font-bold text-text-primary">{t('remediationOption1Title')}</h3>
                                 <p className="text-sm text-text-secondary">{t('remediationOption1Desc')}</p>
                             </div>
-                            {activeRemediation === 'refresher' && <CheckCircleIcon className="h-6 w-6 text-green-500 ml-auto"/>}
+                            {activeRemediation === 'refresher' && <CheckCircleIcon className="h-6 w-6 text-status-success ml-auto"/>}
                         </button>
                          <button onClick={() => { setActiveRemediation('drill'); setTimeout(() => { setShowRemediation(null); setActiveRemediation(null); }, 1500); }} className="remediation-card w-full">
                             <PuzzlePieceIcon className="h-8 w-8 text-primary"/>
@@ -284,7 +325,7 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
                                 <h3 className="font-bold text-text-primary">{t('remediationOption2Title')}</h3>
                                 <p className="text-sm text-text-secondary">{t('remediationOption2Desc')}</p>
                             </div>
-                            {activeRemediation === 'drill' && <CheckCircleIcon className="h-6 w-6 text-green-500 ml-auto"/>}
+                            {activeRemediation === 'drill' && <CheckCircleIcon className="h-6 w-6 text-status-success ml-auto"/>}
                         </button>
                     </div>
                 </div>
@@ -293,11 +334,11 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
         {showTutorAlert && (
             <div className="modal-overlay">
                  <div className="modal-content text-center">
-                    <ExclamationTriangleSolid className="h-16 w-16 mx-auto text-red-400"/>
+                    <ExclamationTriangleSolid className="h-16 w-16 mx-auto text-status-danger"/>
                     <h2 className="text-2xl font-bold mt-4 text-text-primary">{t('tutorAlertTitle')}</h2>
                     <p className="text-text-secondary mt-2">{t('tutorAlertDesc', { concept: tCurriculum(showTutorAlert.conceptTitle) })}</p>
                     <div className="mt-6 flex gap-4">
-                        <button onClick={() => setShowTutorAlert(null)} className="w-full px-4 py-2 bg-slate-700 text-text-primary font-semibold rounded-lg hover:bg-slate-600 transition">{t('tutorAlertDismiss')}</button>
+                        <button onClick={() => setShowTutorAlert(null)} className="w-full px-4 py-2 bg-border text-text-primary font-semibold rounded-lg hover:opacity-80 transition">{t('tutorAlertDismiss')}</button>
                         <button onClick={() => { onStartTutorSession([showTutorAlert]); setShowTutorAlert(null); }} className="w-full btn-accent">{t('tutorAlertButton')}</button>
                     </div>
                  </div>
@@ -306,7 +347,7 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
          {showAdvanced && (
             <div className="modal-overlay">
                  <div className="modal-content text-center">
-                    <TrophySolid className="h-16 w-16 mx-auto text-green-400"/>
+                    <TrophySolid className="h-16 w-16 mx-auto text-status-success"/>
                     <h2 className="text-2xl font-bold mt-4 text-text-primary">{t('advancedSuggestionTitle')}</h2>
                     <p className="text-text-secondary mt-2">{t('advancedSuggestionDesc')}</p>
                     <div className="mt-6">
@@ -318,7 +359,7 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
       {/* --- END: Modals --- */}
       <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-sm font-semibold text-text-secondary mb-6">
         <button onClick={onBackToSubjects} className="hover:text-primary transition-colors">{tCurriculum(subject.name)}</button>
-        <ChevronRightIcon className="h-4 w-4 flex-shrink-0 text-slate-600" />
+        <ChevronRightIcon className="h-4 w-4 flex-shrink-0" />
         <button onClick={onBackToChapters} className="hover:text-primary transition-colors">{t('backToChapters')}</button>
       </nav>
 
@@ -333,12 +374,12 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
                 {selectedConcept && (
                     <section key={selectedConcept.conceptTitle} className="concept-view-card animate-fade-in">
                         <h2 className="text-3xl font-bold text-text-primary mb-4">{tCurriculum(selectedConcept.conceptTitle)}</h2>
-                        <div className="prose prose-xl max-w-none prose-invert text-slate-300 mb-4">
+                        <div className="prose prose-xl max-w-none dark:prose-invert mb-4">
                             <StructuredText text={selectedConcept.explanation} renderText={(text) => renderTextWithTTS(text, selectedConcept.conceptTitle + '-explanation')} />
                         </div>
-                        <div className="mt-4 p-4 bg-slate-800 border-l-4 border-primary rounded-r-lg">
+                        <div className="mt-4 p-4 bg-surface border-l-4 border-primary rounded-r-lg">
                             <h4 className="font-semibold text-primary flex items-center mb-2"><BeakerIcon className="h-5 w-5 mr-2" />{t('stemConnection')}</h4>
-                            <div className="prose prose-lg max-w-none prose-invert text-slate-300">
+                            <div className="prose prose-lg max-w-none dark:prose-invert">
                                 <StructuredText text={selectedConcept.realWorldExample} renderText={(text) => renderTextWithTTS(text, selectedConcept.conceptTitle + '-example')} />
                             </div>
                         </div>
@@ -359,7 +400,7 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
                                     </div>
                                 )
                             ) : (
-                                <div className="text-center p-4 bg-green-900/50 rounded-lg text-green-300 font-semibold flex items-center justify-center gap-2">
+                                <div className="text-center p-4 bg-status-success rounded-lg text-status-success font-semibold flex items-center justify-center gap-2">
                                     <CheckCircleIcon className="h-6 w-6" />
                                     {t('mastered')}
                                 </div>
@@ -407,13 +448,13 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
                         <button onClick={handleQuizStart} disabled={!allConceptsMastered || isLoading} className="w-full btn-accent disabled:opacity-50 disabled:cursor-not-allowed">
                             {isLoading ? <LoadingSpinner /> : ( <><TrophySolid className="h-5 w-5 mr-2"/>{t('startChapterQuiz')}</>)}
                         </button>
-                        {!allConceptsMastered && <p className="text-xs text-slate-500 mt-2 text-center">{t('masterAllConceptsPrompt')}</p>}
+                        {!allConceptsMastered && <p className="text-xs text-text-secondary mt-2 text-center">{t('masterAllConceptsPrompt')}</p>}
                      </div>
 
                       {quizResult && !showQuiz && (
                          <div className="animate-fade-in border-t border-border pt-4">
                              <h3 className="font-bold text-lg text-text-primary text-center">{t('quizResults')}</h3>
-                             <p className="text-4xl font-bold my-2 text-center" style={{color: quizResult.score > 70 ? 'rgb(var(--c-success))' : 'rgb(var(--c-error))'}}>{quizResult.score}%</p>
+                             <p className={`text-4xl font-bold my-2 text-center ${quizResult.score > 70 ? 'text-status-success' : 'text-status-danger'}`}>{quizResult.score}%</p>
                               <div className="mt-4 p-3 bg-bg-primary rounded-lg border border-border">
                                   <h4 className="font-bold text-sm text-primary flex items-center"><ForwardIcon className="h-4 w-4 mr-2"/> {t('nextSteps')}</h4>
                                 {isLoadingNextStep ? <div className="py-2"><LoadingSpinner /></div> : (

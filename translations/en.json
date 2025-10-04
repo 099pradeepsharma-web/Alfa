@@ -652,5 +652,11 @@
   "aiChatbotTitle": "AI Doubt Solver",
   "aiChatbotDescription": "Ask any conceptual question, 24/7.",
   "aiChatbotWelcome": "Hello! I'm Fitto, your 24/7 AI Doubt Solver. What concept can I help you understand today? Ask me anything from your curriculum!",
-  "aiChatbotPlaceholder": "Ask a conceptual question..."
+  "aiChatbotPlaceholder": "Ask a conceptual question...",
+
+  "loadingMessage1": "Connecting to the Alfanumrik knowledge core...",
+  "loadingMessage2": "Analyzing chapter objectives for a personalized path...",
+  "loadingMessage3": "Generating key concepts with real-world examples...",
+  "loadingMessage4": "Designing visual aids and interactive elements...",
+  "loadingMessage5": "Assembling your unique learning module... almost there!"
 }

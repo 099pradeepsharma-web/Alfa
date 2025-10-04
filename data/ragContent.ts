@@ -116,7 +116,7 @@ const THE_GREAT_TRANSFORMATION_HI: LearningModule = {
     },
     {
       conceptTitle: 'केस स्टडी: दो छात्रों की कहानी',
-      explanation: "आइए दो छात्रों, रोहन और प्रिया से मिलते हैं, दोनों कक्षा 9 में हैं, जो समान चुनौतियों का सामना कर रहे हैं।\n\nरोहन की कहानी: रोहन एक शानदार छात्र था, लेकिन हाल ही में, वह आसानी से विचलित महसूस कर रहा है। वह अपने दोस्तों के साथ समय बिताने में अधिक रुचि रखता है, और फिट होने के लिए बहुत दबाव महसूस करता है। वह खुद को टालमटोल करते हुए पाता है है, और उसके ग्रेड गिरने लगे हैं। वह दोषी महसूस करता है लेकिन यह नहीं जानता कि नियंत्रण कैसे वापस पाया जाए।\n\nप्रिया की कहानी: प्रिया के मिजाज में उतार-चढ़ाव हो रहा है। एक पल वह खुश होती है और अगले ही पल वह किसी छोटी सी बात पर रोने लगती है। वह अपनी परीक्षाओं में अच्छा करने के लिए अपने माता-पिता से बहुत अधिक दबाव महसूस करती है, और नई दोस्ती और सहकर्मी समूहों को भी नेविगेट कर रही है। वह थका हुआ महसूस करती है और अपनी पढ़ाई पर पहले की तरह ध्यान केंद्रित नहीं कर पाती है।\n\nउनकी भावनाएं पूरी तरह से सामान्य हैं। ये कमजोरी या ध्यान की कमी के संकेत नहीं हैं; वे उनके अंदर हो रहे परिवर्तनों का प्रत्यक्ष परिणाम हैं। कुंजी यह सीखना है कि 'इन नई भावनाओं को कैसे प्रबंधित किया जाए' और उस ऊर्जा को सही दिशा में कैसे लगाया जाए।",
+      explanation: "आइए दो छात्रों, रोहन और प्रिया से मिलते हैं, दोनों कक्षा 9 में हैं, जो समान चुनौतियों का सामना कर रहे हैं।\n\nरोहन की कहानी: रोहन एक शानदार छात्र था, लेकिन हाल ही में, वह आसानी से विचलित महसूस कर रहा है। वह अपने दोस्तों के साथ समय बिताने में अधिक रुचि रखता है, और फिट होने के लिए बहुत दबाव महसूस करता है। वह खुद को टालमटोल करते हुए पाता है है, और उसके ग्रेड गिरने लगे हैं। वह दोषी महसूस करता है लेकिन यह नहीं जानता कि नियंत्रण कैसे वापस पाया जाए।\n\nPriya's Story: प्रिया के मिजाज में उतार-चढ़ाव हो रहा है। एक पल वह खुश होती है और अगले ही पल वह किसी छोटी सी बात पर रोने लगती है। वह अपनी परीक्षाओं में अच्छा करने के लिए अपने माता-पिता से बहुत अधिक दबाव महसूस करती है, और नई दोस्ती और सहकर्मी समूहों को भी नेविगेट कर रही है। वह थका हुआ महसूस करती है और अपनी पढ़ाई पर पहले की तरह ध्यान केंद्रित नहीं कर पाती है।\n\nउनकी भावनाएं पूरी तरह से सामान्य हैं। ये कमजोरी या ध्यान की कमी के संकेत नहीं हैं; वे उनके अंदर हो रहे परिवर्तनों का प्रत्यक्ष परिणाम हैं। कुंजी यह सीखना है कि 'इन नई भावनाओं को कैसे प्रबंधित किया जाए' और उस ऊर्जा को सही दिशा में कैसे लगाया जाए।",
       realWorldExample: "यह केस स्टडी अपने आप में एक वास्तविक दुनिया का उदाहरण है। बहुत से छात्र स्कूल के दबाव, दोस्ती और आंतरिक परिवर्तनों को एक साथ नेविगेट करते समय बिल्कुल रोहन या प्रिया जैसा महसूस करते हैं।",
       diagramDescription: "एक चित्रण जिसमें दो छात्र, रोहन और प्रिया, भ्रमित दिख रहे हैं। तीर उनसे 'टालमटोल' (एक घड़ी), 'सहकर्मी दबाव' (लोगों का एक समूह), 'मिजाज में बदलाव' (एक खुश और एक उदास मुखौटा), और 'परीक्षा तनाव' (कम ग्रेड वाली एक किताब) का प्रतिनिधित्व करने वाले आइकन की ओर इशारा करते हैं। एक अलग तीर समाधान का प्रतिनिधित्व करने वाले एक टूलकिट आइकन की ओर इशारा करता है।"
     },
@@ -186,10 +186,138 @@ const THE_GREAT_TRANSFORMATION_HI: LearningModule = {
 };
 // --- END: Content for "The Great Transformation" Chapter ---
 
+// --- START: New Content for "Light: Reflection and Refraction" ---
+const LIGHT_REFLECTION_REFRACTION_EN: LearningModule = {
+    chapterTitle: "Light: Reflection and Refraction",
+    introduction: "Ever wondered how a simple mirror shows your reflection, or why a pencil in a glass of water looks bent? These everyday magic tricks are all thanks to the fascinating properties of light! In this chapter, we'll embark on an illuminating journey to explore two fundamental phenomena: 'reflection', how light bounces off surfaces, and 'refraction', how it bends when passing from one medium to another. From the secrets of spherical mirrors used in cars and telescopes to the principles behind lenses that correct our vision, you'll uncover the science that governs how we see the world. Get ready to have your perspective on light completely transformed!",
+    learningObjectives: [
+        "Understand and apply the laws of reflection.",
+        "Differentiate between concave and convex mirrors and their uses.",
+        "Construct ray diagrams to determine the position, nature, and size of images formed by spherical mirrors.",
+        "Apply the mirror formula and magnification formula to solve numerical problems.",
+        "Understand the phenomenon of refraction and the laws of refraction, including Snell's law.",
+        "Explain the concept of refractive index and its significance.",
+        "Construct ray diagrams for image formation by spherical lenses (concave and convex).",
+        "Apply the lens formula and magnification formula to solve numerical problems.",
+        "Understand and calculate the power of a lens."
+    ],
+    prerequisitesCheck: ["Basic understanding of straight-line propagation of light.", "Familiarity with basic geometric concepts like angles, parallel lines, and circles."],
+    keyConcepts: [
+        {
+            conceptTitle: "Reflection of Light & Spherical Mirrors",
+            explanation: "Reflection is the phenomenon of light bouncing back after striking a surface. The 'laws of reflection' are simple but powerful:\n- The angle of incidence (the angle at which light hits the surface) is equal to the angle of reflection (the angle at which it bounces off).\n- The incident ray, the reflected ray, and the normal (an imaginary line perpendicular to the surface at the point of incidence) all lie in the same plane.\n\nWhile this is straightforward for plane mirrors, it gets interesting with 'spherical mirrors', which are curved. There are two types:\n- 'Concave mirrors': Curved inwards, like the inside of a spoon. They are 'converging' mirrors because they bring parallel rays of light together at a single point called the 'principal focus' (F).\n- 'Convex mirrors': Curved outwards, like the back of a spoon. They are 'diverging' mirrors because they spread parallel rays of light out, making them appear to come from a virtual focus behind the mirror.",
+            realWorldExample: "The side-view mirror of a car is a convex mirror. It gives a 'wider field of view', allowing the driver to see more of the traffic behind them, even though the objects appear smaller. Shaving mirrors or makeup mirrors are often concave because when you stand close to them, they produce a magnified, upright image, helping you see details more clearly.",
+            diagramDescription: "A diagram showing a concave mirror and a convex mirror side-by-side. For the concave mirror, parallel light rays are shown coming from the left, hitting the inner curved surface, and converging at a single point 'F' in front of the mirror. For the convex mirror, parallel rays hit the outer curved surface and diverge, with dotted lines tracing them back to a virtual focus 'F' behind the mirror."
+        },
+        {
+            conceptTitle: "Refraction of Light & Snell's Law",
+            explanation: "Refraction is the bending of light as it passes from one transparent medium to another (e.g., from air to water). This happens because light travels at different speeds in different media. The denser the medium, the slower the light travels.\n\nThe 'laws of refraction' are:\n- The incident ray, the refracted ray, and the normal all lie in the same plane.\n- 'Snell's Law': The ratio of the sine of the angle of incidence (i) to the sine of the angle of refraction (r) is a constant, known as the 'refractive index' (n). Mathematically, n = sin(i) / sin(r). The refractive index is a measure of how much a medium can bend light.",
+            realWorldExample: "When you look at a swimming pool, it often appears shallower than it actually is. This is due to refraction. The light rays coming from the bottom of the pool bend away from the normal as they travel from the denser medium (water) to the rarer medium (air) before reaching your eyes. Your brain traces these rays back in a straight line, making you perceive the bottom at a shallower depth.",
+            diagramDescription: "An illustration showing a ray of light passing from Air (rarer medium) into a block of Glass (denser medium). The ray is shown bending 'towards' the normal as it enters the glass. The angle of incidence (i) and the angle of refraction (r) are clearly labeled with respect to the normal line. 'i > r' is written to emphasize the bending."
+        },
+        {
+            conceptTitle: "Spherical Lenses & Power",
+            explanation: "A 'lens' is a transparent material with two curved surfaces that refracts light to form an image. Like mirrors, there are two main types:\n- 'Convex lens': Thicker in the middle. It is a 'converging' lens, bringing parallel rays to a focus. It can form both real and virtual images.\n- 'Concave lens': Thinner in the middle. It is a 'diverging' lens, spreading parallel rays out. It always forms a virtual, erect, and diminished image.\n\nThe 'power of a lens' (P) is a measure of its ability to converge or diverge light rays. It is the reciprocal of its focal length (f) in meters. P = 1/f. The unit of power is the 'diopter' (D). A convex lens has positive power, while a concave lens has negative power.",
+            realWorldExample: "Eyeglasses are the most common application of lenses. A person who is 'farsighted' (can't see near objects clearly) uses a convex lens to converge light rays onto their retina. A person who is 'nearsighted' (can't see distant objects clearly) uses a concave lens to diverge light rays before they enter the eye, allowing them to focus correctly on the retina. The prescription from an optometrist, like '+2.0 D' or '-1.5 D', directly refers to the power of the lens needed.",
+            diagramDescription: "Side-by-side diagrams of a convex and a concave lens. For the convex lens, parallel rays converge to a focal point after passing through it. For the concave lens, parallel rays diverge, with dotted lines tracing them back to a virtual focal point on the same side as the incident light."
+        }
+    ],
+    formulaSheet: [
+        { formula: "1/f = 1/v + 1/u", description: "Mirror Formula: Relates focal length (f), image distance (v), and object distance (u) for spherical mirrors." },
+        { formula: "m = -v/u = h'/h", description: "Magnification (Mirrors): Relates image distance (v), object distance (u), image height (h'), and object height (h)." },
+        { formula: "n = sin(i) / sin(r)", description: "Snell's Law of Refraction: Relates refractive index (n) to the angles of incidence (i) and refraction (r)." },
+        { formula: "1/f = 1/v - 1/u", description: "Lens Formula: Relates focal length (f), image distance (v), and object distance (u) for spherical lenses." },
+        { formula: "m = v/u = h'/h", description: "Magnification (Lenses): Relates image distance (v), object distance (u), image height (h'), and object height (h)." },
+        { formula: "P = 1/f (where f is in meters)", description: "Power of a Lens: Power (P) in diopters is the reciprocal of the focal length (f) in meters." }
+    ],
+    summary: "- Reflection follows two laws: angle of incidence equals angle of reflection, and they lie on the same plane with the normal.\n- Concave mirrors converge light and can form real or virtual images; Convex mirrors diverge light and form virtual, diminished images.\n- Refraction is the bending of light due to a change in speed when it enters a new medium, governed by Snell's Law.\n- Convex lenses converge light, while concave lenses diverge light.\n- The Power of a lens (in Diopters) is the inverse of its focal length in meters.",
+    conceptMap: "graph TD; A[Light] --> B{Phenomena}; B --> C[Reflection]; B --> D[Refraction]; C --> E[Laws of Reflection]; C --> F{Mirrors}; F --> G[Plane]; F --> H[Spherical]; H --> I[Concave]; H --> J[Convex]; I & J --> K[Mirror Formula & Magnification]; D --> L[Laws of Refraction]; L --> M[Snell's Law]; M --> N[Refractive Index]; D --> O{Lenses}; O --> P[Convex]; O --> Q[Concave]; P & Q --> R[Lens Formula & Magnification]; R --> S[Power of a Lens];",
+    interactiveVideoSimulation: {
+        title: "Dispersion of Light Through a Prism",
+        description: "See how a single beam of white light magically splits into a beautiful rainbow of seven colors when it passes through a glass prism. This video explains the phenomenon of dispersion.",
+        videoPrompt: "A visually stunning, high-definition animated video showing a single beam of white light entering a glass prism from one side. As the light passes through the prism, it splits into the seven colors of the rainbow (VIBGYOR). Show that red light bends the least and violet light bends the most. The colors should then project onto a screen, forming a clear spectrum. Use elegant light rays and a clean, dark background to make the colors pop. Add text labels for 'White Light', 'Prism', and 'Spectrum'."
+    },
+    virtualLab: {
+        title: "Verify Snell's Law",
+        description: "In this virtual lab, you can change the angle at which light enters different materials and observe how much it bends. Measure the angles to verify Snell's Law for yourself!",
+        baseScenarioPrompt: "A top-down view of a physics experiment setup. A ray box on the left emits a single, sharp beam of red light. In the center is a semi-circular block made of a transparent material.",
+        variables: [
+            { name: "Material", options: ["Glass", "Water", "Diamond"] },
+            { name: "Angle of Incidence", options: ["15 degrees", "30 degrees", "45 degrees", "60 degrees"] }
+        ],
+        outcomePromptTemplate: "The light ray from the ray box strikes the flat surface of the {{Material}} block at an angle of {{Angle of Incidence}} to the normal. Show the refracted ray bending inside the material and then exiting the curved surface without further deviation. Clearly show the angle of refraction inside the block. A protractor graphic should be overlaid to help visualize the angles."
+    }
+};
+
+const LIGHT_REFLECTION_REFRACTION_HI: LearningModule = {
+    chapterTitle: "प्रकाश: परावर्तन तथा अपवर्तन",
+    introduction: "क्या आपने कभी सोचा है कि एक साधारण दर्पण आपका प्रतिबिंब कैसे दिखाता है, या पानी के गिलास में एक पेंसिल मुड़ी हुई क्यों दिखती है? ये रोजमर्रा के जादू के करतब प्रकाश के आकर्षक गुणों के कारण होते हैं! इस अध्याय में, हम दो मूलभूत घटनाओं का पता लगाने के लिए एक ज्ञानवर्धक यात्रा पर निकलेंगे: 'परावर्तन', प्रकाश सतहों से कैसे टकराकर वापस आता है, और 'अपवर्तन', यह एक माध्यम से दूसरे माध्यम में जाने पर कैसे झुकता है। कारों और दूरबीनों में उपयोग होने वाले गोलीय दर्पणों के रहस्यों से लेकर हमारी दृष्टि को ठीक करने वाले लेंसों के सिद्धांतों तक, आप उस विज्ञान को उजागर करेंगे जो यह नियंत्रित करता है कि हम दुनिया को कैसे देखते हैं। प्रकाश पर अपने दृष्टिकोण को पूरी तरह से बदलने के लिए तैयार हो जाइए!",
+    learningObjectives: [
+        "परावर्तन के नियमों को समझना और लागू करना।",
+        "अवतल और उत्तल दर्पण और उनके उपयोगों के बीच अंतर करना।",
+        "गोलीय दर्पणों द्वारा बनने वाले प्रतिबिंबों की स्थिति, प्रकृति और आकार को निर्धारित करने के लिए किरण आरेख बनाना।",
+        "संख्यात्मक समस्याओं को हल करने के लिए दर्पण सूत्र और आवर्धन सूत्र लागू करना।",
+        "अपवर्तन की घटना और अपवर्तन के नियमों को समझना, जिसमें स्नेल का नियम भी शामिल है।",
+        "अपवर्तनांक की अवधारणा और उसके महत्व की व्याख्या करना।",
+        "गोलीय लेंस (अवतल और उत्तल) द्वारा प्रतिबिंब निर्माण के लिए किरण आरेख बनाना।",
+        "संख्यात्मक समस्याओं को हल करने के लिए लेंस सूत्र और आवर्धन सूत्र लागू करना।",
+        "लेंस की क्षमता को समझना और उसकी गणना करना।"
+    ],
+    prerequisitesCheck: ["प्रकाश के सीधी-रेखा में प्रसार की बुनियादी समझ।", "कोण, समानांतर रेखाएं और वृत्त जैसी बुनियादी ज्यामितीय अवधारणाओं से परिचित होना।"],
+    keyConcepts: [
+        {
+            conceptTitle: "प्रकाश का परावर्तन और गोलीय दर्पण",
+            explanation: "परावर्तन किसी सतह से टकराने के बाद प्रकाश के वापस लौटने की घटना है। 'परावर्तन के नियम' सरल लेकिन शक्तिशाली हैं:\n- आपतन कोण (जिस कोण पर प्रकाश सतह से टकराता है) परावर्तन कोण (जिस कोण पर वह वापस लौटता है) के बराबर होता है।\n- आपतित किरण, परावर्तित किरण, और अभिलंब (आपतन बिंदु पर सतह के लंबवत एक काल्पनिक रेखा) सभी एक ही तल में स्थित होते हैं।\n\nहालांकि यह समतल दर्पणों के लिए सीधा है, यह 'गोलीय दर्पणों' के साथ दिलचस्प हो जाता है, जो घुमावदार होते हैं। दो प्रकार के होते हैं:\n- 'अवतल दर्पण': अंदर की ओर घुमावदार, चम्मच के अंदर की तरह। वे 'अभिसारी' दर्पण होते हैं क्योंकि वे प्रकाश की समानांतर किरणों को 'मुख्य फोकस' (F) नामक एक बिंदु पर एक साथ लाते हैं।\n- 'उत्तल दर्पण': बाहर की ओर घुमावदार, चम्मच के पीछे की तरह। वे 'अपसारी' दर्पण होते हैं क्योंकि वे प्रकाश की समानांतर किरणों को फैलाते हैं, जिससे वे दर्पण के पीछे एक आभासी फोकस से आते हुए प्रतीत होते हैं।",
+            realWorldExample: "कार का साइड-व्यू मिरर एक उत्तल दर्पण होता है। यह एक 'व्यापक दृष्टि क्षेत्र' देता है, जिससे चालक को अपने पीछे के अधिक यातायात को देखने की अनुमति मिलती है, भले ही वस्तुएं छोटी दिखाई दें। शेविंग दर्पण या मेकअप दर्पण अक्सर अवतल होते हैं क्योंकि जब आप उनके करीब खड़े होते हैं, तो वे एक आवर्धित, सीधा प्रतिबिंब उत्पन्न करते हैं, जिससे आपको विवरण अधिक स्पष्ट रूप से देखने में मदद मिलती है।",
+            diagramDescription: "एक अवतल दर्पण और एक उत्तल दर्पण को अगल-बगल दिखाते हुए एक आरेख। अवतल दर्पण के लिए, समानांतर प्रकाश किरणें बाईं ओर से आती हुई, आंतरिक घुमावदार सतह से टकराती हुई, और दर्पण के सामने एक बिंदु 'F' पर अभिसरित होती हुई दिखाई गई हैं। उत्तल दर्पण के लिए, समानांतर किरणें बाहरी घुमावदार सतह से टकराती हैं और अपसरित होती हैं, बिंदीदार रेखाएं उन्हें दर्पण के पीछे एक आभासी फोकस 'F' तक वापस ले जाती हैं।"
+        },
+        {
+            conceptTitle: "प्रकाश का अपवर्तन और स्नेल का नियम",
+            explanation: "अपवर्तन प्रकाश का एक पारदर्शी माध्यम से दूसरे में (जैसे, हवा से पानी में) गुजरते समय झुकना है। ऐसा इसलिए होता है क्योंकि प्रकाश विभिन्न माध्यमों में अलग-अलग गति से यात्रा करता है। माध्यम जितना सघन होता है, प्रकाश उतना ही धीमा यात्रा करता है।\n\n'अपवर्तन के नियम' हैं:\n- आपतित किरण, अपवर्तित किरण, और अभिलंब सभी एक ही तल में स्थित होते हैं।\n- 'स्नेल का नियम': आपतन कोण (i) की ज्या (sine) और अपवर्तन कोण (r) की ज्या (sine) का अनुपात एक स्थिरांक होता है, जिसे 'अपवर्तनांक' (n) के रूप में जाना जाता है। गणितीय रूप से, n = sin(i) / sin(r)। अपवर्तनांक एक माप है कि कोई माध्यम प्रकाश को कितना मोड़ सकता है।",
+            realWorldExample: "जब आप किसी स्विमिंग पूल को देखते हैं, तो वह अक्सर अपनी वास्तविक गहराई से कम गहरा दिखाई देता है। यह अपवर्तन के कारण होता है। पूल के तल से आने वाली प्रकाश किरणें सघन माध्यम (पानी) से विरल माध्यम (हवा) में यात्रा करते समय अभिलंब से दूर झुक जाती हैं, इससे पहले कि वे आपकी आँखों तक पहुँचें। आपका मस्तिष्क इन किरणों को एक सीधी रेखा में वापस ट्रेस करता है, जिससे आप तल को कम गहराई पर महसूस करते हैं।",
+            diagramDescription: "एक चित्रण जिसमें प्रकाश की एक किरण वायु (विरल माध्यम) से एक कांच (सघन माध्यम) के ब्लॉक में गुजरती हुई दिखाई गई है। किरण को कांच में प्रवेश करते समय अभिलंब की 'ओर' झुकते हुए दिखाया गया है। आपतन कोण (i) और अपवर्तन कोण (r) को अभिलंब रेखा के संबंध में स्पष्ट रूप से लेबल किया गया है। झुकाव पर जोर देने के लिए 'i > r' लिखा गया है।"
+        },
+        {
+            conceptTitle: "गोलीय लेंस और क्षमता",
+            explanation: "एक 'लेंस' दो घुमावदार सतहों वाला एक पारदर्शी पदार्थ है जो प्रतिबिंब बनाने के लिए प्रकाश को अपवर्तित करता है। दर्पणों की तरह, दो मुख्य प्रकार होते हैं:\n- 'उत्तल लेंस': बीच में मोटा। यह एक 'अभिसारी' लेंस है, जो समानांतर किरणों को एक फोकस पर लाता है। यह वास्तविक और आभासी दोनों प्रतिबिंब बना सकता है।\n- 'अवतल लेंस': बीच में पतला। यह एक 'अपसारी' लेंस है, जो समानांतर किरणों को फैलाता है। यह हमेशा एक आभासी, सीधा और छोटा प्रतिबिंब बनाता है।\n\n'लेंस की क्षमता' (P) प्रकाश किरणों को अभिसरित या अपसरित करने की उसकी क्षमता का एक माप है। यह मीटर में उसकी फोकस दूरी (f) का व्युत्क्रम है। P = 1/f। क्षमता की इकाई 'डायोप्टर' (D) है। एक उत्तल लेंस की क्षमता धनात्मक होती है, जबकि एक अवतल लेंस की क्षमता ऋणात्मक होती है।",
+            realWorldExample: "चश्मा लेंस का सबसे आम अनुप्रयोग है। एक व्यक्ति जो 'दूर-दृष्टि' दोष से पीड़ित है (निकट की वस्तुओं को स्पष्ट रूप से नहीं देख सकता) अपनी रेटिना पर प्रकाश किरणों को अभिसरित करने के लिए एक उत्तल लेंस का उपयोग करता है। एक व्यक्ति जो 'निकट-दृष्टि' दोष से पीड़ित है (दूर की वस्तुओं को स्पष्ट रूप से नहीं देख सकता) आंख में प्रवेश करने से पहले प्रकाश किरणों को अपसरित करने के लिए एक अवतल लेंस का उपयोग करता है, जिससे वे रेटिना पर सही ढंग से ध्यान केंद्रित कर पाते हैं। एक नेत्र चिकित्सक से मिलने वाला प्रिस्क्रिप्शन, जैसे '+2.0 D' या '-1.5 D', सीधे आवश्यक लेंस की क्षमता को संदर्भित करता है।",
+            diagramDescription: "एक उत्तल और एक अवतल लेंस के अगल-बगल के आरेख। उत्तल लेंस के लिए, समानांतर किरणें इससे गुजरने के बाद एक फोकल बिंदु पर अभिसरित होती हैं। अवतल लेंस के लिए, समानांतर किरणें अपसरित होती हैं, बिंदीदार रेखाएं उन्हें आपतित प्रकाश के समान तरफ एक आभासी फोकल बिंदु पर वापस ले जाती हैं।"
+        }
+    ],
+    formulaSheet: [
+        { formula: "1/f = 1/v + 1/u", description: "दर्पण सूत्र: गोलीय दर्पणों के लिए फोकस दूरी (f), प्रतिबिंब दूरी (v), और वस्तु दूरी (u) से संबंधित है।" },
+        { formula: "m = -v/u = h'/h", description: "आवर्धन (दर्पण): प्रतिबिंब दूरी (v), वस्तु दूरी (u), प्रतिबिंब की ऊँचाई (h'), और वस्तु की ऊँचाई (h) से संबंधित है।" },
+        { formula: "n = sin(i) / sin(r)", description: "स्नेल का अपवर्तन का नियम: अपवर्तनांक (n) को आपतन (i) और अपवर्तन (r) के कोणों से संबंधित करता है।" },
+        { formula: "1/f = 1/v - 1/u", description: "लेंस सूत्र: गोलीय लेंस के लिए फोकस दूरी (f), प्रतिबिंब दूरी (v), और वस्तु दूरी (u) से संबंधित है।" },
+        { formula: "m = v/u = h'/h", description: "आवर्धन (लेंस): प्रतिबिंब दूरी (v), वस्तु दूरी (u), प्रतिबिंब की ऊँचाई (h'), और वस्तु की ऊँचाई (h) से संबंधित है।" },
+        { formula: "P = 1/f (जहाँ f मीटर में है)", description: "लेंस की क्षमता: डायोप्टर में क्षमता (P) मीटर में फोकस दूरी (f) का व्युत्क्रम है।" }
+    ],
+    summary: "- परावर्तन दो नियमों का पालन करता है: आपतन कोण परावर्तन कोण के बराबर होता है, और वे अभिलंब के साथ एक ही तल पर स्थित होते हैं।\n- अवतल दर्पण प्रकाश को अभिसरित करते हैं और वास्तविक या आभासी प्रतिबिंब बना सकते हैं; उत्तल दर्पण प्रकाश को अपसरित करते हैं और आभासी, छोटे प्रतिबिंब बनाते हैं।\n- अपवर्तन प्रकाश का एक नए माध्यम में प्रवेश करने पर गति में परिवर्तन के कारण झुकना है, जो स्नेल के नियम द्वारा नियंत्रित होता है।\n- उत्तल लेंस प्रकाश को अभिसरित करते हैं, जबकि अवतल लेंस प्रकाश को अपसरित करते हैं।\n- एक लेंस की क्षमता (डायोप्टर में) मीटर में उसकी फोकस दूरी का व्युत्क्रम है।",
+    conceptMap: "graph TD; A[प्रकाश] --> B{घटनाएँ}; B --> C[परावर्तन]; B --> D[अपवर्तन]; C --> E[परावर्तन के नियम]; C --> F{दर्पण}; F --> G[समतल]; F --> H[गोलीय]; H --> I[अवतल]; H --> J[उत्तल]; I & J --> K[दर्पण सूत्र और आवर्धन]; D --> L[अपवर्तन के नियम]; L --> M[स्नेल का नियम]; M --> N[अपवर्तनांक]; D --> O{लेंस}; O --> P[उत्तल]; O --> Q[अवतल]; P & Q --> R[लेंस सूत्र और आवर्धन]; R --> S[लेंस की क्षमता];",
+    interactiveVideoSimulation: {
+        title: "प्रिज्म के माध्यम से प्रकाश का विक्षेपण",
+        description: "देखें कि कैसे सफेद प्रकाश की एक किरण एक कांच के प्रिज्म से गुजरने पर सात रंगों के एक सुंदर इंद्रधनुष में विभाजित हो जाती है। यह वीडियो विक्षेपण की घटना की व्याख्या करता है।",
+        videoPrompt: "एक नेत्रहीन आश्चर्यजनक, उच्च-परिभाषा एनिमेटेड वीडियो जो सफेद प्रकाश की एक किरण को एक तरफ से एक कांच के प्रिज्म में प्रवेश करते हुए दिखाता है। जैसे ही प्रकाश प्रिज्म से गुजरता है, यह इंद्रधनुष के सात रंगों (VIBGYOR) में विभाजित हो जाता है। दिखाएँ कि लाल प्रकाश सबसे कम झुकता है और बैंगनी प्रकाश सबसे अधिक झुकता है। रंग फिर एक स्क्रीन पर प्रक्षेपित होने चाहिए, जिससे एक स्पष्ट स्पेक्ट्रम बनता है। रंगों को पॉप करने के लिए सुंदर प्रकाश किरणों और एक साफ, गहरे रंग की पृष्ठभूमि का उपयोग करें। 'सफेद प्रकाश', 'प्रिज्म', और 'स्पेक्ट्रम' के लिए टेक्स्ट लेबल जोड़ें।"
+    },
+    virtualLab: {
+        title: "स्नेल के नियम को सत्यापित करें",
+        description: "इस वर्चुअल लैब में, आप उस कोण को बदल सकते हैं जिस पर प्रकाश विभिन्न सामग्रियों में प्रवेश करता है और देख सकते हैं कि यह कितना झुकता है। अपने लिए स्नेल के नियम को सत्यापित करने के लिए कोणों को मापें!",
+        baseScenarioPrompt: "एक भौतिकी प्रयोग सेटअप का टॉप-डाउन दृश्य। बाईं ओर एक रे बॉक्स लाल प्रकाश की एक तेज किरण उत्सर्जित करता है। केंद्र में एक पारदर्शी सामग्री से बना एक अर्ध-वृत्ताकार ब्लॉक है।",
+        variables: [
+            { name: "पदार्थ", options: ["कांच", "पानी", "हीरा"] },
+            { name: "आपतन कोण", options: ["15 डिग्री", "30 डिग्री", "45 डिग्री", "60 डिग्री"] }
+        ],
+        outcomePromptTemplate: "रे बॉक्स से प्रकाश की किरण {{पदार्थ}} ब्लॉक की समतल सतह पर अभिलंब से {{आपतन कोण}} के कोण पर टकराती है। पदार्थ के अंदर अपवर्तित किरण को झुकते हुए दिखाएं और फिर बिना किसी और विचलन के घुमावदार सतह से बाहर निकलते हुए दिखाएं। ब्लॉक के अंदर अपवर्तन के कोण को स्पष्ट रूप से दिखाएं। कोणों की कल्पना करने में मदद के लिए एक चांदा ग्राफिक को ओवरले किया जाना चाहिए।"
+    }
+};
+// --- END: New Content ---
+
 
 // Populate the store
 RAG_CONTENT_STORE[createRagKey('The Great Transformation: Navigating Your Journey from Teen to Adult', 'en')] = THE_GREAT_TRANSFORMATION_EN;
 RAG_CONTENT_STORE[createRagKey('The Great Transformation: Navigating Your Journey from Teen to Adult', 'hi')] = THE_GREAT_TRANSFORMATION_HI;
+RAG_CONTENT_STORE[createRagKey('Light: Reflection and Refraction', 'en')] = LIGHT_REFLECTION_REFRACTION_EN;
+RAG_CONTENT_STORE[createRagKey('Light: Reflection and Refraction', 'hi')] = LIGHT_REFLECTION_REFRACTION_HI;
 
 
 /**

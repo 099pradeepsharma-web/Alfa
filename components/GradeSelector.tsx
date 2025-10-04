@@ -40,7 +40,7 @@ const GradeCard: React.FC<{ grade: Grade; onSelect: () => void; }> = React.memo(
                 <p className="text-text-secondary mt-1">{tCurriculum(grade.description)}</p>
             </div>
             <div className="relative z-10 w-full flex justify-end mt-2">
-                <Icon aria-hidden="true" className="h-10 w-10 text-slate-700 group-hover:text-primary transition-colors duration-300 group-hover:scale-110" />
+                <Icon aria-hidden="true" className="h-10 w-10 text-text-secondary group-hover:text-primary transition-colors duration-300 group-hover:scale-110" />
             </div>
         </button>
     )

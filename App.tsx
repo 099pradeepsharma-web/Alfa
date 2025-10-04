@@ -1,4 +1,7 @@
 
+
+
+
 import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { Grade, Subject, Chapter, Student, LearningModule, Concept, NextStepRecommendation } from './types';
 import { getCurriculum } from './services/curriculumService';
@@ -18,14 +21,16 @@ const SubjectSelector = lazy(() => import('./components/SubjectSelector'));
 const ChapterView = lazy(() => import('./components/ChapterView').then(module => ({ default: module.ChapterView })));
 const RoleSelector = lazy(() => import('./screens/RoleSelector'));
 const TeacherDashboard = lazy(() => import('./screens/TeacherDashboard'));
-const ParentDashboard = lazy(() => import('./screens/ParentDashboard'));
+// FIX: Lazy load ParentDashboard as a named export to resolve the missing 'default' property error.
+const ParentDashboard = lazy(() => import('./screens/ParentDashboard').then(module => ({ default: module.ParentDashboard })));
 const StudentPerformanceView = lazy(() => import('./screens/StudentPerformanceView'));
 const StudentDashboard = lazy(() => import('./screens/StudentDashboard'));
 const LoginScreen = lazy(() => import('./screens/LoginScreen').then(module => ({ default: module.LoginScreen })));
 const PersonalizedPathScreen = lazy(() => import('./screens/PersonalizedPathScreen'));
 const PrivacyPolicyScreen = lazy(() => import('./screens/PrivacyPolicyScreen'));
 const FAQScreen = lazy(() => import('./screens/FAQScreen'));
-const TutorSessionScreen = lazy(() => import('./screens/TutorSessionScreen'));
+// FIX: Lazy load TutorSessionScreen as a named export to resolve the missing 'default' property error.
+const TutorSessionScreen = lazy(() => import('./screens/TutorSessionScreen').then(module => ({ default: module.TutorSessionScreen })));
 const MicrolearningScreen = lazy(() => import('./screens/MicrolearningScreen'));
 const CompetitionScreen = lazy(() => import('./screens/CompetitionScreen'));
 const CareerGuidanceScreen = lazy(() => import('./screens/CareerGuidanceScreen'));
@@ -379,18 +384,22 @@ const App: React.FC = () => {
         return (
             <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
                 <LoadingSpinner />
-                <p className="mt-4 text-slate-400 text-lg">Loading curriculum...</p>
+                <p className="mt-4 text-text-secondary text-lg">Loading curriculum...</p>
             </div>
         );
     }
     
     if (error) {
         return (
-            <div className="text-center p-8 bg-red-900/20 rounded-lg max-w-2xl mx-auto">
-                <ExclamationTriangleIcon className="h-12 w-12 mx-auto text-red-400" />
-                <h3 className="text-xl font-bold text-red-400 mt-4">Could Not Load App Content</h3>
-                <p className="text-red-400 mt-2">{error}</p>
-                <button onClick={loadCurriculum} className="mt-6 flex items-center justify-center mx-auto px-6 py-2 bg-red-600 text-white font-bold rounded-lg shadow-md hover:bg-red-700 transition">
+            <div className="text-center p-8 bg-status-danger rounded-lg max-w-2xl mx-auto">
+                <ExclamationTriangleIcon className="h-12 w-12 mx-auto text-status-danger" />
+                <h3 className="text-xl font-bold text-status-danger mt-4">Could Not Load App Content</h3>
+                <p className="text-status-danger mt-2">{error}</p>
+                <button 
+                    onClick={loadCurriculum} 
+                    className="mt-6 flex items-center justify-center mx-auto px-6 py-2 bg-status-danger text-white font-bold rounded-lg shadow-md hover:opacity-80 transition"
+                    style={{ backgroundColor: 'rgb(var(--c-error))' }}
+                >
                     <ArrowPathIcon className="h-5 w-5 mr-2" />
                     Retry
                 </button>

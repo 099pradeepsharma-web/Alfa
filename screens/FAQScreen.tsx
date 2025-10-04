@@ -14,17 +14,17 @@ const AccordionItem: React.FC<{ question: string; answer: string; }> = ({ questi
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border-b border-slate-200">
+    <div className="border-b border-border">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex justify-between items-center text-left py-4 px-2"
         aria-expanded={isOpen}
       >
-        <span className="text-lg font-semibold text-slate-800">{question}</span>
-        <ChevronDownIcon className={`h-6 w-6 text-slate-500 transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        <span className="text-lg font-semibold text-text-primary">{question}</span>
+        <ChevronDownIcon className={`h-6 w-6 text-text-secondary transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-screen' : 'max-h-0'}`}>
-        <div className="p-4 pt-0 text-slate-600 prose prose-lg max-w-none">
+        <div className="p-4 pt-0 text-text-secondary prose prose-lg max-w-none dark:prose-invert">
             <p>{answer}</p>
         </div>
       </div>
@@ -44,15 +44,15 @@ const FAQScreen: React.FC<FAQScreenProps> = ({ onBack }) => {
 
   return (
     <div className="animate-fade-in max-w-4xl mx-auto">
-      <button onClick={onBack} className="flex items-center text-slate-600 hover:text-slate-900 font-semibold transition mb-6">
+      <button onClick={onBack} className="flex items-center text-text-secondary hover:text-text-primary font-semibold transition mb-6">
         <ArrowLeftIcon className="h-5 w-5 mr-2" />
         {t('backToHome')}
       </button>
 
-      <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200">
-        <header className="text-center border-b border-slate-200 pb-6 mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-800 mt-3">{t('faqTitle')}</h1>
-          <p className="text-lg text-slate-500 mt-2">{t('faqSubtitle')}</p>
+      <div className="dashboard-highlight-card p-8">
+        <header className="text-center border-b border-border pb-6 mb-6">
+          <h1 className="text-3xl md:text-4xl font-bold text-text-primary mt-3">{t('faqTitle')}</h1>
+          <p className="text-lg text-text-secondary mt-2">{t('faqSubtitle')}</p>
         </header>
 
         <div className="mb-6">

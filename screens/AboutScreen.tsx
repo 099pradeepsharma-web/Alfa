@@ -1,6 +1,5 @@
 import React from 'react';
 import { useLanguage } from '../contexts/Language-context';
-// FIX: Import `SparklesIcon` to resolve reference error.
 import { ArrowLeftIcon, LightBulbIcon, SparklesIcon } from '@heroicons/react/24/solid';
 import Logo from '../components/Logo';
 

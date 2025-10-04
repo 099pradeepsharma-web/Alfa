@@ -19,15 +19,15 @@ const PerformanceTab: React.FC<{ performanceRecords: PerformanceRecord[] }> = ({
     const { t, tCurriculum } = useLanguage();
     
     const getScoreColor = (score: number) => {
-        if (score > 85) return 'text-green-300 bg-green-900/50 border-green-700';
-        if (score > 70) return 'text-yellow-300 bg-yellow-900/50 border-yellow-700';
-        return 'text-red-300 bg-red-900/50 border-red-700';
+        if (score > 85) return 'bg-status-success text-status-success';
+        if (score > 70) return 'bg-status-warning text-status-warning';
+        return 'bg-status-danger text-status-danger';
     }
 
     return (
         <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
            {performanceRecords.length > 0 ? performanceRecords.map((record, index) => (
-               <div key={index} className="bg-slate-800/50 p-3 rounded-lg flex justify-between items-center border border-border">
+               <div key={index} className="bg-bg-primary p-3 rounded-lg flex justify-between items-center border border-border">
                    <div>
                         <p className="font-semibold text-text-primary">{tCurriculum(record.chapter)}</p>
                          <p className="text-sm text-text-secondary">
@@ -39,7 +39,7 @@ const PerformanceTab: React.FC<{ performanceRecords: PerformanceRecord[] }> = ({
                              </span>
                          </p>
                    </div>
-                   <div className={`px-3 py-1 text-sm font-bold rounded-full border ${getScoreColor(record.score)}`}>
+                   <div className={`px-3 py-1 text-sm font-bold rounded-full border border-current ${getScoreColor(record.score)}`}>
                         {record.score}%
                    </div>
                </div>
@@ -72,7 +72,7 @@ const WeeklyActivityChart: React.FC<{ activityData: { [key: string]: number }, m
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return (
-        <div className="bg-slate-800/50 p-4 rounded-lg">
+        <div className="bg-bg-primary p-4 rounded-lg">
              <div className="grid grid-cols-7 gap-1.5" style={{ gridTemplateRows: 'auto' }}>
                 {weekDays.map(day => <div key={day} className="text-xs font-bold text-center text-text-secondary">{day}</div>)}
              </div>
@@ -165,7 +165,7 @@ const StudyPatternsTab: React.FC<{ performanceRecords: PerformanceRecord[] }> = 
                                 <span className="text-sm font-semibold text-text-secondary">{tCurriculum(subject)}</span>
                                 <span className="text-sm font-bold text-text-primary">{averageScore}%</span>
                             </div>
-                            <div className="w-full bg-slate-700 rounded-full h-3.5">
+                            <div className="w-full bg-surface rounded-full h-3.5">
                                 <div className="h-3.5 rounded-full" style={{ width: `${averageScore}%`, backgroundColor: 'rgb(var(--c-accent))' }}></div>
                             </div>
                         </div>
@@ -176,11 +176,11 @@ const StudyPatternsTab: React.FC<{ performanceRecords: PerformanceRecord[] }> = 
             {(chartData.learningStyle.quizzes > 0 || chartData.learningStyle.exercises > 0) && <div>
                 <h3 className="text-lg font-bold text-text-primary mb-3">{t('learningStyle')}</h3>
                 <div className="grid grid-cols-2 gap-4 text-center">
-                    <div className="bg-slate-800/50 p-4 rounded-lg border border-border">
+                    <div className="bg-bg-primary p-4 rounded-lg border border-border">
                         <p className="text-3xl font-bold text-text-primary">{chartData.learningStyle.quizzes}</p>
                         <p className="text-sm font-semibold text-text-secondary">{t('quizzesTaken')}</p>
                     </div>
-                    <div className="bg-slate-800/50 p-4 rounded-lg border border-border">
+                    <div className="bg-bg-primary p-4 rounded-lg border border-border">
                         <p className="text-3xl font-bold text-text-primary">{chartData.learningStyle.exercises}</p>
                         <p className="text-sm font-semibold text-text-secondary">{t('practiceSessions')}</p>
                     </div>
@@ -190,7 +190,7 @@ const StudyPatternsTab: React.FC<{ performanceRecords: PerformanceRecord[] }> = 
             {chartData.benchmarkData.length > 0 && (
                 <div>
                     <h3 className="text-lg font-bold text-text-primary mb-3">{t('performanceBenchmarking')}</h3>
-                    <div className="bg-slate-800/50 p-4 rounded-lg space-y-6">
+                    <div className="bg-bg-primary p-4 rounded-lg space-y-6">
                         <p className="text-sm text-text-secondary">{t('performanceBenchmarkingDesc')}</p>
                         {chartData.benchmarkData.map(({ subject, yourScore, indianAvg, globalAvg }) => (
                             <div key={subject}>
@@ -202,7 +202,7 @@ const StudyPatternsTab: React.FC<{ performanceRecords: PerformanceRecord[] }> = 
                                             <span className="text-text-secondary">{t('yourAverage')}</span>
                                             <span className="text-text-primary">{yourScore}%</span>
                                         </div>
-                                        <div className="w-full bg-slate-700 rounded-full h-2">
+                                        <div className="w-full bg-surface rounded-full h-2">
                                             <div className="h-2 rounded-full" style={{ width: `${yourScore}%`, backgroundColor: `rgb(var(--c-accent))` }}></div>
                                         </div>
                                     </div>
@@ -212,7 +212,7 @@ const StudyPatternsTab: React.FC<{ performanceRecords: PerformanceRecord[] }> = 
                                             <span className="text-text-secondary">{t('indianAverage')}</span>
                                             <span className="text-text-primary">{indianAvg}%</span>
                                         </div>
-                                        <div className="w-full bg-slate-700 rounded-full h-2">
+                                        <div className="w-full bg-surface rounded-full h-2">
                                             <div className="h-2 rounded-full" style={{ width: `${indianAvg}%`, backgroundColor: `rgb(var(--c-primary))` }}></div>
                                         </div>
                                     </div>
@@ -222,8 +222,8 @@ const StudyPatternsTab: React.FC<{ performanceRecords: PerformanceRecord[] }> = 
                                             <span className="text-text-secondary">{t('globalAverage')}</span>
                                             <span className="text-text-primary">{globalAvg}%</span>
                                         </div>
-                                        <div className="w-full bg-slate-700 rounded-full h-2">
-                                            <div className="h-2 rounded-full bg-slate-500" style={{ width: `${globalAvg}%` }}></div>
+                                        <div className="w-full bg-surface rounded-full h-2">
+                                            <div className="h-2 rounded-full bg-border" style={{ width: `${globalAvg}%` }}></div>
                                         </div>
                                     </div>
                                 </div>
@@ -257,13 +257,13 @@ const StudentQuestionsTab: React.FC<{ questions: StudentQuestion[], student: Stu
     return (
         <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
             {questions.length > 0 ? questions.map(q => (
-                 <div key={q.id} className="bg-slate-800/50 p-4 rounded-lg border border-border">
+                 <div key={q.id} className="bg-bg-primary p-4 rounded-lg border border-border">
                     <p className="text-xs text-text-secondary">{new Date(q.timestamp).toLocaleString()}</p>
                     <p className="font-semibold my-1 text-text-primary">"{q.questionText}"</p>
                     <p className="text-sm text-text-secondary">{t('context')}: {tCurriculum(q.chapter)} &gt; <span className="font-medium">{tCurriculum(q.concept)}</span></p>
 
                     {q.fittoResponse && (
-                        <div className="mt-4 bg-slate-700 p-3 rounded-lg">
+                        <div className="mt-4 bg-surface p-3 rounded-lg">
                             <h5 className="font-bold text-sm text-text-secondary flex items-center"><SparklesIcon className="h-4 w-4 mr-1.5 text-text-secondary" />{t('fittoResponseTitle')}</h5>
                             <p className="text-sm text-text-primary mt-1">{q.fittoResponse.responseText}</p>
                         </div>
@@ -271,8 +271,8 @@ const StudentQuestionsTab: React.FC<{ questions: StudentQuestion[], student: Stu
 
                     {analysis[q.id] ? (
                         <div className="mt-4 space-y-3 animate-fade-in">
-                            <div className="bg-slate-700 p-3 rounded"><h5 className="font-bold text-sm text-text-primary">{t('modelAnswer')}</h5><p className="text-sm text-text-primary">{analysis[q.id]?.modelAnswer}</p></div>
-                            <div className="bg-slate-700 p-3 rounded"><h5 className="font-bold text-sm text-text-primary">{t('pedagogicalNotes')}</h5><p className="text-sm text-text-primary">{analysis[q.id]?.pedagogicalNotes}</p></div>
+                            <div className="bg-surface p-3 rounded"><h5 className="font-bold text-sm text-text-primary">{t('modelAnswer')}</h5><p className="text-sm text-text-primary">{analysis[q.id]?.modelAnswer}</p></div>
+                            <div className="bg-surface p-3 rounded"><h5 className="font-bold text-sm text-text-primary">{t('pedagogicalNotes')}</h5><p className="text-sm text-text-primary">{analysis[q.id]?.pedagogicalNotes}</p></div>
                         </div>
                     ) : (
                         <div className="mt-3 text-right">
@@ -378,28 +378,28 @@ const ReportsTab: React.FC<{ student: Student; userRole: 'teacher' | 'parent'; p
             </button>
            )}
            {report && (
-                <div className="mt-6 p-4 bg-slate-800/50 border border-border rounded-lg animate-fade-in max-h-[450px] overflow-y-auto">
+                <div className="mt-6 p-4 bg-bg-primary border border-border rounded-lg animate-fade-in max-h-[450px] overflow-y-auto">
                     <div className="flex justify-between items-start mb-2">
                         <h4 className="font-bold text-text-primary text-lg flex items-center"><SparklesIcon className="h-5 w-5 mr-2 text-text-secondary"/>{t('aiGeneratedReport')}</h4>
-                        {isReportFromDB && <div className="flex items-center bg-slate-700 text-text-secondary text-xs font-medium px-2 py-0.5 rounded-full"><ArchiveBoxIcon className="h-3 w-3 mr-1" />{t('loadedFromDB')}</div>}
+                        {isReportFromDB && <div className="flex items-center bg-surface text-text-secondary text-xs font-medium px-2 py-0.5 rounded-full"><ArchiveBoxIcon className="h-3 w-3 mr-1" />{t('loadedFromDB')}</div>}
                     </div>
-                    <div className="prose prose-sm max-w-none prose-invert">{formatReportText(report)}</div>
+                    <div className="prose prose-sm max-w-none dark:prose-invert">{formatReportText(report)}</div>
                 </div>
             )}
             {report && !isGeneratingReport && (
                 <div className="mt-6 pt-4 border-t border-dashed border-border">
                     {feedbackSubmitted ? (
-                        <div className="text-center p-4 bg-slate-700 rounded-lg text-text-primary font-semibold animate-fade-in">{t('feedbackThanks')}</div>
+                        <div className="text-center p-4 bg-surface rounded-lg text-text-primary font-semibold animate-fade-in">{t('feedbackThanks')}</div>
                     ) : (
                         <div className="animate-fade-in">
                             <h5 className="font-bold text-text-primary">{t('feedbackOnReport')}</h5>
                             <p className="text-sm text-text-secondary mb-3">{t('helpUsImprove')}</p>
                             <div className="flex items-center gap-3">
-                                <button onClick={() => setFeedbackRating('up')} className={`p-2 rounded-full transition ${feedbackRating === 'up' ? 'bg-slate-600 text-text-primary' : 'bg-slate-700 hover:bg-slate-600 text-text-secondary'}`}>{feedbackRating === 'up' ? <HandThumbUpSolid className="h-6 w-6" /> : <HandThumbUpIcon className="h-6 w-6" />}</button>
-                                <button onClick={() => setFeedbackRating('down')} className={`p-2 rounded-full transition ${feedbackRating === 'down' ? 'bg-slate-600 text-text-primary' : 'bg-slate-700 hover:bg-slate-600 text-text-secondary'}`}>{feedbackRating === 'down' ? <HandThumbDownSolid className="h-6 w-6" /> : <HandThumbDownIcon className="h-6 w-6" />}</button>
+                                <button onClick={() => setFeedbackRating('up')} className={`p-2 rounded-full transition ${feedbackRating === 'up' ? 'bg-surface text-text-primary' : 'bg-bg-primary hover:bg-surface text-text-secondary'}`}><HandThumbUpIcon className="h-6 w-6" /></button>
+                                <button onClick={() => setFeedbackRating('down')} className={`p-2 rounded-full transition ${feedbackRating === 'down' ? 'bg-surface text-text-primary' : 'bg-bg-primary hover:bg-surface text-text-secondary'}`}><HandThumbDownIcon className="h-6 w-6" /></button>
                                 <textarea value={feedbackComment} onChange={(e) => setFeedbackComment(e.target.value)} placeholder={t('commentOptional')} className="flex-grow p-2 text-sm border-border bg-bg-primary rounded-md focus:ring-1 focus:ring-primary" rows={1}/>
                             </div>
-                            {feedbackRating && <div className="text-right mt-3"><button onClick={handleFeedbackSubmit} className="px-4 py-1.5 text-sm bg-slate-600 text-white font-semibold rounded-lg shadow-sm hover:bg-slate-700 transition">{t('submitFeedback')}</button></div>}
+                            {feedbackRating && <div className="text-right mt-3"><button onClick={handleFeedbackSubmit} className="px-4 py-1.5 text-sm bg-surface text-text-primary font-semibold rounded-lg shadow-sm hover:bg-bg-primary transition">{t('submitFeedback')}</button></div>}
                         </div>
                     )}
                 </div>
