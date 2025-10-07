@@ -57,7 +57,6 @@ const Quiz: React.FC<QuizProps> = React.memo(({ questions, onBack, chapterTitle,
   
   const resultsByConcept = useMemo(() => {
       if (!showResults) return {};
-      // FIX: Added type annotation to accumulator to resolve implicit 'any' error.
       return questions.reduce((acc: ResultsByConceptType, question, index) => {
           const concept = question.conceptTitle;
           if (!acc[concept]) {

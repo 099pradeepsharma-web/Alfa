@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '../contexts/Language-context';
-import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeftIcon, UserGroupIcon, PaperAirplaneIcon, LinkIcon } from '@heroicons/react/24/solid';
+import { Student } from '../types';
 
 interface LeadershipCircleScreenProps {
+  student: Student;
   onBack: () => void;
 }
 
-const LeadershipCircleScreen: React.FC<LeadershipCircleScreenProps> = ({ onBack }) => {
+const LeadershipCircleScreen: React.FC<LeadershipCircleScreenProps> = ({ student, onBack }) => {
     const { t } = useLanguage();
-    const { currentUser } = useAuth();
     const chatHistoryRef = useRef<HTMLDivElement>(null);
 
     const [messages, setMessages] = useState([
@@ -20,12 +20,12 @@ const LeadershipCircleScreen: React.FC<LeadershipCircleScreenProps> = ({ onBack 
 
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !currentUser) return;
+        if (!newMessage.trim() || !student) return;
 
         const userMessage = {
             id: Date.now(),
             author: 'You',
-            avatar: currentUser.avatarUrl,
+            avatar: student.avatarUrl,
             text: newMessage.trim(),
         };
 

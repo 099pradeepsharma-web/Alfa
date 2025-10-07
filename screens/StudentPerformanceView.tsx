@@ -356,7 +356,7 @@ const ReportsTab: React.FC<{ student: Student; userRole: 'teacher' | 'parent'; p
             }
 
             const { content: moduleContent } = await getChapterContent(student.grade, lowestScoreRecord.subject, chapterObject, student, language);
-            const quiz = await generateQuiz(moduleContent.keyConcepts, language);
+            const quiz = await generateQuiz(moduleContent.coreConceptTraining.map(c => c.title), language);
             setPracticeSheet(quiz);
         } catch (err: any) {
             onSetError(err.message);

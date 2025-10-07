@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Concept, Student, Grade, Subject, Chapter, StudentQuestion, FittoResponse } from '../types';
+import { Concept, Student, Grade, Subject, Chapter, StudentQuestion, FittoResponse, LearningModule } from '../types';
 import { BeakerIcon, ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleSolid, MicrophoneIcon, PaperAirplaneIcon, PencilSquareIcon, StopCircleIcon, TrophyIcon, PlayCircleIcon, PauseCircleIcon } from '@heroicons/react/24/solid';
 import { saveStudentQuestion, updateStudentQuestion } from '../services/pineconeService';
 import { getFittoAnswer } from '../services/geminiService';
-import { useAuth } from '../contexts/AuthContext';
 
 import LoadingSpinner from './LoadingSpinner';
 import PracticeExercises from './PracticeExercises';
@@ -20,11 +19,16 @@ interface ConceptCardProps {
   grade: Grade;
   subject: Subject;
   chapter: Chapter;
+  student: Student;
   language: string;
-  progressStatus: 'not-started' | 'in-progress' | 'mastered';
-  onMarkAsInProgress: () => void;
-  onConceptMastered: (conceptTitle: string) => void;
-  renderText: (text: string) => React.ReactNode;
+  progressStatus: 'locked' | 'novice' | 'competent' | 'master';
+  onConceptMastered: (conceptTitle: string, score: number, correctCount: number) => void;
+  onMarkAsInProgress?: () => void;
+  
+  // New props for deep content
+  learningModule: LearningModule;
+  isLoadingSection: (section: keyof LearningModule) => boolean;
+  onLoadSection: (section: keyof LearningModule) => void;
 }
 
 type ConversationTurn = {
@@ -37,19 +41,21 @@ type ConversationTurn = {
 const ProgressBadge: React.FC<{ status: ConceptCardProps['progressStatus'] }> = ({ status }) => {
     const { t } = useLanguage();
     switch (status) {
-        case 'mastered':
+        case 'master':
             return <span className="flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300"><CheckCircleSolid className="h-4 w-4 mr-1"/>{t('mastered')}</span>;
-        case 'in-progress':
-            return <span className="flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300"><ClockIcon className="h-4 w-4 mr-1"/>{t('inProgress')}</span>;
+        case 'competent':
+            return <span className="flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300"><ClockIcon className="h-4 w-4 mr-1"/>{t('masteryCompetent')}</span>;
+        case 'novice':
         default:
-            return <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600 dark:bg-slate-600 dark:text-slate-300">{t('notStarted')}</span>;
+            return <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600 dark:bg-slate-600 dark:text-slate-300">{t('masteryNovice')}</span>;
     }
 }
 
-const ConceptCard: React.FC<ConceptCardProps> = React.memo(({ concept, grade, subject, chapter, language, progressStatus, onMarkAsInProgress, onConceptMastered, renderText }) => {
+const ConceptCard: React.FC<ConceptCardProps> = React.memo(({ 
+    concept, grade, subject, chapter, student, language, progressStatus, onConceptMastered,
+    learningModule, isLoadingSection, onLoadSection 
+}) => {
   const { t } = useLanguage();
-  const { currentUser } = useAuth();
-  const student = currentUser!;
   
   const [questionText, setQuestionText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,8 +116,8 @@ const ConceptCard: React.FC<ConceptCardProps> = React.memo(({ concept, grade, su
       onEnd: handleSubmitText
   });
 
-  const handleMastered = useCallback(() => {
-    onConceptMastered(concept.conceptTitle);
+  const handleMastered = useCallback((score: number, correctCount: number) => {
+    onConceptMastered(concept.conceptTitle, score, correctCount);
   }, [onConceptMastered, concept.conceptTitle]);
 
   useEffect(() => {
@@ -152,7 +158,7 @@ const ConceptCard: React.FC<ConceptCardProps> = React.memo(({ concept, grade, su
   const renderQnA = () => {
     return (
         <div className="flex flex-col space-y-4">
-            <div ref={chatHistoryRef} className="space-y-4 h-72 overflow-y-auto pr-2 rounded-lg bg-white dark:bg-slate-900/50 p-3 border border-slate-200 dark:border-slate-700">
+            <div ref={chatHistoryRef} className="space-y-4 h-72 overflow-y-auto pr-2 rounded-lg bg-bg-primary p-3 border border-border">
                 {conversation.map((turn, index) => {
                     if (turn.type === 'user') {
                         return (
@@ -182,22 +188,22 @@ const ConceptCard: React.FC<ConceptCardProps> = React.memo(({ concept, grade, su
                                             <div className="typing-indicator"><span></span><span></span><span></span></div>
                                         </div>
                                     ) : turn.state === 'error' ? (
-                                        <div role="status" className="p-3 text-sm bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300 rounded-lg">
+                                        <div role="status" className="p-3 text-sm bg-status-danger text-status-danger rounded-lg">
                                             {turn.text}
                                         </div>
                                     ) : (
                                         <div className="chat-bubble fitto-bubble">
-                                            <p className="text-slate-700 dark:text-slate-200">{turn.text}</p>
+                                            <p className="text-text-primary">{turn.text}</p>
                                         </div>
                                     )}
                                     {!turn.state && turn.text && (
                                         <div className="flex-shrink-0">
                                             {(!isFittoSpeaking || !isCurrentAudio) ? (
-                                                <button onClick={() => playFittoResponse(turn.text, turn.id.toString())} className="p-2 rounded-full bg-slate-200 dark:bg-slate-600 hover:bg-primary-light text-slate-600 dark:text-slate-200 hover:text-primary-dark transition" aria-label="Play audio response"><PlayCircleIcon className="h-5 w-5"/></button>
+                                                <button onClick={() => playFittoResponse(turn.text, turn.id.toString())} className="p-2 rounded-full bg-slate-600 hover:bg-slate-500 text-slate-200 transition" aria-label="Play audio response"><PlayCircleIcon className="h-5 w-5"/></button>
                                             ) : (
                                                 <div className="flex items-center gap-1">
-                                                    <button onClick={isPaused ? resume : pause} className="p-2 rounded-full bg-slate-200 dark:bg-slate-600 hover:bg-primary-light text-slate-600 dark:text-slate-200 hover:text-primary-dark transition" aria-label={isPaused ? "Resume audio" : "Pause audio"}>{isPaused ? <PlayCircleIcon className="h-5 w-5"/> : <PauseCircleIcon className="h-5 w-5"/>}</button>
-                                                    <button onClick={stopFittoResponse} className="p-2 rounded-full bg-slate-200 dark:bg-slate-600 hover:bg-red-100 dark:hover:bg-red-800/50 text-slate-600 dark:text-slate-200 hover:text-red-500 dark:hover:text-red-400 transition" aria-label="Stop speaking"><StopCircleIcon className="h-5 w-5"/></button>
+                                                    <button onClick={isPaused ? resume : pause} className="p-2 rounded-full bg-slate-600 hover:bg-slate-500 text-slate-200 transition" aria-label={isPaused ? "Resume audio" : "Pause audio"}>{isPaused ? <PlayCircleIcon className="h-5 w-5"/> : <PauseCircleIcon className="h-5 w-5"/>}</button>
+                                                    <button onClick={stopFittoResponse} className="p-2 rounded-full bg-slate-600 hover:bg-red-800/50 text-slate-200 hover:text-red-400 transition" aria-label="Stop speaking"><StopCircleIcon className="h-5 w-5"/></button>
                                                 </div>
                                             )}
                                         </div>
@@ -210,13 +216,13 @@ const ConceptCard: React.FC<ConceptCardProps> = React.memo(({ concept, grade, su
                 })}
             </div>
 
-            <form onSubmit={handleFormSubmit} className="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <form onSubmit={handleFormSubmit} className="flex items-center gap-3 pt-4 border-t border-border">
                 <textarea
                   value={questionText}
                   onChange={(e) => setQuestionText(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) handleFormSubmit(e); }}
                   placeholder={isListening ? "Listening..." : t('askQuestionPlaceholder')}
-                  className="w-full flex-grow p-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-md focus:ring-2 focus:ring-primary focus:border-primary transition"
+                  className="w-full"
                   rows={1}
                   disabled={isSubmitting}
                 />
@@ -227,7 +233,7 @@ const ConceptCard: React.FC<ConceptCardProps> = React.memo(({ concept, grade, su
                         className={`flex-shrink-0 p-2.5 rounded-lg shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed ${
                             isListening 
                             ? 'bg-red-500 text-white animate-pulse' 
-                            : 'bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-500'
+                            : 'bg-slate-600 text-slate-200 hover:bg-slate-500'
                         }`}
                         aria-label={isListening ? "Stop listening" : "Start listening"}
                     >
@@ -236,8 +242,7 @@ const ConceptCard: React.FC<ConceptCardProps> = React.memo(({ concept, grade, su
                 )}
                 <button 
                   type="submit" 
-                  className="flex-shrink-0 p-2.5 bg-primary text-white font-semibold rounded-lg shadow-sm hover:bg-primary-dark transition disabled:opacity-50 disabled:cursor-not-allowed" 
-                  style={{backgroundColor: 'rgb(var(--c-primary))'}}
+                  className="flex-shrink-0 p-2.5 btn-accent" 
                   disabled={isSubmitting || (!questionText.trim() && !isListening)}
                   aria-label={t('submitQuestion')}
                 >
@@ -250,75 +255,85 @@ const ConceptCard: React.FC<ConceptCardProps> = React.memo(({ concept, grade, su
 
 
   return (
-    <div className="relative bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-6 transition-shadow hover:shadow-md not-prose">
-      {progressStatus === 'mastered' && (
-        <div className="absolute top-3 right-3 bg-green-500 text-white font-bold px-3 py-1 text-xs rounded-full shadow-lg flex items-center gap-1.5 animate-fade-in z-10">
+    <div className="relative concept-view-card not-prose">
+      {progressStatus === 'master' && (
+        <div className="absolute top-3 right-3 bg-green-900/50 text-green-300 font-bold px-3 py-1 text-xs rounded-full shadow-lg flex items-center gap-1.5 animate-fade-in z-10">
             <TrophyIcon className="h-4 w-4" />
             {t('masteryBadge')}
         </div>
       )}
       <div className="flex justify-between items-start mb-4">
-        <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center">
-            <SubjectIcon className="h-7 w-7 text-primary mr-3 flex-shrink-0" style={{color: 'rgb(var(--c-primary))'}} />
+        <h3 className="text-2xl font-bold text-text-primary flex items-center">
+            <SubjectIcon className="h-7 w-7 text-primary mr-3 flex-shrink-0" />
             {concept.conceptTitle}
         </h3>
-        <ProgressBadge status={progressStatus} />
       </div>
       
-      <div className="prose prose-lg max-w-none prose-indigo dark:prose-invert mb-4"><StructuredText text={concept.explanation} renderText={renderText} /></div>
+      <div className="prose prose-lg max-w-none dark:prose-invert mb-4"><StructuredText text={concept.explanation} /></div>
       
-       {progressStatus === 'not-started' && (
-        <div className="text-right mb-4">
-            <button
-                onClick={onMarkAsInProgress}
-                className="px-4 py-2 text-sm font-semibold bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 transition shadow-sm"
-            >
-                {t('markAsUnderstood')}
-            </button>
-        </div>
-      )}
-
-      <div className="bg-primary-light border-l-4 border-primary/50 p-4 rounded-r-lg mb-4" style={{backgroundColor: 'rgb(var(--c-primary-light))', borderColor: 'rgba(var(--c-primary), 0.5)'}}>
-        <h4 className="font-semibold text-primary-dark flex items-center mb-2" style={{color: 'rgb(var(--c-primary-dark))'}}>
+      <div className="bg-primary-light border-l-4 border-primary/50 p-4 rounded-r-lg mb-4">
+        <h4 className="font-semibold text-primary-dark flex items-center mb-2">
             <BeakerIcon className="h-5 w-5 mr-2" />
             {t('stemConnection')}
         </h4>
-        <div className="prose prose-lg max-w-none dark:prose-invert" style={{color: 'rgba(var(--c-primary-dark), 0.8)'}}><StructuredText text={concept.realWorldExample} renderText={renderText} /></div>
+        <div className="prose prose-lg max-w-none dark:prose-invert"><StructuredText text={concept.realWorldExample} /></div>
       </div>
       
-      <div className="mt-6">
-        {showPractice ? (
-            <PracticeExercises
-                concept={concept}
-                grade={grade}
-                subject={subject}
-                chapter={chapter}
-                language={language}
-                onResult={(score) => {
-                    if (score >= 75) { // Assuming 75% is mastery
-                        handleMastered();
-                    }
-                    setShowPractice(false);
-                }}
-            />
+      <div className="mt-6 integrated-practice-block">
+        {progressStatus !== 'master' ? (
+            showPractice ? (
+                <PracticeExercises
+                    concept={concept}
+                    grade={grade}
+                    subject={subject}
+                    chapter={chapter}
+                    language={language}
+                    onResult={(score, correctCount) => {
+                       handleMastered(score, correctCount);
+                       setShowPractice(false);
+                    }}
+                />
+            ) : (
+                 <div className="text-center">
+                    <button
+                        onClick={() => setShowPractice(true)}
+                        className="btn-accent"
+                    >
+                        <PencilSquareIcon className="h-5 w-5 mr-2" />
+                        {t('practiceThisConcept')}
+                    </button>
+                </div>
+            )
         ) : (
-             <div className="text-center">
-                <button
-                    onClick={() => setShowPractice(true)}
-                    className="inline-flex items-center px-6 py-2 bg-white dark:bg-slate-700 border border-primary/50 text-primary-dark font-semibold rounded-lg shadow-sm hover:bg-primary-light dark:hover:bg-slate-600 transition"
-                    style={{borderColor: 'rgba(var(--c-primary), 0.5)', color: 'rgb(var(--c-primary-dark))'}}
-                >
-                    <PencilSquareIcon className="h-5 w-5 mr-2" />
-                    {t('practiceThisConcept')}
-                </button>
+             <div className="text-center p-4 bg-status-success rounded-lg text-status-success font-semibold flex items-center justify-center gap-2">
+                <CheckCircleSolid className="h-6 w-6" />
+                {t('mastered')}
             </div>
         )}
       </div>
 
+       {/* New "Deeper Learning" Section */}
+       <div className="mt-6 pt-6 border-t border-dashed border-border">
+            <h4 className="text-lg font-bold text-text-primary flex items-center mb-4">
+               <SparklesIcon className="h-6 w-6 mr-2 text-primary" />
+               Deeper Learning & Practice
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <SectionLoaderButton 
+                    sectionKey="categorizedProblems" 
+                    label={t('loadPracticeProblems')} 
+                    isLoaded={!!learningModule.categorizedProblems}
+                    isLoading={isLoadingSection('categorizedProblems')}
+                    onLoad={() => onLoadSection('categorizedProblems')}
+                />
+            </div>
+       </div>
+
+
        {/* Q&A Section */}
-      <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-          <h4 className="text-lg font-bold text-slate-700 dark:text-slate-200 flex items-center mb-4">
-             <SparklesIcon className="h-6 w-6 mr-2 text-primary" style={{color: 'rgb(var(--c-primary))'}} />
+      <div className="mt-6 pt-4 border-t border-border">
+          <h4 className="text-lg font-bold text-text-primary flex items-center mb-4">
+             <SparklesIcon className="h-6 w-6 mr-2 text-primary" />
              {t('askFitto')}
           </h4>
           {renderQnA()}
@@ -326,5 +341,32 @@ const ConceptCard: React.FC<ConceptCardProps> = React.memo(({ concept, grade, su
     </div>
   );
 });
+
+// New Component for Lazy-Loading Buttons
+const SectionLoaderButton: React.FC<{
+    sectionKey: keyof LearningModule;
+    label: string;
+    isLoaded: boolean;
+    isLoading: boolean;
+    onLoad: () => void;
+}> = ({ sectionKey, label, isLoaded, isLoading, onLoad }) => {
+    if (isLoaded) {
+        return (
+            <div className="p-3 text-center bg-status-success rounded-lg font-semibold text-sm">
+                {label} Loaded
+            </div>
+        );
+    }
+    return (
+        <button
+            onClick={onLoad}
+            disabled={isLoading}
+            className="w-full px-4 py-3 bg-surface border border-border rounded-lg text-text-primary font-semibold hover:bg-bg-primary transition disabled:opacity-50"
+        >
+            {isLoading ? <LoadingSpinner /> : label}
+        </button>
+    );
+};
+
 
 export default ConceptCard;

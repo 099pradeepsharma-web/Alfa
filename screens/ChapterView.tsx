@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Grade, Subject, Chapter, LearningModule, Student, Trigger, CoreConceptLesson, PracticeArena, PracticalApplicationLab, QuizQuestion, XpReward, VideoReward } from '../types';
+import { Grade, Subject, Chapter, LearningModule, Student, Trigger, CoreConceptLesson, PracticeArena, PracticalApplicationLab, QuizQuestion, XpReward, VideoReward, PracticeProblem, WrittenAnswerEvaluation } from '../types';
 import * as contentService from '../services/contentService';
 import * as pineconeService from '../services/pineconeService';
-import LoadingSpinner from './LoadingSpinner';
-import Quiz from './Quiz';
+import * as geminiService from '../services/geminiService';
+import LoadingSpinner from '../components/LoadingSpinner';
+import Quiz from '../components/Quiz';
 import { useLanguage } from '../contexts/Language-context';
-import { ArrowPathIcon, BookOpenIcon, BeakerIcon, LightBulbIcon, CpuChipIcon, AcademicCapIcon, PuzzlePieceIcon, SparklesIcon, ChevronRightIcon, PlayCircleIcon, DevicePhoneMobileIcon, CheckIcon } from '@heroicons/react/24/solid';
-import StructuredText from './StructuredText';
-import Confetti from './Confetti';
-import ConceptVideoPlayer from './ConceptVideoPlayer';
+import { ArrowPathIcon, BookOpenIcon, BeakerIcon, LightBulbIcon, CpuChipIcon, AcademicCapIcon, PuzzlePieceIcon, SparklesIcon, ChevronRightIcon, PlayCircleIcon, DevicePhoneMobileIcon, CheckIcon, StarIcon, ClipboardDocumentCheckIcon, DocumentTextIcon } from '@heroicons/react/24/solid';
+import StructuredText from '../components/StructuredText';
+import Confetti from '../components/Confetti';
+import ConceptVideoPlayer from '../components/ConceptVideoPlayer';
 
 interface ChapterViewProps {
   grade: Grade;
@@ -20,8 +21,6 @@ interface ChapterViewProps {
   onBackToSubjects: () => void;
   onChapterSelect: (chapter: Chapter) => void;
   onUpdatePoints: (points: number) => void;
-  // FIX: Added missing onAddAchievement prop
-  onAddAchievement: (achievementId: string) => void;
 }
 
 // --- START: Section-specific rendering components ---
@@ -89,7 +88,6 @@ const CoreConceptTrainingSection: React.FC<{ content: CoreConceptLesson[], grade
                                 </div>
                             )}
                             <div className="prose prose-lg max-w-none dark:prose-invert">
-                                {/* FIX: Removed invalid 'renderText' prop. */}
                                 <StructuredText text={lesson.explanation} />
                             </div>
                             <div className="mt-4">
@@ -155,8 +153,7 @@ const PracticeArenaSection: React.FC<{
                         <p className="text-text-secondary mb-2"><strong>Problem:</strong> {p.problemStatement}</p>
                         <details>
                             <summary className="cursor-pointer font-semibold text-primary">View Solution</summary>
-                            {/* FIX: Replaced <p> with <div> to avoid invalid nested paragraphs and removed invalid 'renderText' prop. */}
-                            <div className="mt-2 text-primary"><StructuredText text={p.solution}/></div>
+                            <div className="mt-2 text-primary"><StructuredText text={p.solution} /></div>
                         </details>
                     </div>
                 </div>
@@ -191,17 +188,176 @@ const ApplicationLabSection: React.FC<{ content: PracticalApplicationLab }> = ({
         <p className="text-text-secondary mt-1">{content.description}</p>
         {content.labInstructions && (
              <div className="mt-4 p-4 bg-surface rounded-lg">
-                <h5 className="font-bold text-text-primary">Instructions</h5>
-                <p className="text-text-secondary mt-1 whitespace-pre-wrap">{content.labInstructions}</p>
+                <div className="prose prose-lg max-w-none dark:prose-invert">
+                    <StructuredText text={content.labInstructions} />
+                </div>
              </div>
         )}
     </div>
 );
 
+// --- NEW: Mastery Zone Component ---
+const MasteryZoneSection: React.FC<{ grade: string, subject: string, chapter: string, existingProblems: PracticeProblem[], language: string }> = ({ grade, subject, chapter, existingProblems, language }) => {
+    const [activeTab, setActiveTab] = useState<'mastery' | 'writing'>('mastery');
+    
+    const [moreProblems, setMoreProblems] = useState<PracticeProblem[] | null>(null);
+    const [isLoadingProblems, setIsLoadingProblems] = useState(false);
+    const [problemError, setProblemError] = useState<string | null>(null);
+
+    const [challengeQuestion, setChallengeQuestion] = useState<string | null>(null);
+    const [isLoadingChallenge, setIsLoadingChallenge] = useState(false);
+    const [challengeError, setChallengeError] = useState<string | null>(null);
+    const [studentAnswer, setStudentAnswer] = useState('');
+    const [evaluation, setEvaluation] = useState<WrittenAnswerEvaluation | null>(null);
+    const [isEvaluating, setIsEvaluating] = useState(false);
+
+    const handleGenerateProblems = async () => {
+        setIsLoadingProblems(true);
+        setProblemError(null);
+        try {
+            const problems = await geminiService.generateMorePracticeProblems(grade, subject, chapter, existingProblems, language);
+            setMoreProblems(problems);
+        } catch (e: any) {
+            setProblemError(e.message);
+        } finally {
+            setIsLoadingProblems(false);
+        }
+    };
+    
+    const handleGetChallenge = async () => {
+        setIsLoadingChallenge(true);
+        setChallengeError(null);
+        setStudentAnswer('');
+        setEvaluation(null);
+        try {
+            const question = await geminiService.getWritingChallengeQuestion(grade, subject, chapter, language);
+            setChallengeQuestion(question);
+        } catch (e: any) {
+            setChallengeError(e.message);
+        } finally {
+            setIsLoadingChallenge(false);
+        }
+    };
+    
+    const handleEvaluateAnswer = async () => {
+        if (!challengeQuestion || !studentAnswer) return;
+        setIsEvaluating(true);
+        setChallengeError(null);
+        try {
+            const result = await geminiService.evaluateWrittenAnswer(challengeQuestion, studentAnswer, grade, subject, language);
+            setEvaluation(result);
+        } catch(e: any) {
+            setChallengeError(e.message);
+        } finally {
+            setIsEvaluating(false);
+        }
+    };
+
+    return (
+        <div className="bg-surface p-6 rounded-2xl border border-border">
+            <div className="flex border-b border-border mb-4">
+                <button
+                    onClick={() => setActiveTab('mastery')}
+                    className={`px-4 py-2 font-semibold text-sm transition-colors ${activeTab === 'mastery' ? 'text-primary border-b-2 border-primary' : 'text-text-secondary hover:text-text-primary'}`}
+                >
+                    Subject Mastery
+                </button>
+                <button
+                    onClick={() => setActiveTab('writing')}
+                    className={`px-4 py-2 font-semibold text-sm transition-colors ${activeTab === 'writing' ? 'text-primary border-b-2 border-primary' : 'text-text-secondary hover:text-text-primary'}`}
+                >
+                    Practice Writing
+                </button>
+            </div>
+
+            {activeTab === 'mastery' && (
+                <div className="animate-fade-in">
+                    <p className="text-text-secondary mt-1 mb-4">Challenge yourself with unique, competitive exam-focused questions.</p>
+                    <button onClick={handleGenerateProblems} disabled={isLoadingProblems} className="btn-accent flex items-center justify-center w-full sm:w-auto">
+                        {isLoadingProblems ? <><LoadingSpinner /><span className="ml-2">Generating...</span></> : <><SparklesIcon className="h-5 w-5 mr-2" />Generate More Practice Questions</>}
+                    </button>
+                    {problemError && <p className="text-status-danger mt-2">{problemError}</p>}
+                    {moreProblems && (
+                        <div className="mt-4 space-y-4 animate-fade-in">
+                            {moreProblems.map((p, i) => (
+                                <div key={i} className="practice-problem-card !mt-0">
+                                    <div className="practice-problem-header">
+                                        <h4 className="font-bold text-text-primary">Challenge Problem {i + 1}</h4>
+                                        <span className={`problem-level-badge level-${p.level.charAt(6)}`}>{p.level}</span>
+                                    </div>
+                                    <div className="practice-problem-body prose max-w-none dark:prose-invert">
+                                        <p className="text-text-secondary mb-2"><strong>Problem:</strong> {p.problemStatement}</p>
+                                        <details>
+                                            <summary className="cursor-pointer font-semibold text-primary">View Solution</summary>
+                                            <div className="mt-2 text-primary"><StructuredText text={p.solution} /></div>
+                                        </details>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+            
+            {activeTab === 'writing' && (
+                <div className="animate-fade-in">
+                    <p className="text-text-secondary mt-1 mb-4">Hone your exam writing skills with AI-powered feedback based on CBSE guidelines.</p>
+                     <button onClick={handleGetChallenge} disabled={isLoadingChallenge} className="btn-accent flex items-center justify-center w-full sm:w-auto">
+                        {isLoadingChallenge ? <><LoadingSpinner /><span className="ml-2">Generating...</span></> : <><SparklesIcon className="h-5 w-5 mr-2" />Get a Writing Challenge</>}
+                    </button>
+                    {challengeError && <p className="text-status-danger mt-2">{challengeError}</p>}
+
+                    {challengeQuestion && (
+                        <div className="mt-4 animate-fade-in space-y-4">
+                            <div className="bg-bg-primary p-4 rounded-lg border border-border">
+                                <p className="font-semibold text-text-primary">{challengeQuestion}</p>
+                            </div>
+                            <textarea value={studentAnswer} onChange={e => setStudentAnswer(e.target.value)} rows={5} className="w-full" placeholder="Write your answer here..." />
+                            <button onClick={handleEvaluateAnswer} disabled={isEvaluating || !studentAnswer.trim()} className="btn-accent flex items-center justify-center w-full sm:w-auto">
+                               {isEvaluating ? <><LoadingSpinner /><span className="ml-2">Evaluating...</span></> : <>Evaluate My Answer</>}
+                            </button>
+                        </div>
+                    )}
+                    
+                    {evaluation && (
+                        <div className="mt-6 animate-fade-in">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <EvaluationCard title="Model Answer" icon={DocumentTextIcon}>
+                                    <StructuredText text={evaluation.modelAnswer} />
+                                </EvaluationCard>
+                                <EvaluationCard title="Marking Scheme" icon={ClipboardDocumentCheckIcon}>
+                                    <StructuredText text={evaluation.markingScheme} />
+                                </EvaluationCard>
+                                <EvaluationCard title="Personalized Feedback" icon={SparklesIcon}>
+                                    <StructuredText text={evaluation.personalizedFeedback} />
+                                </EvaluationCard>
+                                <EvaluationCard title="Pro Tips for Exams" icon={StarIcon}>
+                                    <StructuredText text={evaluation.proTips} />
+                                </EvaluationCard>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const EvaluationCard: React.FC<{ title: string; icon: React.ElementType; children: React.ReactNode }> = ({ title, icon: Icon, children }) => (
+    <div className="p-4 bg-bg-primary rounded-lg border border-border">
+        <h5 className="font-bold text-lg text-primary mb-3 flex items-center gap-2">
+            <Icon className="h-6 w-6" />
+            {title}
+        </h5>
+        <div className="prose max-w-none dark:prose-invert text-sm">{children}</div>
+    </div>
+);
+
+
 // --- END: Section-specific rendering components ---
 
 export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
-  grade, subject, chapter, student, language, onBackToChapters, onBackToSubjects, onChapterSelect, onUpdatePoints, onAddAchievement
+  grade, subject, chapter, student, language, onBackToChapters, onBackToSubjects, onChapterSelect, onUpdatePoints
 }) => {
     const { t, tCurriculum } = useLanguage();
 
@@ -210,7 +366,6 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
     const [error, setError] = useState<string | null>(null);
     const [activeSection, setActiveSection] = useState<string>('mission-briefing');
     
-    // State for robust progress tracking, lifted up from PracticeArenaSection
     const [completedPracticeProblems, setCompletedPracticeProblems] = useState<number[]>([]);
 
     const mainRef = useRef<HTMLDivElement>(null);
@@ -241,8 +396,6 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
         setCompletedPracticeProblems([]); // Reset on new chapter load
         try {
             const progressKey = `practice-${student.id}-${grade.level}-${subject.name}-${chapter.title}`;
-            
-            // Fetch content and progress in parallel
             const [moduleResult, savedProgress] = await Promise.all([
                 contentService.getChapterContent(grade.level, subject.name, chapter, student, language),
                 pineconeService.getDoc<number[] | null>('progress', progressKey)
@@ -261,7 +414,6 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
 
     useEffect(() => { loadChapter(); }, [chapter, language, loadChapter]);
     
-    // Handler to update and save practice problem progress
     const handleTogglePracticeProblem = useCallback(async (problemIndex: number) => {
         const newCompletedProblems = completedPracticeProblems.includes(problemIndex)
             ? completedPracticeProblems.filter(i => i !== problemIndex)
@@ -272,10 +424,7 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
         const progressKey = `practice-${student.id}-${grade.level}-${subject.name}-${chapter.title}`;
         try {
             await pineconeService.setDoc('progress', progressKey, newCompletedProblems);
-        } catch(e) {
-            console.error("Failed to save practice progress:", e);
-            // Optionally, we could show a small toast notification on failure
-        }
+        } catch(e) { console.error("Failed to save practice progress:", e); }
     }, [completedPracticeProblems, student.id, grade.level, subject.name, chapter.title]);
     
     const sections = useMemo(() => {
@@ -286,7 +435,7 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
             { id: 'practice-arena', title: 'The Practice Arena', icon: PuzzlePieceIcon },
             { id: 'application-lab', title: 'Application Lab', icon: SparklesIcon },
             { id: 'boss-fight', title: 'The Boss Fight', icon: CpuChipIcon },
-            // FIX: Removed 'mission-debrief' as it does not exist on the LearningModule type.
+            { id: 'mastery-zone', title: 'Mastery Zone', icon: StarIcon },
         ];
     }, [learningModule]);
 
@@ -308,9 +457,7 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
         );
 
         Object.values(sectionRefs.current).forEach(ref => {
-            if (ref instanceof Element) {
-                observer.observe(ref);
-            }
+            if (ref instanceof Element) { observer.observe(ref); }
         });
 
         return () => observer.disconnect();
@@ -343,17 +490,17 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
         <div className="virtual-classroom-grid">
             <main id="smartboard" ref={mainRef} className="space-y-12">
                 
-                <section id="mission-briefing" ref={(el: HTMLElement | null) => { if (el) sectionRefs.current['mission-briefing'] = el; }}>
+                <section id="mission-briefing" ref={(el) => { if (el) sectionRefs.current['mission-briefing'] = el; }}>
                     <h2 className="section-title"><LightBulbIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='mission-briefing')?.title}</h2>
                     <MissionBriefingSection content={learningModule.missionBriefing} />
                 </section>
                 
-                <section id="core-concepts" ref={(el: HTMLElement | null) => { if (el) sectionRefs.current['core-concepts'] = el; }}>
+                <section id="core-concepts" ref={(el) => { if (el) sectionRefs.current['core-concepts'] = el; }}>
                     <h2 className="section-title"><AcademicCapIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='core-concepts')?.title}</h2>
                     <CoreConceptTrainingSection content={learningModule.coreConceptTraining} grade={grade} subject={subject} />
                 </section>
                 
-                <section id="practice-arena" ref={(el: HTMLElement | null) => { if (el) sectionRefs.current['practice-arena'] = el; }}>
+                <section id="practice-arena" ref={(el) => { if (el) sectionRefs.current['practice-arena'] = el; }}>
                     <h2 className="section-title"><PuzzlePieceIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='practice-arena')?.title}</h2>
                     <PracticeArenaSection 
                         content={learningModule.practiceArena} 
@@ -363,17 +510,26 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
                     />
                 </section>
                 
-                <section id="application-lab" ref={(el: HTMLElement | null) => { if (el) sectionRefs.current['application-lab'] = el; }}>
+                <section id="application-lab" ref={(el) => { if (el) sectionRefs.current['application-lab'] = el; }}>
                     <h2 className="section-title"><SparklesIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='application-lab')?.title}</h2>
                     <ApplicationLabSection content={learningModule.practicalApplicationLab} />
                 </section>
                 
-                <section id="boss-fight" ref={(el: HTMLElement | null) => { if (el) sectionRefs.current['boss-fight'] = el; }}>
+                <section id="boss-fight" ref={(el) => { if (el) sectionRefs.current['boss-fight'] = el; }}>
                     <h2 className="section-title"><CpuChipIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='boss-fight')?.title}</h2>
                     <Quiz questions={learningModule.bossFight} onBack={() => {}} chapterTitle="Final Challenge" />
                 </section>
                 
-                {/* FIX: Removed 'mission-debrief' section which caused a type error. */}
+                <section id="mastery-zone" ref={(el) => { if (el) sectionRefs.current['mastery-zone'] = el; }}>
+                    <h2 className="section-title"><StarIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='mastery-zone')?.title}</h2>
+                    <MasteryZoneSection 
+                        grade={grade.level}
+                        subject={subject.name}
+                        chapter={chapter.title}
+                        existingProblems={learningModule.practiceArena.problems}
+                        language={language}
+                    />
+                </section>
 
             </main>
             

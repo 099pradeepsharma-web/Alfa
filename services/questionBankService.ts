@@ -45,6 +45,7 @@ const questionBankSchema = {
 
 
 export const generateQuestionBankQuestions = async (grade: string, subject: string, chapter: string, language: string): Promise<QuestionBankItem[]> => {
+    // FIX: Escaped inner backticks in the prompt string to prevent syntax errors.
     const prompt = `
         Act as an expert question paper setter for the Indian CBSE curriculum. Your task is to generate a comprehensive and diverse sample of 25-30 questions for a question bank.
         The questions must be for a ${grade} student, studying the chapter "${chapter}" in the subject "${subject}".
@@ -52,7 +53,7 @@ export const generateQuestionBankQuestions = async (grade: string, subject: stri
 
         For each question, you MUST provide the following metadata:
         1.  **questionText**: The full text of the question.
-        2.  **questionType**: Must be one of 'MCQ', 'Short Answer', or 'Long Answer'. Generate a mix of these types.
+        2.  **questionType**: Must be one of 'MCQ', 'Short Answer', 'Long Answer'. Generate a mix of these types.
         3.  **difficulty**: Must be one of 'Easy', 'Medium', or 'Hard'.
         4.  **bloomTaxonomy**: Assign a level from Bloom's Taxonomy ('Remembering', 'Understanding', 'Applying', 'Analyzing', 'Evaluating', 'Creating').
         5.  **isCompetencyBased**: A boolean. Set to true if the question requires application of knowledge or skills in a new situation, rather than just rote recall.

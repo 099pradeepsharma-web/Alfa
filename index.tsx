@@ -14,9 +14,9 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <ThemeProvider>
       <LanguageProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
+          <AuthProvider>
+              <App />
+          </AuthProvider>
       </LanguageProvider>
   </ThemeProvider>
 );

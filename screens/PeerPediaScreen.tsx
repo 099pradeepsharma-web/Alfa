@@ -1,9 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useLanguage } from '../contexts/Language-context';
-import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeftIcon, UsersIcon, BookOpenIcon, SparklesIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 import { MOCK_PEER_EXPLANATIONS } from '../data/peerPedia';
-import { PeerExplanation, Subject, Chapter, Concept } from '../types';
+import { PeerExplanation, Subject, Chapter, Concept, Student } from '../types';
 import { getCurriculum } from '../services/curriculumService';
 import { LearningModule } from '../types';
 import * as contentService from '../services/contentService';
@@ -11,12 +10,12 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 
 interface PeerPediaScreenProps {
+  student: Student;
   onBack: () => void;
 }
 
-const PeerPediaScreen: React.FC<PeerPediaScreenProps> = ({ onBack }) => {
+const PeerPediaScreen: React.FC<PeerPediaScreenProps> = ({ student, onBack }) => {
     const { t, tCurriculum, language } = useLanguage();
-    const { currentUser } = useAuth();
 
     const [curriculum, setCurriculum] = React.useState<any[]>([]);
     const [explanations, setExplanations] = useState<PeerExplanation[]>(MOCK_PEER_EXPLANATIONS);
@@ -32,25 +31,25 @@ const PeerPediaScreen: React.FC<PeerPediaScreenProps> = ({ onBack }) => {
 
     React.useEffect(() => {
         getCurriculum().then(data => {
-            const studentGrade = currentUser?.grade || 'Grade 10';
+            const studentGrade = student?.grade || 'Grade 10';
             const gradeData = data.find(g => g.level === studentGrade);
             if (gradeData) {
                 setCurriculum(gradeData.subjects);
             }
         });
-    }, [currentUser]);
+    }, [student]);
 
     React.useEffect(() => {
         const fetchModule = async () => {
-            if (selectedChapter && selectedSubject && currentUser) {
+            if (selectedChapter && selectedSubject && student) {
                 setIsLoadingModule(true);
-                const { content } = await contentService.getChapterContent(currentUser.grade, selectedSubject.name, selectedChapter, currentUser, language);
+                const { content } = await contentService.getChapterContent(student.grade, selectedSubject.name, selectedChapter, student, language);
                 setLearningModule(content);
                 setIsLoadingModule(false);
             }
         };
         fetchModule();
-    }, [selectedChapter, selectedSubject, currentUser, language]);
+    }, [selectedChapter, selectedSubject, student, language]);
 
     const handleSubjectSelect = (subject: Subject) => {
         setSelectedSubject(subject);
@@ -73,13 +72,13 @@ const PeerPediaScreen: React.FC<PeerPediaScreenProps> = ({ onBack }) => {
         
     const handleSubmitExplanation = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newExplanationText.trim() || !currentUser || !selectedSubject || !selectedChapter || !selectedConcept) return;
+        if (!newExplanationText.trim() || !student || !selectedSubject || !selectedChapter || !selectedConcept) return;
 
         const newExplanation: PeerExplanation = {
             id: `peer-${Date.now()}`,
-            studentId: currentUser.id,
-            studentName: currentUser.name,
-            studentAvatarUrl: currentUser.avatarUrl,
+            studentId: student.id,
+            studentName: student.name,
+            studentAvatarUrl: student.avatarUrl,
             subject: selectedSubject.name,
             chapter: selectedChapter.title,
             concept: selectedConcept.conceptTitle,
@@ -89,6 +88,17 @@ const PeerPediaScreen: React.FC<PeerPediaScreenProps> = ({ onBack }) => {
         setExplanations(prev => [newExplanation, ...prev]);
         setNewExplanationText('');
     };
+
+    const conceptsAsConcepts: Concept[] = useMemo(() => {
+      if (!learningModule || !learningModule.coreConceptTraining) return [];
+      return learningModule.coreConceptTraining.map(cct => ({
+        conceptTitle: cct.title,
+        explanation: cct.explanation,
+        realWorldExample: '', // Not available in this structure
+        diagramDescription: '' // Not available in this structure
+      }));
+    }, [learningModule]);
+
 
     return (
         <div className="animate-fade-in">
@@ -128,7 +138,7 @@ const PeerPediaScreen: React.FC<PeerPediaScreenProps> = ({ onBack }) => {
                                                 <div className="pl-4 mt-1">
                                                 {isLoadingModule ? <LoadingSpinner /> : (
                                                     <ul className="space-y-1 border-l-2 border-border">
-                                                        {learningModule?.keyConcepts.map(con => (
+                                                        {conceptsAsConcepts.map(con => (
                                                             <li key={con.conceptTitle}><button onClick={() => setSelectedConcept(con)} className={`w-full text-left p-1.5 pl-3 text-xs rounded-r-md transition ${selectedConcept?.conceptTitle === con.conceptTitle ? 'bg-bg-primary' : 'hover:bg-bg-primary'}`}>{tCurriculum(con.conceptTitle)}</button></li>
                                                         ))}
                                                     </ul>

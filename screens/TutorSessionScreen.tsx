@@ -14,7 +14,6 @@ interface TutorSessionScreenProps {
   onBack: () => void;
 }
 
-// FIX: Exported the component to make it available for lazy loading in App.tsx.
 export const TutorSessionScreen: React.FC<TutorSessionScreenProps> = ({ student, chat, onBack }) => {
     const { t } = useLanguage();
     const [messages, setMessages] = useState<ChatMessage[]>([]);

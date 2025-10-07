@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { useLanguage } from '../contexts/Language-context';
-import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeftIcon, CubeIcon, LightBulbIcon, ChevronDownIcon, AcademicCapIcon, LinkIcon, PaperAirplaneIcon } from '@heroicons/react/24/solid';
 import { MOCK_PROJECTS } from '../data/projects';
-import { Project, ProjectSubmission } from '../types';
+import { Project, ProjectSubmission, Student } from '../types';
 
 interface ProjectHubScreenProps {
+  student: Student;
   onBack: () => void;
 }
 
@@ -63,19 +63,18 @@ const ProjectCard: React.FC<{
     );
 };
 
-const ProjectDetailView: React.FC<{ project: Project, onNewSubmission: (submission: ProjectSubmission) => void }> = ({ project, onNewSubmission }) => {
+const ProjectDetailView: React.FC<{ student: Student, project: Project, onNewSubmission: (submission: ProjectSubmission) => void }> = ({ student, project, onNewSubmission }) => {
     const { t } = useLanguage();
-    const { currentUser } = useAuth();
     const [solutionText, setSolutionText] = useState('');
     const [solutionUrl, setSolutionUrl] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!solutionText.trim() || !currentUser) return;
+        if (!solutionText.trim() || !student) return;
         const newSubmission: ProjectSubmission = {
-            studentId: currentUser.id,
-            studentName: currentUser.name,
-            studentAvatarUrl: currentUser.avatarUrl,
+            studentId: student.id,
+            studentName: student.name,
+            studentAvatarUrl: student.avatarUrl,
             solutionText: solutionText.trim(),
             solutionUrl: solutionUrl.trim() || undefined,
             submittedDate: new Date().toISOString()
@@ -131,9 +130,8 @@ const ProjectDetailView: React.FC<{ project: Project, onNewSubmission: (submissi
     )
 }
 
-const ProjectHubScreen: React.FC<ProjectHubScreenProps> = ({ onBack }) => {
+const ProjectHubScreen: React.FC<ProjectHubScreenProps> = ({ student, onBack }) => {
     const { t, tCurriculum } = useLanguage();
-    const { currentUser } = useAuth();
     const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
     const [selectedProject, setSelectedProject] = useState<string | null>(null);
     const [subjectFilter, setSubjectFilter] = useState<string>('all');
@@ -217,7 +215,7 @@ const ProjectHubScreen: React.FC<ProjectHubScreenProps> = ({ onBack }) => {
                                 isSelected={selectedProject === project.id}
                                 onPriorityChange={(newPriority) => handlePriorityChange(project.id, newPriority)}
                             />
-                            {selectedProject === project.id && <ProjectDetailView project={project} onNewSubmission={(sub) => handleNewSubmission(project.id, sub)} />}
+                            {selectedProject === project.id && <ProjectDetailView student={student} project={project} onNewSubmission={(sub) => handleNewSubmission(project.id, sub)} />}
                         </div>
                     ))}
                 </div>

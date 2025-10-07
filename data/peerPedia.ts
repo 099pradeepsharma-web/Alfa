@@ -3,7 +3,7 @@ import { PeerExplanation } from '../types';
 export const MOCK_PEER_EXPLANATIONS: PeerExplanation[] = [
     {
         id: 'peer-math-10-1',
-        studentId: 3,
+        studentId: '3',
         studentName: 'Priya Singh',
         studentAvatarUrl: `https://i.pravatar.cc/150?u=priya`,
         subject: 'Mathematics',
@@ -14,7 +14,7 @@ export const MOCK_PEER_EXPLANATIONS: PeerExplanation[] = [
     },
     {
         id: 'peer-sci-10-1',
-        studentId: 1,
+        studentId: '1',
         studentName: 'Ananya Sharma',
         studentAvatarUrl: `https://i.pravatar.cc/150?u=ananya`,
         subject: 'Science',
@@ -25,7 +25,7 @@ export const MOCK_PEER_EXPLANATIONS: PeerExplanation[] = [
     },
     {
         id: 'peer-hist-10-1',
-        studentId: 2,
+        studentId: '2',
         studentName: 'Rohan Verma',
         studentAvatarUrl: `https://i.pravatar.cc/150?u=rohan`,
         subject: 'History',

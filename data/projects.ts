@@ -1,4 +1,4 @@
-import { Project } from '../types';
+import { Project, ProjectSubmission } from '../types';
 
 export const MOCK_PROJECTS: Project[] = [
   {
@@ -22,7 +22,7 @@ export const MOCK_PROJECTS: Project[] = [
     ],
     submissions: [
       {
-        studentId: 1,
+        studentId: '1',
         studentName: 'Ananya Sharma',
         studentAvatarUrl: `https://i.pravatar.cc/150?u=ananya`,
         solutionText: 'My design uses a small 6V solar panel connected to a USB charging module with a voltage regulator. The casing is a repurposed plastic container, making it waterproof. I also added a small LED to indicate when it\'s charging.',
@@ -72,7 +72,7 @@ export const MOCK_PROJECTS: Project[] = [
     ],
     submissions: [
        {
-        studentId: 2,
+        studentId: '2',
         studentName: 'Rohan Verma',
         studentAvatarUrl: `https://i.pravatar.cc/150?u=rohan`,
         solutionText: 'I created a short video documentary on Veer Kunwar Singh from Bihar and his role in the 1857 revolt. I used old maps and images to show his area of operations and explained how he united different communities against the British.',

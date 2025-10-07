@@ -1,20 +1,14 @@
-// New type for authenticated users
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  password_plaintext: string; // Stored as plaintext for this simulation. In a real app, this would be a hash.
-  grade: string;
-  avatarUrl: string;
-  avatarSeed?: string;
-  school?: string;
-  city?: string;
-  board?: string;
-}
+
+
+
+
+
+
 
 export interface Chapter {
   title: string;
   tags?: string[];
+  topics: string[];
 }
 
 export interface Subject {
@@ -36,218 +30,60 @@ export interface Concept {
   diagramDescription: string;
 }
 
-// --- New Types for Deeper Pedagogical Content ---
-export interface Theorem {
-    name: string;
-    proof: string;
+// --- NEW "GAMIFIED, HOOK-DRIVEN" LEARNING MODULE STRUCTURE ---
+
+export interface Trigger {
+    triggerType: 'paradoxicalQuestion' | 'realWorldVideo' | 'interdisciplinaryConnection';
+    title: string; // The main hook/question.
+    description: string; // Elaboration or context. For 'realWorldVideo', this is the video prompt.
+    pushNotification: string; // A short, punchy text for a push notification.
 }
-export interface FormulaDerivation {
-    formula: string;
-    derivation: string;
+
+export interface CoreConceptLesson {
+    title: string;
+    videoUrl?: string; // or videoPrompt for generation
+    videoPrompt?: string;
+    explanation: string;
+    knowledgeCheck: QuizQuestion[]; // 2 questions
 }
-export interface SolvedNumericalProblem {
-    question: string;
+
+export interface PracticeProblem {
+    level: 'Level 1: NCERT Basics' | 'Level 2: Reference Application' | 'Level 3: Competitive Challenge';
+    problemStatement: string;
     solution: string;
 }
-export interface KeyLawOrPrinciple {
-    name: string;
-    explanation: string;
+
+export interface XpReward {
+    type: 'xp';
+    points: number;
 }
-export interface HOTQuestion {
-    question: string;
-    hint: string;
-}
-
-
-// --- Existing Types for Enhanced Content ---
-
-export interface Formula {
-  formula: string;
-  description: string;
+export interface VideoReward {
+    type: 'video';
+    title: string;
+    videoPrompt: string;
 }
 
-export interface ProblemSolvingTemplate {
-  problemType: string;
-  steps: string[];
+export interface PracticeArena {
+    problems: PracticeProblem[];
+    reward?: XpReward | VideoReward;
 }
 
-export interface CommonMistake {
-  mistake: string;
-  correction: string;
-}
-
-export interface Experiment {
+export interface PracticalApplicationLab {
+    type: 'virtualLab' | 'simulation' | 'project';
     title: string;
     description: string;
-    materials: string[];
-    steps: string[];
-    safetyGuidelines: string;
+    labInstructions?: string;
 }
-
-export interface TimelineEvent {
-    year: string;
-    event: string;
-    significance: string;
-}
-export interface KeyFigure {
-    name: string;
-    contribution: string;
-}
-export interface PrimarySourceSnippet {
-    sourceTitle: string;
-    snippet: string;
-    analysis: string;
-}
-export interface CaseStudy {
-    title: string;
-    background: string;
-    analysis: string;
-    conclusion: string;
-}
-
-export interface GrammarRule {
-    ruleName: string;
-    explanation: string;
-    examples: string[];
-}
-export interface LiteraryDevice {
-    deviceName: string;
-    explanation: string;
-    example: string;
-}
-
-export interface VocabularyDeepDive {
-    term: string;
-    definition: string;
-    usageInSentence: string;
-    etymology?: string; // Optional: origin of the word
-}
-
-// --- New Type for Video Simulations ---
-export interface InteractiveVideoSimulation {
-    title: string;
-    description: string; // Explains what the simulation will show and why it's useful.
-    videoPrompt: string; // The detailed prompt for the VEO model.
-}
-
-// --- New Types for Virtual Labs & Interactive Explainers ---
-export interface InteractiveVariable { // Renamed from VirtualLabVariable to be more generic
-    name: string;
-    options: string[];
-}
-export interface VirtualLab {
-    title: string;
-    description: string;
-    baseScenarioPrompt: string;
-    variables: InteractiveVariable[]; // Use renamed type
-    outcomePromptTemplate: string;
-}
-export interface InteractiveExplainer {
-    title: string;
-    description: string;
-    variables: InteractiveVariable[];
-    videoPromptTemplate: string;
-}
-
-
-// --- New Types for Adaptive Storytelling ---
-export interface StoryNodeChoice {
-    text: string;
-    nextNodeId: string;
-    feedback: string; // Feedback to the student for making this choice
-}
-
-export interface StoryNode {
-    id: string;
-    text: string;
-    choices: StoryNodeChoice[];
-    isEnding: boolean; // Is this a concluding node?
-}
-
-export interface AdaptiveStory {
-    title: string;
-    introduction: string;
-    startNodeId: string;
-    nodes: StoryNode[];
-}
-
-// --- New Types for Offline & Printable Content ---
-export interface PrintableResource {
-    title: string;
-    content: string; // HTML content
-}
-
-// --- New Types for Cultural & Value-Based Learning ---
-export interface CulturalContext {
-    title: string;
-    content: string;
-}
-
-export interface MoralScienceCorner {
-    title: string;
-    story: string;
-    moral: string;
-}
-
 
 export interface LearningModule {
   chapterTitle: string;
-  introduction: string;
-  learningObjectives: string[];
-  keyConcepts: Concept[];
-  summary: string;
-  conceptMap?: string;
-  learningTricksAndMnemonics?: string[];
-  higherOrderThinkingQuestions?: HOTQuestion[];
-  interactiveVideoSimulation?: InteractiveVideoSimulation;
-  interactiveExplainer?: InteractiveExplainer;
-  virtualLab?: VirtualLab;
-  adaptiveStory?: AdaptiveStory;
-  culturalContext?: CulturalContext;
-  moralScienceCorner?: MoralScienceCorner;
-
-  // New pedagogical fields
-  prerequisitesCheck?: string[];
-  selfAssessmentChecklist?: string[];
-  extensionActivities?: string[];
-  remedialActivities?: string[];
-  careerConnections?: string;
-  technologyIntegration?: string;
-  
-  // Mathematics
-  keyTheoremsAndProofs?: Theorem[];
-  formulaDerivations?: FormulaDerivation[];
-  formulaSheet?: Formula[];
-  problemSolvingTemplates?: ProblemSolvingTemplate[];
+  missionBriefing: Trigger[];
+  coreConceptTraining: CoreConceptLesson[];
+  practiceArena: PracticeArena;
+  practicalApplicationLab: PracticalApplicationLab;
+  bossFight: QuizQuestion[]; // The final chapter test
+  // FIX: Added optional 'categorizedProblems' to support lazy-loading sections in ConceptCard.tsx.
   categorizedProblems?: CategorizedProblems;
-  commonMistakes?: CommonMistake[];
-  
-  // Science
-  keyLawsAndPrinciples?: KeyLawOrPrinciple[];
-  solvedNumericalProblems?: SolvedNumericalProblem[];
-  experiments?: Experiment[];
-  scientificMethodApplications?: string;
-  currentDiscoveries?: string;
-  environmentalAwareness?: string;
-  interdisciplinaryConnections?: string;
-  
-  // Social Science, Commerce, Humanities
-  timelineOfEvents?: TimelineEvent[];
-  keyFigures?: KeyFigure[];
-  primarySourceAnalysis?: PrimarySourceSnippet[];
-  inDepthCaseStudies?: CaseStudy[];
-
-  // Language Arts
-  grammarSpotlight?: GrammarRule[];
-  literaryDeviceAnalysis?: LiteraryDevice[];
-
-  // Shared across subjects
-  vocabularyDeepDive?: VocabularyDeepDive[];
-  competitiveExamMapping?: string;
-
-  // New offline/printable content (generated on-demand)
-  printableWorksheet?: PrintableResource;
-  printableStudyNotes?: PrintableResource;
 }
 
 
@@ -290,11 +126,19 @@ export interface Achievement {
   timestamp: string; // ISO date string when it was earned
 }
 
+// New type for student-set goals
+export interface StudyGoal {
+  id: string;
+  text: string;
+  isCompleted: boolean;
+  createdAt: string;
+}
 
 export interface Student {
-  id: number;
+  id: string;
   name: string;
   grade: string;
+  email?: string;
   avatarUrl: string;
   avatarSeed?: string;
   school?: string;
@@ -303,7 +147,23 @@ export interface Student {
   performance: PerformanceRecord[];
   achievements: Achievement[];
   points: number;
+  studyGoals: StudyGoal[];
 }
+
+export interface Teacher {
+  id: string;
+  name: string;
+  email: string;
+  studentIds: string[];
+}
+
+export interface Parent {
+  id: string;
+  name: string;
+  email: string;
+  childIds: string[];
+}
+
 
 // New type for progress tracking
 export type ChapterProgress = {
@@ -327,7 +187,7 @@ export interface FittoResponse {
 
 export interface StudentQuestion {
   id: string; // a unique id like a timestamp
-  studentId: number;
+  studentId: string;
   studentName: string;
   grade: string;
   subject: string;
@@ -438,13 +298,13 @@ export interface CurriculumOutlineChapter {
 
 // --- New Type for AI Content Feedback ---
 export interface AIFeedback {
-    id: string;
-    userRole: 'teacher' | 'parent';
-    studentId: number;
-    contentIdentifier: string; // e.g., report-teacher-1-en
-    rating: 'up' | 'down';
-    comment?: string;
-    timestamp: string;
+  id: string;
+  userRole: 'teacher' | 'parent';
+  studentId: string;
+  contentIdentifier: string; // e.g., report-teacher-1-en
+  rating: 'up' | 'down';
+  comment?: string;
+  timestamp: string;
 }
 
 // --- New Types for FAQ/Tutorial ---
@@ -461,7 +321,7 @@ export interface FAQSection {
 
 // --- New Types for Project-Based Learning ---
 export interface ProjectSubmission {
-  studentId: number;
+  studentId: string;
   studentName: string;
   studentAvatarUrl: string;
   solutionText: string;
@@ -485,7 +345,7 @@ export interface Project {
 // --- New Types for Peer Teaching Network ---
 export interface PeerExplanation {
   id: string;
-  studentId: number;
+  studentId: string;
   studentName: string;
   studentAvatarUrl: string;
   subject: string;
@@ -497,7 +357,7 @@ export interface PeerExplanation {
 
 // --- New Types for Competitive Features ---
 export interface LeaderboardEntry {
-  studentId: number;
+  studentId: string;
   name: string;
   avatarUrl: string;
   points: number;
@@ -553,4 +413,71 @@ export interface CareerGuidance {
     introduction: string;
     streamRecommendations: StreamRecommendation[];
     conclusion: string;
+}
+
+// --- NEW: Type for Answer Writing Practice ---
+export interface WrittenAnswerEvaluation {
+    modelAnswer: string;
+    markingScheme: string;
+    personalizedFeedback: string;
+    proTips: string;
+}
+
+// --- NEW: Type for SAT Answer Evaluation ---
+export interface SATAnswerEvaluation {
+    modelApproach: string;
+    personalizedFeedback: string;
+    keyConcept: string;
+    proTips: string;
+}
+
+
+// --- FIX: Add missing types for interactive content components ---
+export interface InteractiveVideoSimulation {
+    title: string;
+    // FIX: Added missing 'description' property used in VideoSimulationPlayer.tsx.
+    description: string;
+    videoPrompt: string;
+}
+
+export interface VirtualLabVariable {
+    name: string;
+    options: string[];
+}
+
+export interface VirtualLab {
+    title: string;
+    description: string;
+    baseScenarioPrompt: string;
+    outcomePromptTemplate: string;
+    variables: VirtualLabVariable[];
+}
+
+export interface StoryNodeChoice {
+  text: string;
+  feedback: string;
+  nextNodeId: string;
+}
+export interface StoryNode {
+  id: string;
+  text: string;
+  choices: StoryNodeChoice[];
+  isEnding: boolean;
+}
+export interface AdaptiveStory {
+  title: string;
+  introduction: string;
+  startNodeId: string;
+  nodes: StoryNode[];
+}
+
+export interface ExplainerVariable {
+    name: string;
+    options: string[];
+}
+export interface InteractiveExplainer {
+    title: string;
+    description: string;
+    videoPromptTemplate: string;
+    variables: ExplainerVariable[];
 }

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { QuizQuestion, IQExercise, EQExercise, Student, PerformanceRecord, AdaptiveAction } from '../types';
 import { savePerformanceRecord } from '../services/pineconeService';
 import { useLanguage } from '../contexts/Language-context';
-import { useAuth } from '../contexts/AuthContext';
 import { LightBulbIcon, XCircleIcon, CheckCircleIcon, ArrowRightIcon } from '@heroicons/react/24/solid';
 import FittoAvatar from './FittoAvatar';
 
@@ -20,9 +19,8 @@ interface MissionQuizProps {
   onFinish: () => void;
 }
 
-const MissionQuiz: React.FC<MissionQuizProps> = ({ tasks, adaptiveAction, onFinish }) => {
+const MissionQuiz: React.FC<MissionQuizProps> = ({ tasks, student, adaptiveAction, onFinish }) => {
     const { t, tCurriculum } = useLanguage();
-    const { currentUser } = useAuth(); // for student id
     
     const [currentIndex, setCurrentIndex] = useState(0);
     const [selectedAnswers, setSelectedAnswers] = useState<{[key: number]: string}>({});
@@ -44,7 +42,7 @@ const MissionQuiz: React.FC<MissionQuizProps> = ({ tasks, adaptiveAction, onFini
     };
     
     const handleNext = async () => {
-        if (!currentUser) return;
+        if (!student) return;
 
         if (currentIndex === tasks.length - 1) {
             // Group tasks by their type
@@ -101,7 +99,7 @@ const MissionQuiz: React.FC<MissionQuizProps> = ({ tasks, adaptiveAction, onFini
 
             // Save all generated records
             for (const record of recordsToSave) {
-                await savePerformanceRecord(currentUser.id, record);
+                await savePerformanceRecord(student.id, record);
             }
             
             setIsFinished(true);

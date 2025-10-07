@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Student } from '../types';
-import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/Language-context';
 import LoadingSpinner from './LoadingSpinner';
 import { XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
@@ -12,10 +11,12 @@ interface ProfileModalProps {
   onClose: () => void;
   user: Student;
   grades: { level: string; description: string }[];
+  updateUserProfile: (data: any) => Promise<void>;
+  loading: boolean;
+  error: string | null;
 }
 
-const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, grades }) => {
-    const { updateUserProfile, loading, error: authError } = useAuth();
+const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, grades, updateUserProfile, loading, error }) => {
     const { t, tCurriculum } = useLanguage();
     
     const [name, setName] = useState(user.name);
@@ -79,7 +80,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, grad
 
     if (!isOpen) return null;
 
-    const displayedError = localError || authError;
+    const displayedError = localError || error;
 
     return (
         <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">

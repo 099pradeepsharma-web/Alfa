@@ -1,4 +1,4 @@
-import { User, StudentQuestion, PerformanceRecord, AIFeedback, Achievement } from '../types';
+import { StudentQuestion, PerformanceRecord, AIFeedback, Achievement, StudyGoal } from '../types';
 
 const DB_NAME = 'AlfanumrikDB';
 const DB_VERSION = 1;
@@ -6,7 +6,6 @@ let db: IDBDatabase;
 
 // List of "tables" in our database
 const STORES = [
-    'users', 
     'modules', 
     'reports', 
     'progress', 
@@ -17,7 +16,8 @@ const STORES = [
     'cache',
     'videos',
     'conceptMaps',
-    'achievements'
+    'achievements',
+    'studyGoals'
 ];
 
 /**
@@ -48,10 +48,6 @@ const openDb = (): Promise<IDBDatabase> => {
                 if (!tempDb.objectStoreNames.contains(storeName)) {
                     // Define key paths and indexes for specific stores
                     switch(storeName) {
-                        case 'users':
-                            const userStore = tempDb.createObjectStore('users', { keyPath: 'id' });
-                            userStore.createIndex('email', 'email', { unique: true });
-                            break;
                         case 'questions':
                             const questionStore = tempDb.createObjectStore('questions', { keyPath: 'id' });
                             questionStore.createIndex('studentId', 'studentId', { unique: false });
@@ -68,6 +64,10 @@ const openDb = (): Promise<IDBDatabase> => {
                              const achievementStore = tempDb.createObjectStore('achievements', { autoIncrement: true });
                              achievementStore.createIndex('studentId', 'studentId', { unique: false });
                              break;
+                        case 'studyGoals':
+                            const goalStore = tempDb.createObjectStore('studyGoals', { keyPath: 'id' });
+                            goalStore.createIndex('studentId', 'studentId', { unique: false });
+                            break;
                         default:
                             // For simple key-value stores like modules, reports, etc.
                             tempDb.createObjectStore(storeName);
@@ -90,12 +90,12 @@ const promisifyRequest = <T>(request: IDBRequest<T>): Promise<T> => {
 // --- API Implementation using IndexedDB ---
 
 type ObjectTables = 'modules' | 'reports' | 'progress' | 'diagrams' | 'cache' | 'videos' | 'conceptMaps';
-type ArrayTables = 'users' | 'questions' | 'performance' | 'feedback' | 'achievements';
+type ArrayTables = 'questions' | 'performance' | 'feedback' | 'achievements' | 'studyGoals';
 
 /**
  * Gets a document from an object-based table by its ID.
  */
-export const getDoc = async <T>(table: ObjectTables | 'users', id: string | number): Promise<T | null> => {
+export const getDoc = async <T>(table: ObjectTables, id: string | number): Promise<T | null> => {
     const db = await openDb();
     const tx = db.transaction(table, 'readonly');
     const store = tx.objectStore(table);
@@ -153,9 +153,9 @@ export const queryCollectionByIndex = async <T>(
 };
 
 /**
- * Updates a document in the 'questions' collection by finding it via ID and replacing it.
+ * Updates a document in a collection by finding it via ID and replacing it.
  */
-export const updateDocInCollection = async (table: 'questions', id: string, updatedDoc: StudentQuestion): Promise<void> => {
+export const updateDocInCollection = async (table: 'questions' | 'studyGoals', id: string, updatedDoc: any): Promise<void> => {
     const db = await openDb();
     const tx = db.transaction(table, 'readwrite');
     const store = tx.objectStore(table);
@@ -163,28 +163,12 @@ export const updateDocInCollection = async (table: 'questions', id: string, upda
     await promisifyRequest(store.put(updatedDoc));
 };
 
-// --- User specific helpers, now optimized with indexes ---
-export const findUserByEmail = async (email: string): Promise<User | null> => {
+/**
+ * Deletes a document from a collection by its ID.
+ */
+export const deleteDocInCollection = async (table: ArrayTables, id: string): Promise<void> => {
     const db = await openDb();
-    const tx = db.transaction('users', 'readonly');
-    const store = tx.objectStore('users');
-    const index = store.index('email');
-    const result = await promisifyRequest<User>(index.get(email.toLowerCase()));
-    return result ?? null;
-};
-
-export const findUserById = async (id: number): Promise<User | null> => {
-    return getDoc<User>('users', id);
-};
-
-
-export const addUser = async (user: User): Promise<void> => {
-    await addDocToCollection('users', user);
-};
-
-export const updateUser = async (user: User): Promise<void> => {
-    const db = await openDb();
-    const tx = db.transaction('users', 'readwrite');
-    const store = tx.objectStore('users');
-    await promisifyRequest(store.put(user));
+    const tx = db.transaction(table, 'readwrite');
+    const store = tx.objectStore(table);
+    await promisifyRequest(store.delete(id));
 };

@@ -1,9 +1,9 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { HomeIcon, LanguageIcon, ArrowRightOnRectangleIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
+import { HomeIcon, LanguageIcon, MagnifyingGlassIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from '../contexts/Language-context';
-import { useAuth } from '../contexts/AuthContext';
 import Logo from './Logo';
-import { Grade, Subject, Chapter } from '../types';
+import { Grade, Subject, Chapter, Student, Teacher, Parent } from '../types';
 import ThemeToggle from './ThemeToggle';
 import ProfileModal from './ProfileModal';
 
@@ -12,6 +12,14 @@ interface HeaderProps {
     showHomeButton: boolean;
     curriculum: Grade[];
     onSearchSelect: (grade: Grade, subject: Subject, chapter: Chapter) => void;
+    isLoggedIn: boolean;
+    // FIX: Renamed 'currentUser' to 'user' and updated type to handle any logged-in user role.
+    user: Student | Teacher | Parent | null;
+    userRole: 'student' | 'teacher' | 'parent' | null;
+    onUpdateProfile: (data: any) => Promise<void>;
+    profileUpdateLoading: boolean;
+    profileUpdateError: string | null;
+    onLogout: () => void;
 }
 
 type SearchResult = {
@@ -21,9 +29,21 @@ type SearchResult = {
 };
 
 
-const Header: React.FC<HeaderProps> = ({ onGoHome, showHomeButton, curriculum, onSearchSelect }) => {
+const Header: React.FC<HeaderProps> = ({ 
+    onGoHome, 
+    showHomeButton, 
+    curriculum, 
+    onSearchSelect, 
+    isLoggedIn, 
+    // FIX: Destructure 'user' instead of 'currentUser'.
+    user,
+    userRole,
+    onUpdateProfile,
+    profileUpdateLoading,
+    profileUpdateError,
+    onLogout
+}) => {
   const { language, setLanguage, t, tCurriculum } = useLanguage();
-  const { isLoggedIn, currentUser, logout } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -97,41 +117,43 @@ const Header: React.FC<HeaderProps> = ({ onGoHome, showHomeButton, curriculum, o
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
-              {/* SEARCH BAR START */}
-              <div ref={searchContainerRef} className="relative hidden md:block">
-                  <div className="relative">
-                      <MagnifyingGlassIcon aria-hidden="true" className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" />
-                      <input 
-                          type="text"
-                          placeholder="Search for chapters, subjects..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          onFocus={() => setIsResultsVisible(true)}
-                          className="appearance-none w-48 lg:w-64 pl-10 pr-4"
-                          aria-label="Search curriculum"
-                      />
-                  </div>
-                  {isResultsVisible && searchQuery.length > 1 && (
-                      <div className="absolute top-full mt-2 w-full max-w-sm lg:max-w-md bg-surface rounded-lg shadow-2xl border border-border-color z-50 max-h-96 overflow-y-auto">
-                          {searchResults.length > 0 ? (
-                              <ul className="divide-y divide-border-color" role="listbox">
-                                  {searchResults.map((result, index) => (
-                                      <li key={`${result.chapter.title}-${index}`} role="option" aria-selected="false">
-                                          <button onClick={() => handleResultClick(result)} className="w-full text-left p-3 hover:bg-bg-primary transition-colors">
-                                              <p className="font-semibold text-text-primary">{tCurriculum(result.chapter.title)}</p>
-                                              <p className="text-xs text-text-secondary">
-                                                  {tCurriculum(result.grade.level)} &bull; {tCurriculum(result.subject.name)}
-                                              </p>
-                                          </button>
-                                      </li>
-                                  ))}
-                              </ul>
-                          ) : (
-                              <p className="p-4 text-center text-sm text-text-secondary">No results found for "{searchQuery}"</p>
-                          )}
+              {/* SEARCH BAR START (Student Only) */}
+              {userRole === 'student' && (
+                  <div ref={searchContainerRef} className="relative hidden md:block">
+                      <div className="relative">
+                          <MagnifyingGlassIcon aria-hidden="true" className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" />
+                          <input 
+                              type="text"
+                              placeholder="Search for chapters, subjects..."
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              onFocus={() => setIsResultsVisible(true)}
+                              className="appearance-none w-48 lg:w-64 pl-10 pr-4"
+                              aria-label="Search curriculum"
+                          />
                       </div>
-                  )}
-              </div>
+                      {isResultsVisible && searchQuery.length > 1 && (
+                          <div className="absolute top-full mt-2 w-full max-w-sm lg:max-w-md bg-surface rounded-lg shadow-2xl border border-border-color z-50 max-h-96 overflow-y-auto">
+                              {searchResults.length > 0 ? (
+                                  <ul className="divide-y divide-border-color" role="listbox">
+                                      {searchResults.map((result, index) => (
+                                          <li key={`${result.chapter.title}-${index}`} role="option" aria-selected="false">
+                                              <button onClick={() => handleResultClick(result)} className="w-full text-left p-3 hover:bg-bg-primary transition-colors">
+                                                  <p className="font-semibold text-text-primary">{tCurriculum(result.chapter.title)}</p>
+                                                  <p className="text-xs text-text-secondary">
+                                                      {tCurriculum(result.grade.level)} &bull; {tCurriculum(result.subject.name)}
+                                                  </p>
+                                              </button>
+                                          </li>
+                                      ))}
+                                  </ul>
+                              ) : (
+                                  <p className="p-4 text-center text-sm text-text-secondary">No results found for "{searchQuery}"</p>
+                              )}
+                          </div>
+                      )}
+                  </div>
+              )}
               {/* SEARCH BAR END */}
               <div className="relative">
                 <LanguageIcon aria-hidden="true" className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" />
@@ -152,25 +174,36 @@ const Header: React.FC<HeaderProps> = ({ onGoHome, showHomeButton, curriculum, o
                       <span className="hidden sm:inline">{t('home')}</span>
                   </button>
               )}
-              {isLoggedIn && currentUser && (
+              {isLoggedIn && (
                   <>
-                      <button onClick={() => setIsProfileModalOpen(true)} className="rounded-full w-10 h-10 overflow-hidden border-2 border-slate-600 hover:border-primary transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-primary">
-                          <img src={currentUser.avatarUrl} alt="User profile" className="w-full h-full object-cover" />
-                      </button>
-                      <button onClick={logout} aria-label={t('logoutButton')} className="flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors duration-200">
-                          <ArrowRightOnRectangleIcon className="h-5 w-5"/>
+                      {/* FIX: Use a type guard to ensure 'user' is a Student before accessing student-specific properties. */}
+                      {userRole === 'student' && user && 'avatarUrl' in user && (
+                          <button onClick={() => setIsProfileModalOpen(true)} className="rounded-full w-10 h-10 overflow-hidden border-2 border-slate-600 hover:border-primary transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-primary">
+                              <img src={user.avatarUrl} alt="User profile" className="w-full h-full object-cover" />
+                          </button>
+                      )}
+                      {/* FIX: Display the name for teacher/parent roles correctly. */}
+                      {userRole !== 'student' && user && (
+                           <span className="font-semibold text-text-secondary">{user.name}</span>
+                      )}
+                      <button onClick={onLogout} aria-label={t('logoutButton')} className="p-2.5 rounded-lg border-2 bg-surface text-text-primary transition-colors duration-200 hover:bg-bg-primary" style={{ borderColor: 'rgba(var(--c-border-color), 1)' }}>
+                        <ArrowLeftOnRectangleIcon className="h-5 w-5"/>
                       </button>
                   </>
               )}
           </div>
         </div>
       </header>
-      {currentUser && (
+      {/* FIX: Use a type guard to ensure 'user' is a Student before rendering the student-only ProfileModal. */}
+      {userRole === 'student' && user && 'avatarUrl' in user && (
         <ProfileModal 
           isOpen={isProfileModalOpen}
           onClose={() => setIsProfileModalOpen(false)}
-          user={currentUser}
+          user={user}
           grades={curriculum.map(g => ({ level: g.level, description: g.description }))}
+          updateUserProfile={onUpdateProfile}
+          loading={profileUpdateLoading}
+          error={profileUpdateError}
         />
       )}
     </>

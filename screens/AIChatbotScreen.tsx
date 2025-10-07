@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Student, ChatMessage } from '../types';
 import { Chat } from '@google/genai';
 import { useLanguage } from '../contexts/Language-context';
-import { useAuth } from '../contexts/AuthContext';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useTTS } from '../hooks/useTTS';
 import { createGeneralChatbot } from '../services/geminiService';
@@ -11,12 +10,12 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { ArrowLeftIcon, MicrophoneIcon, PaperAirplaneIcon, StopCircleIcon, PlayCircleIcon, PauseCircleIcon } from '@heroicons/react/24/solid';
 
 interface AIChatbotScreenProps {
+  student: Student;
   onBack: () => void;
 }
 
-const AIChatbotScreen: React.FC<AIChatbotScreenProps> = ({ onBack }) => {
+const AIChatbotScreen: React.FC<AIChatbotScreenProps> = ({ student, onBack }) => {
     const { t, language } = useLanguage();
-    const { currentUser: student } = useAuth();
     const [chat, setChat] = useState<Chat | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState('');

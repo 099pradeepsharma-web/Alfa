@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { QuestionBankItem, Grade, Subject, Chapter } from '../types';
-// FIX: The function is exported from questionBankService, not geminiService.
 import { generateQuestionBankQuestions } from '../services/questionBankService';
 import { CURRICULUM } from '../data/curriculum';
 import { useLanguage } from '../contexts/Language-context';

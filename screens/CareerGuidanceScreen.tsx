@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLanguage } from '../contexts/Language-context';
-import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeftIcon, SparklesIcon, DocumentTextIcon, LightBulbIcon, ChatBubbleLeftRightIcon, AcademicCapIcon, BriefcaseIcon, CheckCircleIcon, TrophyIcon, PaperAirplaneIcon, MicrophoneIcon, StopCircleIcon, PlayCircleIcon, PauseCircleIcon } from '@heroicons/react/24/solid';
 import { AptitudeQuestion, AptitudeTrait, CareerGuidance, Student, ChatMessage } from '../types';
 import * as geminiService from '../services/geminiService';
@@ -11,6 +10,7 @@ import { useTTS } from '../hooks/useTTS';
 import FittoAvatar, { FittoState } from '../components/FittoAvatar';
 
 interface CareerGuidanceScreenProps {
+  student: Student;
   onBack: () => void;
 }
 
@@ -87,9 +87,8 @@ const AptitudeTest: React.FC<{ student: Student, onFinish: (results: any) => voi
 
 
 // --- Main Screen ---
-const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ onBack }) => {
+const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ student, onBack }) => {
     const { t, language } = useLanguage();
-    const { currentUser: student } = useAuth();
     const [view, setView] = useState<ViewState>('idle');
     const [aptitudeResults, setAptitudeResults] = useState<{ scores: Record<string, { correct: number, total: number }>, summary: string } | null>(null);
     const [guidance, setGuidance] = useState<CareerGuidance | null>(null);

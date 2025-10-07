@@ -1,195 +1,151 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
-import { User, Student, Achievement, PerformanceRecord } from '../types';
-import * as authService from '../services/authService';
-import * as pineconeService from '../services/pineconeService';
-import * as db from '../services/databaseService';
+import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
+import { Student, StudyGoal, Achievement } from '../types';
+import { MOCK_STUDENTS } from '../data/mockData';
 import { createAvatar } from '@dicebear/core';
 import { lorelei } from '@dicebear/collection';
+import * as pineconeService from '../services/pineconeService';
+import { ALL_ACHIEVEMENTS } from '../data/achievements';
 
 interface AuthContextType {
   currentUser: Student | null;
-  isLoggedIn: boolean;
-  loading: boolean;
-  error: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string, grade: string) => Promise<void>;
+  users: Student[];
+  login: (studentId: string) => void;
   logout: () => void;
-  updateStudentPoints: (pointsToAdd: number) => void;
-  updateUserProfile: (updatedData: { 
-      name: string; 
-      grade: string; 
-      school: string;
-      city: string;
-      board: string;
-      avatarSeed: string;
-  }) => Promise<void>;
+  signup: (userData: { name: string, grade: string, email: string }) => Promise<void>;
+  updateUser: (updatedUser: Student) => void;
+  addStudyGoal: (goalText: string) => Promise<void>;
+  toggleStudyGoal: (goal: StudyGoal) => Promise<void>;
+  removeStudyGoal: (goal: StudyGoal) => Promise<void>;
+  addAchievement: (achievementId: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [currentUser, setCurrentUser] = useState<Student | null>(null);
-    const [loading, setLoading] = useState(true); // Start true to check session
-    const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<Student | null>(() => {
+    try {
+        const storedUser = sessionStorage.getItem('alfanumrik-currentUser');
+        return storedUser ? JSON.parse(storedUser) : null;
+    } catch (e) {
+        return null;
+    }
+  });
+  
+  const [allUsers, setAllUsers] = useState<Student[]>(MOCK_STUDENTS);
 
-    const handleLoginSuccess = useCallback(async (user: User) => {
-        const performance = await pineconeService.getPerformanceRecords(user.id);
-        const achievements = await pineconeService.getAchievements(user.id);
-        
-        const totalPoints = performance.reduce((sum, record) => sum + record.score, 0);
+  useEffect(() => {
+    try {
+        if (currentUser) {
+            sessionStorage.setItem('alfanumrik-currentUser', JSON.stringify(currentUser));
+        } else {
+            sessionStorage.removeItem('alfanumrik-currentUser');
+        }
+    } catch (e) {
+        console.error("Failed to update sessionStorage", e);
+    }
+  }, [currentUser]);
 
-        const studentProfile: Student = {
-            id: user.id,
-            name: user.name,
-            grade: user.grade,
-            avatarUrl: user.avatarUrl,
-            avatarSeed: user.avatarSeed || user.name,
-            school: user.school || '',
-            city: user.city || '',
-            board: user.board || '',
-            performance: performance,
-            achievements: achievements,
-            points: totalPoints,
-        };
-        setCurrentUser(studentProfile);
-        sessionStorage.setItem('alfanumrik-userId', user.id.toString());
-        setError(null);
-    }, []);
-
-    useEffect(() => {
-        const checkSession = async () => {
-            const userId = sessionStorage.getItem('alfanumrik-userId');
-            if (userId) {
-                const user = await db.findUserById(parseInt(userId, 10));
-                if (user) {
-                    await handleLoginSuccess(user);
-                }
+  // Effect to load study goals from DB when a user is logged in
+  useEffect(() => {
+    if (currentUser?.id) {
+        const loadGoals = async () => {
+            const goals = await pineconeService.getStudyGoals(currentUser.id);
+            // Update user state only if the goals are different, to avoid loops
+            if (JSON.stringify(goals) !== JSON.stringify(currentUser.studyGoals)) {
+                setCurrentUser(prevUser => prevUser ? { ...prevUser, studyGoals: goals } : null);
             }
-            setLoading(false);
         };
-        checkSession();
-    }, [handleLoginSuccess]);
+        loadGoals();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id]); // Depend on ID to run once per user session
 
-    const login = async (email: string, password: string) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const user = await authService.login(email, password);
-            await handleLoginSuccess(user);
-        } catch (err: any) {
-            setError(err.message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
+
+  const login = useCallback((studentId: string) => {
+    const user = allUsers.find(u => u.id === studentId);
+    if (user) {
+      setCurrentUser(user);
+    }
+  }, [allUsers]);
+
+  const logout = useCallback(() => {
+    setCurrentUser(null);
+  }, []);
+  
+  const signup = useCallback(async (userData: { name: string, grade: string, email: string }) => {
+    const seed = userData.name.trim();
+    const avatar = createAvatar(lorelei, { seed });
+    const avatarUrl = await avatar.toDataUri();
+    
+    const newUser: Student = {
+        id: `user-${Date.now()}`,
+        name: userData.name,
+        grade: userData.grade,
+        email: userData.email,
+        avatarUrl: avatarUrl,
+        avatarSeed: seed,
+        performance: [],
+        achievements: [],
+        points: 0,
+        studyGoals: [],
+    };
+    setAllUsers(prev => [...prev, newUser]);
+    setCurrentUser(newUser);
+  }, []);
+  
+  const updateUser = useCallback((updatedUser: Student) => {
+    setCurrentUser(updatedUser);
+    setAllUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+  }, []);
+  
+  const addStudyGoal = useCallback(async (goalText: string) => {
+    if (!currentUser) return;
+    const newGoal = await pineconeService.addStudyGoal(currentUser.id, goalText);
+    setCurrentUser(prev => prev ? { ...prev, studyGoals: [newGoal, ...prev.studyGoals] } : null);
+  }, [currentUser]);
+
+  const toggleStudyGoal = useCallback(async (goal: StudyGoal) => {
+      if (!currentUser) return;
+      const updatedGoal = { ...goal, isCompleted: !goal.isCompleted };
+      await pineconeService.updateStudyGoal(currentUser.id, updatedGoal);
+      setCurrentUser(prev => prev ? { ...prev, studyGoals: prev.studyGoals.map(g => g.id === goal.id ? updatedGoal : g) } : null);
+  }, [currentUser]);
+
+  const removeStudyGoal = useCallback(async (goal: StudyGoal) => {
+      if (!currentUser) return;
+      await pineconeService.removeStudyGoal(currentUser.id, goal.id);
+      setCurrentUser(prev => prev ? { ...prev, studyGoals: prev.studyGoals.filter(g => g.id !== goal.id) } : null);
+  }, [currentUser]);
+
+  const addAchievement = useCallback((achievementId: string) => {
+    if (!currentUser) return;
+
+    const achievementExists = currentUser.achievements.some(a => a.id === achievementId);
+    if (achievementExists) return;
+
+    const achievementToAdd = ALL_ACHIEVEMENTS.find(a => a.id === achievementId);
+    if (!achievementToAdd) return;
+
+    const newAchievement: Achievement = {
+      ...achievementToAdd,
+      timestamp: new Date().toISOString()
     };
 
-    const signup = async (name: string, email: string, password: string, grade: string) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const newUser = await authService.signup(name, email, password, grade);
-            await handleLoginSuccess(newUser);
-        } catch (err: any) {
-            setError(err.message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
+    const updatedUser = {
+      ...currentUser,
+      achievements: [...currentUser.achievements, newAchievement]
     };
+    
+    setCurrentUser(updatedUser);
+    pineconeService.addAchievement(currentUser.id, newAchievement);
+    
+  }, [currentUser]);
 
-    const logout = () => {
-        setCurrentUser(null);
-        sessionStorage.removeItem('alfanumrik-userId');
-        setError(null);
-    };
-
-    const updateStudentPoints = (pointsToAdd: number) => {
-        setCurrentUser(prevUser => {
-            if (!prevUser) return null;
-            const newPoints = prevUser.points + pointsToAdd;
-            return { ...prevUser, points: newPoints };
-        });
-    };
-    
-    const updateUserProfile = async (updatedData: { 
-        name: string; 
-        grade: string; 
-        school: string;
-        city: string;
-        board: string;
-        avatarSeed: string;
-    }) => {
-        if (!currentUser) return;
-        
-        setLoading(true);
-        setError(null);
-    
-        try {
-            const userFromDb = await db.findUserById(currentUser.id);
-            if (!userFromDb) throw new Error("User not found");
-    
-            const seed = updatedData.avatarSeed.trim() || updatedData.name.trim();
-            const hasSeedChanged = (userFromDb.avatarSeed || userFromDb.name) !== seed;
-    
-            let newAvatarUrl = userFromDb.avatarUrl;
-            if (hasSeedChanged) {
-                const avatar = createAvatar(lorelei, { seed });
-                newAvatarUrl = await avatar.toDataUri();
-            }
-    
-            const updatedUser: User = {
-                ...userFromDb,
-                name: updatedData.name.trim(),
-                grade: updatedData.grade,
-                school: updatedData.school.trim(),
-                city: updatedData.city.trim(),
-                board: updatedData.board.trim(),
-                avatarUrl: newAvatarUrl,
-                avatarSeed: seed,
-            };
-    
-            await db.updateUser(updatedUser);
-    
-            setCurrentUser(prevUser => {
-                if (!prevUser) return null;
-                return {
-                    ...prevUser,
-                    name: updatedUser.name,
-                    grade: updatedUser.grade,
-                    school: updatedUser.school,
-                    city: updatedUser.city,
-                    board: updatedUser.board,
-                    avatarUrl: updatedUser.avatarUrl,
-                    avatarSeed: updatedUser.avatarSeed,
-                };
-            });
-    
-        } catch (err: any) {
-            setError(err.message);
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const value = {
-        currentUser,
-        isLoggedIn: !!currentUser,
-        loading,
-        error,
-        login,
-        signup,
-        logout,
-        updateStudentPoints,
-        updateUserProfile
-    };
-
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-    );
+  return (
+    <AuthContext.Provider value={{ currentUser, users: allUsers, login, logout, signup, updateUser, addStudyGoal, toggleStudyGoal, removeStudyGoal, addAchievement }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = (): AuthContextType => {

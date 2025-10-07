@@ -6,11 +6,12 @@ import { CURRICULUM } from '../data/curriculum';
 import LoadingSpinner from '../components/LoadingSpinner';
 import MissionQuiz from '../components/MissionQuiz';
 import { useLanguage } from '../contexts/Language-context';
-import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeftIcon, SparklesIcon, ExclamationTriangleIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 
 interface PersonalizedPathScreenProps {
+  student: Student;
   onBack: () => void;
+  onMissionComplete: (action: AdaptiveAction) => void;
 }
 
 type PathState = 'FETCHING_ACTION' | 'GENERATING_CONTENT' | 'PRESENTING_TASK' | 'ERROR';
@@ -41,9 +42,8 @@ const findWeakestAcademicArea = (performance: PerformanceRecord[], studentGrade:
     return { subject: 'Mathematics', chapter: 'Real Numbers' };
 };
 
-const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ onBack }) => {
+const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ student, onBack, onMissionComplete }) => {
     const { t, language } = useLanguage();
-    const { currentUser: student } = useAuth();
     
     const [pathState, setPathState] = useState<PathState>('FETCHING_ACTION');
     const [adaptiveAction, setAdaptiveAction] = useState<AdaptiveAction | null>(null);
@@ -88,7 +88,7 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ onBack 
                         throw new Error(`Chapter "${details.chapter}" not found in curriculum.`);
                     }
                     const {content: module} = await getChapterContent(student.grade, details.subject, chapterObject, student, language);
-                    const academicQuestions = await generateQuiz(module.keyConcepts, language, 6);
+                    const academicQuestions = await generateQuiz(module.coreConceptTraining.map(c => c.title), language, 6);
                     const iqQuestions = await generateIQExercises(student.grade, language, 2);
                     const eqQuestions = await generateEQExercises(student.grade, language, 2);
                     missionTasks.push(...academicQuestions, ...iqQuestions, ...eqQuestions);
@@ -107,7 +107,7 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ onBack 
                         throw new Error(`Chapter "${weakArea.chapter}" not found in curriculum.`);
                     }
                     const {content: module} = await getChapterContent(student.grade, weakArea.subject, chapterObject, student, language);
-                    const academicQuestions = await generateQuiz(module.keyConcepts, language, 2);
+                    const academicQuestions = await generateQuiz(module.coreConceptTraining.map(c => c.title), language, 2);
                     missionTasks.push(...academicQuestions);
 
                 } else if (type === 'EQ_EXERCISE') {
@@ -124,7 +124,7 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ onBack 
                         throw new Error(`Chapter "${weakArea.chapter}" not found in curriculum.`);
                     }
                     const {content: module} = await getChapterContent(student.grade, weakArea.subject, chapterObject, student, language);
-                    const academicQuestions = await generateQuiz(module.keyConcepts, language, 2);
+                    const academicQuestions = await generateQuiz(module.coreConceptTraining.map(c => c.title), language, 2);
                     missionTasks.push(...academicQuestions);
                 }
 
@@ -157,7 +157,7 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ onBack 
             tasks={taskContent}
             student={student}
             adaptiveAction={adaptiveAction}
-            onFinish={onBack}
+            onFinish={() => onMissionComplete(adaptiveAction)}
         />
     }
 

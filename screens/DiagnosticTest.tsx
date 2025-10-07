@@ -9,7 +9,7 @@ import { useLanguage } from '../contexts/Language-context';
 interface DiagnosticTestProps {
     grade: Grade;
     subject: Subject;
-    chapter: Chapter;
+    chapter?: Chapter;
     language: string;
     onBack: () => void;
     onTestComplete?: (recommendation: NextStepRecommendation) => void;
@@ -31,7 +31,11 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
             try {
                 setIsLoading(true);
                 setError(null);
-                const questions = await generateComprehensiveDiagnosticTest(grade.level, subject.name, chapter.title, language);
+                const effectiveChapter = chapter || subject.chapters[0];
+                if (!effectiveChapter) {
+                    throw new Error("No chapters available for this subject.");
+                }
+                const questions = await generateComprehensiveDiagnosticTest(grade.level, subject.name, effectiveChapter.title, language);
                 setTestQuestions(questions);
             } catch (err: any) {
                 setError(err.message || t('testGenerationError'));
@@ -40,7 +44,7 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
             }
         };
         fetchTest();
-    }, [grade.level, subject.name, chapter, language, t]);
+    }, [grade.level, subject.name, chapter, subject.chapters, language, t]);
     
     const handleQuizFinish = useCallback(async (result: { score: number; answers: { [key: number]: string; } }) => {
         if (!testQuestions || !onTestComplete) return;
@@ -48,7 +52,7 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
         setIsTestCompleted(true);
         setIsLoadingRecommendation(true);
 
-        const scoreCounts = {
+        const scoreCounts: Record<string, { correct: number, total: number }> = {
             ACADEMIC: { correct: 0, total: 0 },
             IQ: { correct: 0, total: 0 },
             EQ: { correct: 0, total: 0 },
@@ -56,6 +60,7 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
 
         testQuestions.forEach((q, index) => {
             const type = q.type || 'ACADEMIC';
+            if (!scoreCounts[type]) scoreCounts[type] = { correct: 0, total: 0 };
             scoreCounts[type].total++;
             if (result.answers[index] === q.correctAnswer) {
                 scoreCounts[type].correct++;
@@ -70,22 +75,31 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
         };
         setScores(calculatedScores);
         
+        const effectiveChapter = chapter || subject.chapters[0];
+        if (!effectiveChapter) {
+            setError("Could not determine chapter for recommendation.");
+            setIsLoadingRecommendation(false);
+            return;
+        }
+
         try {
-            const rec = await generateComprehensiveDiagnosticRecommendation(grade.level, subject.name, chapter.title, calculatedScores, language);
+            const rec = await generateComprehensiveDiagnosticRecommendation(grade.level, subject.name, effectiveChapter.title, calculatedScores, language, subject.chapters);
             setRecommendation(rec);
         } catch (err: any) {
             setError(err.message || "Could not get recommendation.");
         } finally {
             setIsLoadingRecommendation(false);
         }
-    }, [chapter, grade, subject, testQuestions, language, onTestComplete]);
+    }, [chapter, subject.chapters, grade.level, subject.name, testQuestions, language, onTestComplete]);
 
     const handleRecommendationAction = () => {
         if (recommendation && onTestComplete) {
             onTestComplete(recommendation);
+        } else {
+            onBack();
         }
-    };
-    
+    }
+
     if (isLoading) {
         return <div className="flex flex-col items-center justify-center h-96">
             <LoadingSpinner />
@@ -94,9 +108,9 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
     }
 
     if (error) {
-         return <div className="text-center p-8 bg-red-900/20 rounded-lg">
-            <h3 className="text-xl font-bold text-red-400">{t('couldNotCreateTest')}</h3>
-            <p className="text-red-400 mt-2">{error}</p>
+         return <div className="text-center p-8 bg-status-danger rounded-lg">
+            <h3 className="text-xl font-bold text-status-danger">{t('couldNotCreateTest')}</h3>
+            <p className="text-status-danger mt-2">{error}</p>
             <button onClick={onBack} className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">{t('backToSubjects')}</button>
         </div>;
     }
@@ -105,7 +119,7 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
         return (
              <div className="dashboard-highlight-card p-8 animate-fade-in text-center">
                 <h2 className="text-3xl font-bold text-text-primary">{t('testComplete')}</h2>
-                <p className="text-lg text-text-secondary mt-1">{t('youScored', { score: Math.round(scores.total * (testQuestions?.length || 10) / 100), total: testQuestions?.length })}</p>
+                <p className="text-lg text-text-secondary mt-1">{t('youScored', { score: Math.round(scores.total / 100 * (testQuestions?.length || 10)), total: testQuestions?.length })}</p>
 
                 <div className="my-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
                     <ScoreCard icon={AcademicCapIcon} title="Academic Readiness" score={scores.academic} />
@@ -113,7 +127,7 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
                     <ScoreCard icon={HeartIcon} title="Emotional Skills (EQ)" score={scores.eq} />
                 </div>
                 
-                <div role="status" className="mt-8 p-6 bg-slate-800/50 border-l-4 border-primary rounded-r-lg text-left">
+                <div role="status" className="mt-8 p-6 bg-surface border-l-4 border-primary rounded-r-lg text-left">
                      <h3 className="font-semibold text-primary flex items-center mb-2 text-xl">
                         <LightBulbIcon className="h-6 w-6 mr-2" />
                         {t('ourRecommendation')}
@@ -137,7 +151,7 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
     }
 
     if (testQuestions) {
-        const title = `${t('diagnosticTestFor')}: ${tCurriculum(chapter.title)}`;
+        const title = `${t('diagnosticTestFor')}: ${tCurriculum((chapter || subject.chapters[0]).title)}`;
         return <Quiz 
             questions={testQuestions} 
             onBack={onBack} 
@@ -151,12 +165,12 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
 
 const ScoreCard: React.FC<{icon: React.ElementType, title: string, score: number}> = ({ icon: Icon, title, score }) => {
     const getScoreColor = (s: number) => {
-        if (s >= 80) return 'text-green-400';
-        if (s >= 60) return 'text-yellow-400';
-        return 'text-red-400';
+        if (s >= 80) return 'text-status-success';
+        if (s >= 60) return 'text-yellow-400 dark:text-yellow-300';
+        return 'text-status-danger';
     };
     return (
-        <div className="bg-slate-800/50 p-4 rounded-lg border border-border flex items-center gap-4">
+        <div className="bg-bg-primary p-4 rounded-lg border border-border flex items-center gap-4">
             <Icon className={`h-8 w-8 flex-shrink-0 ${getScoreColor(score)}`} />
             <div>
                 <p className="font-semibold text-text-secondary text-sm">{title}</p>
@@ -179,5 +193,6 @@ const getRecommendationButtonText = (rec: NextStepRecommendation, t: Function, t
              return t('startNextChapter', { chapter: tCurriculum(rec.nextChapterTitle || '') });
     }
 };
+
 
 export default DiagnosticTest;

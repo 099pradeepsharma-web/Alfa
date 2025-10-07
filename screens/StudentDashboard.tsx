@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Student, AdaptiveAction, LearningStreak } from '../types';
-import { getLearningStreak, getWellbeingModuleStatus } from '../services/pineconeService';
-import { getAdaptiveNextStep } from '../services/geminiService';
+import { Student, AdaptiveAction, LearningStreak, StudyGoal } from '../types';
+import { getLearningStreak } from '../services/pineconeService';
+import { getAdaptiveNextStep, generateStudyGoalSuggestions } from '../services/geminiService';
 import { useLanguage } from '../contexts/Language-context';
-import { useAuth } from '../contexts/AuthContext';
-import { ArrowRightIcon, BookOpenIcon, SparklesIcon, PuzzlePieceIcon, HeartIcon, TrophyIcon, MagnifyingGlassIcon, FireIcon, QuestionMarkCircleIcon, CubeIcon, UsersIcon, GlobeAltIcon, UserGroupIcon, ChatBubbleLeftRightIcon, BriefcaseIcon, Bars3Icon } from '@heroicons/react/24/solid';
+import { ArrowRightIcon, BookOpenIcon, SparklesIcon, PuzzlePieceIcon, HeartIcon, TrophyIcon, MagnifyingGlassIcon, FireIcon, QuestionMarkCircleIcon, CubeIcon, UsersIcon, GlobeAltIcon, UserGroupIcon, ChatBubbleLeftRightIcon, BriefcaseIcon, Bars3Icon, ClipboardDocumentCheckIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const StatsCard: React.FC<{ icon: React.ElementType; label: string; value: string | number; colorClass: string; className?: string, style?: React.CSSProperties }> = ({ icon: Icon, label, value, colorClass, className, style }) => (
@@ -20,6 +19,8 @@ const StatsCard: React.FC<{ icon: React.ElementType; label: string; value: strin
 );
 
 interface StudentDashboardProps {
+  student: Student;
+  users: Student[];
   onStartMission: () => void;
   onBrowse: () => void;
   onStartWellbeing: () => void;
@@ -33,6 +34,9 @@ interface StudentDashboardProps {
   onStartCompetitions: () => void;
   onStartProjectHub: () => void;
   onStartPeerPedia: () => void;
+  onAddGoal: (text: string) => Promise<void>;
+  onToggleGoal: (goal: StudyGoal) => Promise<void>;
+  onRemoveGoal: (goal: StudyGoal) => Promise<void>;
 }
 
 const MissionCard: React.FC<{ onStartMission: () => void, student: Student }> = ({ onStartMission, student }) => {
@@ -65,19 +69,14 @@ const MissionCard: React.FC<{ onStartMission: () => void, student: Student }> = 
     }
     
     if (!action) return null;
-    
-    const progress = action.details.confidence ? Math.round(action.details.confidence * 100) : 75;
 
     return (
-        <div className="p-6 flex flex-col justify-between h-full">
+        <div className="p-6 flex flex-col justify-between">
             <div>
                 <div className="flex justify-between items-start">
                     <div>
                         <h2 className="text-3xl font-bold text-text-primary">{t('todaysMission')}</h2>
                         <p className="text-text-secondary mt-1">{t('todaysMissionDesc')}</p>
-                    </div>
-                    <div className="power-core">
-                        <div className="power-core-level" style={{ '--progress': `${progress}%` } as React.CSSProperties}></div>
                     </div>
                 </div>
             
@@ -114,6 +113,8 @@ const FeatureCard: React.FC<{ icon: React.ElementType; title: string; descriptio
 );
 
 const StudentDashboard: React.FC<StudentDashboardProps> = ({ 
+    student,
+    users,
     onStartMission, 
     onBrowse, 
     onStartWellbeing, 
@@ -126,24 +127,55 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({
     onStartDoubtSolver,
     onStartCompetitions,
     onStartProjectHub,
-    onStartPeerPedia
+    onStartPeerPedia,
+    onAddGoal,
+    onToggleGoal,
+    onRemoveGoal
 }) => {
-    const { t } = useLanguage();
-    const { currentUser: student } = useAuth();
+    const { t, language } = useLanguage();
     const [learningStreak, setLearningStreak] = useState(0);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [backgroundImageUrl, setBackgroundImageUrl] = useState('');
-    const [imageLoaded, setImageLoaded] = useState(false);
+    const [newGoalText, setNewGoalText] = useState('');
+    const [isAddingGoal, setIsAddingGoal] = useState(false);
+    const [goalSuggestions, setGoalSuggestions] = useState<string[]>([]);
+    const [isSuggesting, setIsSuggesting] = useState(false);
 
-    useEffect(() => {
-        const imageUrl = `https://source.unsplash.com/random/1600x900/?study,library,desk,learning,technology&sig=${Date.now()}`;
-        const img = new Image();
-        img.src = imageUrl;
-        img.onload = () => {
-            setBackgroundImageUrl(imageUrl);
-            setImageLoaded(true);
-        };
-    }, []);
+
+    const handleAddGoal = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newGoalText.trim()) return;
+        setIsAddingGoal(true);
+        try {
+            await onAddGoal(newGoalText);
+            setNewGoalText('');
+            setGoalSuggestions([]); // Clear suggestions after adding a goal
+        } catch(err) {
+            console.error("Failed to add goal:", err);
+        } finally {
+            setIsAddingGoal(false);
+        }
+    };
+
+    const handleSuggestGoals = async () => {
+        setIsSuggesting(true);
+        setGoalSuggestions([]);
+        try {
+            const suggestions = await generateStudyGoalSuggestions(student, language);
+            setGoalSuggestions(suggestions);
+        } catch (err) {
+            console.error("Failed to get suggestions:", err);
+        } finally {
+            setIsSuggesting(false);
+        }
+    };
+
+
+    const handleToggleGoal = async (goal: StudyGoal) => {
+        await onToggleGoal(goal);
+    };
+
+    const handleRemoveGoal = async (goal: StudyGoal) => {
+        await onRemoveGoal(goal);
+    };
     
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -153,77 +185,141 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({
             }
         };
         fetchDashboardData();
-
-        const mediaQuery = window.matchMedia('(max-width: 1024px)');
-        const handleResize = () => setIsSidebarOpen(!mediaQuery.matches);
-        handleResize();
-        mediaQuery.addEventListener('change', handleResize);
-        return () => mediaQuery.removeEventListener('change', handleResize);
     }, [student]);
     
     if (!student) return null;
+    
+    // Placeholder for overall progress
+    const overallProgress = (student.performance.length / 50) * 100; // Assuming 50 total modules for the quest
 
     return (
         <div className="space-y-8">
-            <h1 className="text-4xl font-bold text-text-primary">
-                {t('welcomeBack', { name: student.name.split(' ')[0] })}
-            </h1>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatsCard icon={TrophyIcon} label="Total Points" value={student.points.toLocaleString()} colorClass="bg-accent" className="animate-fade-in" style={{ animationDelay: '0.2s' }} />
-                <StatsCard icon={FireIcon} label="Learning Streak" value={`${learningStreak} Days`} colorClass="bg-red-500" className="animate-fade-in" style={{ animationDelay: '0.4s' }} />
-                <StatsCard icon={BookOpenIcon} label="Completed" value={`${student.performance.length} Modules`} colorClass="bg-primary" className="animate-fade-in" style={{ animationDelay: '0.6s' }} />
+            <div>
+                <h1 className="text-4xl font-bold text-text-primary">
+                    {t('welcomeBack', { name: student.name.split(' ')[0] })}
+                </h1>
+                <p className="text-lg text-text-secondary mt-1">Your Epic Quest for Academic Mastery</p>
             </div>
 
-            <div>
-                 <button
-                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                    className={`sidebar-toggle ${isSidebarOpen ? 'shifted' : ''}`}
-                    aria-label="Toggle sidebar"
-                 >
-                     <ArrowRightIcon className="h-5 w-5 transition-transform" />
-                 </button>
+            <div className="dashboard-highlight-card p-6">
+                <div className="flex justify-between items-center mb-2">
+                    <h2 className="text-lg font-bold text-text-primary">Overall Quest Progress</h2>
+                    <span className="font-bold text-accent xp-display">{Math.round(overallProgress)}%</span>
+                </div>
+                <div className="quest-progress-bar-container">
+                    <div className="quest-progress-bar" style={{width: `${overallProgress}%`}}></div>
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <StatsCard icon={TrophyIcon} label="Total XP" value={student.points.toLocaleString()} colorClass="bg-amber-500" className="animate-fade-in" style={{ animationDelay: '0.2s' }} />
+                <StatsCard icon={FireIcon} label="Learning Streak" value={`${learningStreak} Days`} colorClass="bg-red-500" className="animate-fade-in" style={{ animationDelay: '0.4s' }} />
+                <StatsCard icon={BookOpenIcon} label="Missions Completed" value={`${student.performance.length}`} colorClass="bg-teal-500" className="animate-fade-in" style={{ animationDelay: '0.6s' }} />
+            </div>
 
-                <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
-                    <div className="space-y-8">
-                        <div>
-                            <h2 className="text-2xl font-bold text-text-primary">Mission Hub</h2>
-                            <div className="mt-4 space-y-3">
-                                <FeatureCard icon={MagnifyingGlassIcon} title="Syllabus Browser" description="Explore chapters, concepts, and practice." onClick={onBrowse} />
-                                <FeatureCard icon={ChatBubbleLeftRightIcon} title="AI Tutor" description="Get instant help on any topic." onClick={onStartDoubtSolver} />
-                                <FeatureCard icon={BriefcaseIcon} title={t('careerCompassTitle')} description={t('careerCompassDesc')} onClick={onStartCareerGuidance} />
-                                <FeatureCard icon={TrophyIcon} title={t('competitionHubTitle')} description={t('competitionHubDesc')} onClick={onStartCompetitions} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+                {/* Main Content Area (Left) */}
+                <div className="lg:col-span-2 space-y-8">
+                    <div>
+                        <h2 className="text-2xl font-bold text-text-primary">Mission Hub</h2>
+                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <FeatureCard icon={MagnifyingGlassIcon} title="Syllabus Browser" description="Explore chapters, concepts, and practice." onClick={onBrowse} />
+                            <FeatureCard icon={ChatBubbleLeftRightIcon} title="AI Doubt Solver" description="Get instant help on any topic." onClick={onStartDoubtSolver} />
+                            <FeatureCard icon={BriefcaseIcon} title={t('careerCompassTitle')} description={t('careerCompassDesc')} onClick={onStartCareerGuidance} />
+                            <FeatureCard icon={TrophyIcon} title={t('competitionHubTitle')} description={t('competitionHubDesc')} onClick={onStartCompetitions} />
 
-                            </div>
-                        </div>
-                        
-                         <div>
-                            <h2 className="text-2xl font-bold text-text-primary">Collaborate & Create</h2>
-                             <div className="mt-4 space-y-3">
-                                <FeatureCard icon={CubeIcon} title="Innovation Lab" description="Solve real-world problems." onClick={onStartInnovationLab} />
-                                <FeatureCard icon={PuzzlePieceIcon} title={t('ctGymTitle')} description={t('ctGymDescription')} onClick={onStartCriticalThinking} />
-                                <FeatureCard icon={UsersIcon} title={t('pblHubTitle')} description={t('pblHubDesc')} onClick={onStartProjectHub} />
-                                <FeatureCard icon={UserGroupIcon} title={t('peerPediaTitle')} description={t('peerPediaDesc')} onClick={onStartPeerPedia} />
-                                <FeatureCard icon={GlobeAltIcon} title="Global Prep" description="Practice for SAT, ACT, & more." onClick={onStartGlobalPrep} />
-                                <FeatureCard icon={UserGroupIcon} title="Leadership Circle" description="Join debates & collaborations." onClick={onStartLeadershipCircle} />
-                            </div>
                         </div>
                     </div>
-                </aside>
-
-                <main className={`main-content-area ${isSidebarOpen ? 'lg:shifted' : ''}`}>
-                    <div className="mission-bg-container">
-                        <div 
-                            className={`mission-bg-image ${imageLoaded ? 'loaded' : ''}`} 
-                            style={{ backgroundImage: `url(${backgroundImageUrl})` }}
-                            aria-label="Inspiring background image of a study environment"
-                        ></div>
-                        <div className="mission-bg-overlay"></div>
-                        <div className="mission-bg-content">
-                             <MissionCard onStartMission={onStartMission} student={student} />
+                    
+                    <div>
+                        <h2 className="text-2xl font-bold text-text-primary">Collaborate & Create</h2>
+                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <FeatureCard icon={CubeIcon} title="Innovation Lab" description="Solve real-world problems." onClick={onStartInnovationLab} />
+                            <FeatureCard icon={PuzzlePieceIcon} title={t('ctGymTitle')} description={t('ctGymDescription')} onClick={onStartCriticalThinking} />
+                            <FeatureCard icon={UsersIcon} title={t('pblHubTitle')} description={t('pblHubDesc')} onClick={onStartProjectHub} />
+                            <FeatureCard icon={UserGroupIcon} title={t('peerPediaTitle')} description={t('peerPediaDesc')} onClick={onStartPeerPedia} />
+                            <FeatureCard icon={GlobeAltIcon} title="Global Prep" description="Practice for SAT, ACT, & more." onClick={onStartGlobalPrep} />
+                            <FeatureCard icon={UserGroupIcon} title="Leadership Circle" description="Join debates & collaborations." onClick={onStartLeadershipCircle} />
                         </div>
                     </div>
-                </main>
+                </div>
+
+                {/* Sidebar Area (Right) */}
+                <div className="lg:col-span-1 space-y-8">
+                    {/* NEW "My Study Goals" To-Do List */}
+                    <div className="todo-card">
+                        <h2 className="text-2xl font-bold text-text-primary flex items-center gap-3 mb-4">
+                            <ClipboardDocumentCheckIcon className="h-7 w-7 text-primary"/>
+                            My Study Goals
+                        </h2>
+                        <form onSubmit={handleAddGoal} className="flex gap-2">
+                            <input 
+                                type="text" 
+                                value={newGoalText}
+                                onChange={(e) => setNewGoalText(e.target.value)}
+                                placeholder="e.g., Master the mirror formula"
+                                className="flex-grow"
+                                aria-label="New study goal"
+                            />
+                            <button type="submit" className="btn-accent p-3 flex-shrink-0" disabled={isAddingGoal || !newGoalText.trim()} aria-label="Set Goal">
+                                {isAddingGoal ? <LoadingSpinner /> : <PlusIcon className="h-5 w-5"/>}
+                            </button>
+                        </form>
+
+                        <div className="my-4 pt-4 border-t border-dashed border-border text-center">
+                            <button onClick={handleSuggestGoals} disabled={isSuggesting} className="flex items-center justify-center mx-auto px-4 py-2 text-sm bg-surface border border-border text-text-primary font-semibold rounded-lg hover:bg-bg-primary transition shadow-sm disabled:opacity-50">
+                                {isSuggesting ? (
+                                    <><LoadingSpinner /><span className="ml-2">Getting suggestions...</span></>
+                                ) : (
+                                    <><SparklesIcon className="h-4 w-4 mr-2" /><span>Suggest Goals with AI</span></>
+                                )}
+                            </button>
+                            {goalSuggestions.length > 0 && (
+                                <div className="mt-3 space-y-2 text-left animate-fade-in">
+                                    <p className="text-xs font-semibold text-text-secondary">Click a suggestion to add it:</p>
+                                    {goalSuggestions.map((suggestion, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => setNewGoalText(suggestion)}
+                                            className="w-full text-left p-2 text-sm bg-bg-primary rounded-md hover:bg-surface border border-transparent hover:border-border transition"
+                                        >
+                                            {suggestion}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-4 space-y-2 max-h-60 overflow-y-auto pr-1">
+                            {student?.studyGoals && student.studyGoals.length > 0 ? (
+                                student.studyGoals.map(goal => (
+                                    <div key={goal.id} className={`todo-item ${goal.isCompleted ? 'completed' : ''}`}>
+                                        <input 
+                                            type="checkbox"
+                                            checked={goal.isCompleted}
+                                            onChange={() => handleToggleGoal(goal)}
+                                            id={`goal-${goal.id}`}
+                                            className="todo-checkbox mr-3"
+                                        />
+                                        <label htmlFor={`goal-${goal.id}`} className="flex-grow cursor-pointer text-text-primary">
+                                            {goal.text}
+                                        </label>
+                                        <button onClick={() => handleRemoveGoal(goal)} className="todo-delete-btn" aria-label={`Remove goal: ${goal.text}`}>
+                                            <XMarkIcon className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-center text-text-secondary py-4">Set a goal to get started!</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Today's Mission */}
+                    <div className="dashboard-highlight-card">
+                        <MissionCard onStartMission={onStartMission} student={student} />
+                    </div>
+                </div>
             </div>
         </div>
     );

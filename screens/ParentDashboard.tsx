@@ -11,7 +11,6 @@ interface ParentDashboardProps {
   onBack: () => void;
 }
 
-// FIX: Exported the component to make it available for lazy loading in App.tsx.
 export const ParentDashboard: React.FC<ParentDashboardProps> = React.memo(({ child, onSelectStudent, onBack }) => {
   const { t, tCurriculum } = useLanguage();
   const [agreed, setAgreed] = useState(false);

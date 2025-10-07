@@ -20,26 +20,24 @@ const Footer: React.FC<FooterProps> = ({ onShowAbout, onShowPrivacyPolicy, onSho
     ];
 
     return (
-        <footer className="bg-surface border-t border-border-color mt-16 py-8">
+        <footer className="bg-surface py-6">
             <div className="container mx-auto px-4 md:px-8">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                    <div className="flex items-center gap-3">
-                        <Logo size={40} />
-                        <div>
-                            <h3 className="text-xl font-bold text-text-primary">{t('appTitle')}</h3>
-                            <p className="text-xs text-text-secondary -mt-1">{t('appSubtitle')}</p>
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div className="text-center sm:text-left">
+                        <div className="flex items-center justify-center sm:justify-start gap-2">
+                            <Logo size={24} />
+                            <p className="font-bold text-text-primary">{t('appTitle')}</p>
                         </div>
+                        <p className="text-xs text-text-secondary/80 mt-1">{t('copyright')}</p>
                     </div>
-                    <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+
+                    <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2">
                         {footerLinks.map(link => (
-                            <button key={link.label} onClick={link.action} className="text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors">
+                            <button key={link.label} onClick={link.action} className="footer-link text-sm">
                                 {link.label}
                             </button>
                         ))}
                     </nav>
-                </div>
-                <div className="mt-8 pt-6 border-t border-border-color text-center text-sm text-text-secondary">
-                    <p>{t('copyright')}</p>
                 </div>
             </div>
         </footer>

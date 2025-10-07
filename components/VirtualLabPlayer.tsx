@@ -115,7 +115,6 @@ const VirtualLabPlayer: React.FC<VirtualLabPlayerProps> = ({ labData, grade, sub
             geminiService.generateEducationalTips(tipsTopic, language)
                 .then(setDynamicTips)
                 .catch(err => console.error("Could not fetch dynamic tips:", err));
-
             const videoBlob = await geminiService.generateVideoFromPrompt(prompt);
             await pineconeService.saveVideo(dbKey, videoBlob);
             setVideoUrl(URL.createObjectURL(videoBlob));

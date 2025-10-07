@@ -13,8 +13,10 @@
     "react-dom": "^19.2.0",
     "@google/genai": "^1.21.0",
     "@heroicons/react": "^2.2.0",
+    "lucide-react": "^0.417.0",
     "@dicebear/core": "^9.2.4",
-    "@dicebear/collection": "^9.2.4"
+    "@dicebear/collection": "^9.2.4",
+    "@supabase/supabase-js": "^2.45.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

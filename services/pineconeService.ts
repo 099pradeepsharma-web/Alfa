@@ -1,7 +1,7 @@
 // This service acts as a data access layer for student-specific information,
 // persisting data to the local browser storage (IndexedDB).
 // The name 'pineconeService' is a legacy name.
-import { LearningModule, ChapterProgress, StudentQuestion, PerformanceRecord, AIFeedback, LearningStreak, Achievement } from '../types';
+import { LearningModule, ChapterProgress, StudentQuestion, PerformanceRecord, AIFeedback, LearningStreak, Achievement, StudyGoal } from '../types';
 import * as db from './databaseService';
 
 /**
@@ -33,7 +33,7 @@ export const saveLearningModule = async (key: string, data: LearningModule, lang
  * @param language The language of the report.
  * @returns A Promise that resolves to the report string or null.
  */
-export const getReport = async (studentId: number, userRole: 'teacher' | 'parent', language: string): Promise<string | null> => {
+export const getReport = async (studentId: string, userRole: 'teacher' | 'parent', language: string): Promise<string | null> => {
     const key = `report-${userRole}-${studentId}-${language}`;
     return db.getDoc<string>('reports', key);
 }
@@ -45,18 +45,39 @@ export const getReport = async (studentId: number, userRole: 'teacher' | 'parent
  * @param reportText The text of the report to save.
  * @param language The language of the report.
  */
-export const saveReport = async (studentId: number, userRole: 'teacher' | 'parent', reportText: string, language: string): Promise<void> => {
+export const saveReport = async (studentId: string, userRole: 'teacher' | 'parent', reportText: string, language: string): Promise<void> => {
     const key = `report-${userRole}-${studentId}-${language}`;
     await db.setDoc<string>('reports', key, reportText);
 }
+
+/**
+ * Retrieves a generic document from a simple key-value store.
+ * @param storeName The name of the object store.
+ * @param key The key of the document.
+ * @returns The document data or null.
+ */
+export const getDoc = async <T>(storeName: 'progress' | 'cache' | 'modules' | 'reports' | 'diagrams' | 'videos' | 'conceptMaps', key: string): Promise<T | null> => {
+    return db.getDoc<T>(storeName, key);
+};
+
+/**
+ * Saves a generic document to a simple key-value store.
+ * @param storeName The name of the object store.
+ * @param key The key of the document.
+ * @param data The data to save.
+ */
+export const setDoc = async <T>(storeName: 'progress' | 'cache' | 'modules' | 'reports' | 'diagrams' | 'videos' | 'conceptMaps', key: string, data: T): Promise<void> => {
+    await db.setDoc<T>(storeName, key, data);
+};
+
 
 /**
  * Retrieves performance records for a student from the database.
  * @param userId The ID of the student.
  * @returns A promise that resolves to an array of performance records.
  */
-export const getPerformanceRecords = async (userId: number): Promise<PerformanceRecord[]> => {
-    type StoredPerformanceRecord = PerformanceRecord & { studentId: number };
+export const getPerformanceRecords = async (userId: string): Promise<PerformanceRecord[]> => {
+    type StoredPerformanceRecord = PerformanceRecord & { studentId: string };
     return await db.queryCollectionByIndex<StoredPerformanceRecord>('performance', 'studentId', userId);
 };
 
@@ -77,7 +98,7 @@ const getYesterdayDateString = () => {
  * @param userId The ID of the student.
  * @returns A promise that resolves to the LearningStreak object or null.
  */
-export const getLearningStreak = async (userId: number): Promise<LearningStreak | null> => {
+export const getLearningStreak = async (userId: string): Promise<LearningStreak | null> => {
     const streakKey = `streak-${userId}`;
     const streakData = await db.getDoc<LearningStreak>('cache', streakKey);
 
@@ -94,7 +115,7 @@ export const getLearningStreak = async (userId: number): Promise<LearningStreak 
  * @param userId The ID of the student.
  * @param newRecord The PerformanceRecord object to save.
  */
-export const savePerformanceRecord = async (userId: number, newRecord: PerformanceRecord): Promise<void> => {
+export const savePerformanceRecord = async (userId: string, newRecord: PerformanceRecord): Promise<void> => {
     const streakKey = `streak-${userId}`;
     const todayStr = getTodayDateString();
 
@@ -143,7 +164,7 @@ export const saveChapterProgress = async (key: string, progress: ChapterProgress
  * @param language The language of the questions (currently unused in this implementation but kept for API consistency).
  * @returns A promise that resolves to an array of questions for that student.
  */
-export const getStudentQuestions = async (userId: number, language: string): Promise<StudentQuestion[]> => {
+export const getStudentQuestions = async (userId: string, language: string): Promise<StudentQuestion[]> => {
     // language is not needed for querying the central collection, but kept for API consistency.
     return await db.queryCollectionByIndex<StudentQuestion>('questions', 'studentId', userId);
 };
@@ -237,7 +258,7 @@ export const saveAIFeedback = async (feedback: AIFeedback): Promise<void> => {
  * @param studentId The ID of the student.
  * @returns A promise that resolves to true if assigned, false otherwise.
  */
-export const getWellbeingModuleStatus = async (studentId: number): Promise<boolean> => {
+export const getWellbeingModuleStatus = async (studentId: string): Promise<boolean> => {
     const key = `wellbeing-assigned-${studentId}`;
     const status = await db.getDoc<boolean>('cache', key);
     return status === true;
@@ -248,7 +269,7 @@ export const getWellbeingModuleStatus = async (studentId: number): Promise<boole
  * @param studentId The ID of the student.
  * @param isAssigned The assignment status.
  */
-export const setWellbeingModuleStatus = async (studentId: number, isAssigned: boolean): Promise<void> => {
+export const setWellbeingModuleStatus = async (studentId: string, isAssigned: boolean): Promise<void> => {
     const key = `wellbeing-assigned-${studentId}`;
     await db.setDoc('cache', key, isAssigned);
 };
@@ -260,8 +281,8 @@ export const setWellbeingModuleStatus = async (studentId: number, isAssigned: bo
  * @param userId The ID of the student whose achievements to retrieve.
  * @returns A promise that resolves to an array of achievements for that student.
  */
-export const getAchievements = async (userId: number): Promise<Achievement[]> => {
-    type StoredAchievement = Achievement & { studentId: number };
+export const getAchievements = async (userId: string): Promise<Achievement[]> => {
+    type StoredAchievement = Achievement & { studentId: string };
     return await db.queryCollectionByIndex<StoredAchievement>('achievements', 'studentId', userId);
 };
 
@@ -270,11 +291,43 @@ export const getAchievements = async (userId: number): Promise<Achievement[]> =>
  * @param userId The ID of the student.
  * @param achievement The Achievement object to save.
  */
-export const addAchievement = async (userId: number, achievement: Omit<Achievement, 'timestamp'>): Promise<void> => {
+export const addAchievement = async (userId: string, achievement: Omit<Achievement, 'timestamp'>): Promise<void> => {
     const achievementToSave = { 
         ...achievement, 
         studentId: userId,
         timestamp: new Date().toISOString()
     };
     await db.addDocToCollection('achievements', achievementToSave);
+};
+
+// --- New Functions for Study Goals ---
+type StoredStudyGoal = StudyGoal & { studentId: string };
+
+export const getStudyGoals = async (userId: string): Promise<StudyGoal[]> => {
+    const goals = await db.queryCollectionByIndex<StoredStudyGoal>('studyGoals', 'studentId', userId);
+    // Sort by creation date, newest first
+    return goals.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+};
+
+export const addStudyGoal = async (userId: string, goalText: string): Promise<StudyGoal> => {
+    const newGoal: StoredStudyGoal = {
+        id: `goal-${Date.now()}`,
+        text: goalText,
+        isCompleted: false,
+        createdAt: new Date().toISOString(),
+        studentId: userId,
+    };
+    await db.addDocToCollection('studyGoals', newGoal);
+    const { studentId, ...goalToReturn } = newGoal;
+    return goalToReturn as StudyGoal;
+};
+
+export const updateStudyGoal = async (userId: string, goal: StudyGoal): Promise<void> => {
+    const goalToStore: StoredStudyGoal = { ...goal, studentId: userId };
+    await db.updateDocInCollection('studyGoals', goal.id, goalToStore);
+};
+
+export const removeStudyGoal = async (userId: string, goalId: string): Promise<void> => {
+    // userId is not strictly necessary for deletion by ID but good practice to include for potential future rules
+    await db.deleteDocInCollection('studyGoals', goalId);
 };

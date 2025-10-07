@@ -1,10 +1,8 @@
-
-
-import { Student } from '../types';
+import { Student, Teacher, Parent } from '../types';
 
 export const MOCK_STUDENTS: Student[] = [
   {
-    id: 1,
+    id: '1',
     name: 'Ananya Sharma',
     grade: 'Grade 10',
     avatarUrl: `https://i.pravatar.cc/150?u=ananya`,
@@ -17,9 +15,10 @@ export const MOCK_STUDENTS: Student[] = [
       { subject: 'Biology', chapter: 'Life Processes', score: 95, completedDate: '2024-05-19' },
     ],
     achievements: [],
+    studyGoals: [],
   },
   {
-    id: 2,
+    id: '2',
     name: 'Rohan Verma',
     grade: 'Grade 8',
     avatarUrl: `https://i.pravatar.cc/150?u=rohan`,
@@ -30,9 +29,10 @@ export const MOCK_STUDENTS: Student[] = [
       { subject: 'Mathematics', chapter: 'Linear Equations in One Variable', score: 95, completedDate: '2024-05-25' },
     ],
     achievements: [],
+    studyGoals: [],
   },
   {
-    id: 3,
+    id: '3',
     name: 'Priya Singh',
     grade: 'Grade 10',
     avatarUrl: `https://i.pravatar.cc/150?u=priya`,
@@ -42,5 +42,26 @@ export const MOCK_STUDENTS: Student[] = [
       { subject: 'Chemistry', chapter: 'Carbon and its Compounds', score: 62, completedDate: '2024-05-24' },
     ],
     achievements: [],
+    studyGoals: [],
   },
+];
+
+export const MOCK_TEACHERS: (Teacher & { password?: string })[] = [
+  {
+    id: 'teacher-1',
+    name: 'Mrs. Gita Kapoor',
+    email: 'teacher@alfanumrik.com',
+    password: 'password123',
+    studentIds: ['1', '3'], // Ananya and Priya
+  }
+];
+
+export const MOCK_PARENTS: (Parent & { password?: string })[] = [
+  {
+    id: 'parent-1',
+    name: 'Mr. Raj Verma',
+    email: 'parent@alfanumrik.com',
+    password: 'password123',
+    childIds: ['2'], // Rohan Verma
+  }
 ];
