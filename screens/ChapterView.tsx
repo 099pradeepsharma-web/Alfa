@@ -3,10 +3,12 @@ import { Grade, Subject, Chapter, LearningModule, Student, Trigger, CoreConceptL
 import * as contentService from '../services/contentService';
 import * as pineconeService from '../services/pineconeService';
 import * as geminiService from '../services/geminiService';
+import * as abTestingService from '../services/abTestingService';
+import * as analyticsService from '../services/analyticsService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Quiz from '../components/Quiz';
 import { useLanguage } from '../contexts/Language-context';
-import { ArrowPathIcon, BookOpenIcon, BeakerIcon, LightBulbIcon, CpuChipIcon, AcademicCapIcon, PuzzlePieceIcon, SparklesIcon, ChevronRightIcon, PlayCircleIcon, DevicePhoneMobileIcon, CheckIcon, StarIcon, ClipboardDocumentCheckIcon, DocumentTextIcon } from '@heroicons/react/24/solid';
+import { ArrowPathIcon, BookOpenIcon, BeakerIcon, LightBulbIcon, CpuChipIcon, AcademicCapIcon, PuzzlePieceIcon, SparklesIcon, ChevronRightIcon, PlayCircleIcon, DevicePhoneMobileIcon, CheckIcon, StarIcon, ClipboardDocumentCheckIcon, DocumentTextIcon, PencilSquareIcon, ChevronLeftIcon } from '@heroicons/react/24/solid';
 import StructuredText from '../components/StructuredText';
 import Confetti from '../components/Confetti';
 import ConceptVideoPlayer from '../components/ConceptVideoPlayer';
@@ -21,7 +23,11 @@ interface ChapterViewProps {
   onBackToSubjects: () => void;
   onChapterSelect: (chapter: Chapter) => void;
   onUpdatePoints: (points: number) => void;
+  onAddAchievement: (achievementId: string) => void;
 }
+
+const EXPERIMENT_ID = 'microlesson_ordering_v1';
+type Variant = 'A' | 'B';
 
 // --- START: Section-specific rendering components ---
 
@@ -64,7 +70,7 @@ const MissionBriefingSection: React.FC<{ content: Trigger[] }> = ({ content }) =
     );
 };
 
-const CoreConceptTrainingSection: React.FC<{ content: CoreConceptLesson[], grade: Grade, subject: Subject }> = ({ content, grade, subject }) => {
+const CoreConceptTrainingSection: React.FC<{ content: CoreConceptLesson[], grade: Grade, subject: Subject, onLogEvent: (eventName: string, attributes: any) => void }> = ({ content, grade, subject, onLogEvent }) => {
     const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
     return (
         <div className="space-y-3">
@@ -92,7 +98,12 @@ const CoreConceptTrainingSection: React.FC<{ content: CoreConceptLesson[], grade
                             </div>
                             <div className="mt-4">
                                 <h5 className="font-bold text-text-secondary text-sm uppercase mb-2">Knowledge Check</h5>
-                                <Quiz questions={lesson.knowledgeCheck} onBack={() => {}} chapterTitle={lesson.title} />
+                                <Quiz 
+                                    questions={lesson.knowledgeCheck} 
+                                    onBack={() => {}} 
+                                    chapterTitle={lesson.title} 
+                                    onLogEvent={onLogEvent}
+                                />
                             </div>
                         </div>
                     )}
@@ -107,7 +118,8 @@ const PracticeArenaSection: React.FC<{
     onReward: (points: number) => void;
     completedProblems: number[];
     onToggleComplete: (index: number) => void;
-}> = ({ content, onReward, completedProblems, onToggleComplete }) => {
+    onLogEvent: (eventName: string, attributes: any) => void;
+}> = ({ content, onReward, completedProblems, onToggleComplete, onLogEvent }) => {
     const [rewardShown, setRewardShown] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
     
@@ -132,6 +144,17 @@ const PracticeArenaSection: React.FC<{
         setShowConfetti(false);
     }, [content]);
 
+    const handleToggle = (index: number) => {
+        const isCompleting = !completedProblems.includes(index);
+        onToggleComplete(index);
+        onLogEvent('item_attempt', {
+            item_id: content.problems[index].problemStatement,
+            item_type: 'practice_problem_completion',
+            correctness: isCompleting ? 1 : 0, // 1 for completed, 0 for un-completed
+            attempt_index: 1
+        });
+    }
+
     return (
         <div>
             {showConfetti && <Confetti />}
@@ -144,7 +167,7 @@ const PracticeArenaSection: React.FC<{
                                 {p.level}
                             </span>
                              <label htmlFor={`problem-check-${i}`} className="flex items-center gap-2 text-xs font-semibold text-text-secondary cursor-pointer">
-                                <input id={`problem-check-${i}`} type="checkbox" onChange={() => onToggleComplete(i)} checked={completedProblems.includes(i)} className="h-4 w-4 rounded-sm border-border bg-surface text-primary focus:ring-0 cursor-pointer"/>
+                                <input id={`problem-check-${i}`} type="checkbox" onChange={() => handleToggle(i)} checked={completedProblems.includes(i)} className="h-4 w-4 rounded-sm border-border bg-surface text-primary focus:ring-0 cursor-pointer"/>
                                 Mark as Done
                             </label>
                         </div>
@@ -153,7 +176,7 @@ const PracticeArenaSection: React.FC<{
                         <p className="text-text-secondary mb-2"><strong>Problem:</strong> {p.problemStatement}</p>
                         <details>
                             <summary className="cursor-pointer font-semibold text-primary">View Solution</summary>
-                            <div className="mt-2 text-primary"><StructuredText text={p.solution} /></div>
+                            <div className="mt-2 text-primary"><StructuredText text={p.solution}/></div>
                         </details>
                     </div>
                 </div>
@@ -196,7 +219,53 @@ const ApplicationLabSection: React.FC<{ content: PracticalApplicationLab }> = ({
     </div>
 );
 
-// --- NEW: Mastery Zone Component ---
+const ReflectionSection: React.FC<{ onLogEvent: (eventName: string, attributes: any) => void }> = ({ onLogEvent }) => {
+    const [confidence, setConfidence] = useState(0);
+    const [submitted, setSubmitted] = useState(false);
+
+    const handleSubmit = () => {
+        if (confidence === 0) return;
+        onLogEvent('reflection_submitted', { confidence_rating: confidence });
+        setSubmitted(true);
+    };
+
+    if (submitted) {
+        return (
+            <div className="text-center p-4 bg-status-success rounded-lg">
+                <p className="font-semibold text-status-success">Thank you for your feedback!</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-surface p-6 rounded-2xl border border-border">
+            <h4 className="font-bold text-text-primary text-center">Quick Reflection</h4>
+            <p className="text-sm text-text-secondary text-center mt-1">How confident do you feel about the concepts you just covered?</p>
+            <div className="flex justify-center items-center gap-2 my-4">
+                {[1, 2, 3, 4, 5].map(rating => (
+                    <button key={rating} onClick={() => setConfidence(rating)} className={`w-10 h-10 rounded-full text-lg font-bold transition-all ${confidence >= rating ? 'bg-accent text-button-accent-text scale-110' : 'bg-bg-primary hover:bg-border'}`}>
+                        {rating}
+                    </button>
+                ))}
+            </div>
+            <p className="text-xs text-text-secondary text-center">1 = Not confident at all, 5 = Very confident</p>
+            <div className="text-center mt-4">
+                <button onClick={handleSubmit} disabled={confidence === 0} className="btn-accent px-6 py-2 disabled:opacity-50">Submit</button>
+            </div>
+        </div>
+    );
+}
+
+const EvaluationCard: React.FC<{ title: string; icon: React.ElementType; children: React.ReactNode }> = ({ title, icon: Icon, children }) => (
+    <div className="p-4 bg-bg-primary rounded-lg border border-border">
+        <h5 className="font-bold text-lg text-primary mb-3 flex items-center gap-2">
+            <Icon className="h-6 w-6" />
+            {title}
+        </h5>
+        <div className="prose max-w-none dark:prose-invert text-sm">{children}</div>
+    </div>
+);
+
 const MasteryZoneSection: React.FC<{ grade: string, subject: string, chapter: string, existingProblems: PracticeProblem[], language: string }> = ({ grade, subject, chapter, existingProblems, language }) => {
     const [activeTab, setActiveTab] = useState<'mastery' | 'writing'>('mastery');
     
@@ -343,23 +412,145 @@ const MasteryZoneSection: React.FC<{ grade: string, subject: string, chapter: st
     );
 };
 
-const EvaluationCard: React.FC<{ title: string; icon: React.ElementType; children: React.ReactNode }> = ({ title, icon: Icon, children }) => (
-    <div className="p-4 bg-bg-primary rounded-lg border border-border">
-        <h5 className="font-bold text-lg text-primary mb-3 flex items-center gap-2">
-            <Icon className="h-6 w-6" />
-            {title}
-        </h5>
-        <div className="prose max-w-none dark:prose-invert text-sm">{children}</div>
-    </div>
-);
+const WritingPracticeZone: React.FC<{
+    problems: PracticeProblem[];
+    grade: string;
+    subject: string;
+    language: string;
+}> = ({ problems, grade, subject, language }) => {
+    const { t } = useLanguage();
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [writtenAnswers, setWrittenAnswers] = useState<Record<number, string>>({});
+    const [evaluation, setEvaluation] = useState<WrittenAnswerEvaluation | null>(null);
+    const [isEvaluating, setIsEvaluating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [showSolution, setShowSolution] = useState(false);
 
+    const currentProblem = problems[currentIndex];
+    const currentAnswer = writtenAnswers[currentIndex] || '';
+
+    const handleAnswerChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setWrittenAnswers(prev => ({ ...prev, [currentIndex]: e.target.value }));
+    };
+
+    const handleEvaluate = async () => {
+        if (!currentAnswer.trim()) return;
+        setIsEvaluating(true);
+        setError(null);
+        setEvaluation(null);
+        setShowSolution(true);
+        try {
+            const result = await geminiService.evaluateWrittenAnswer(currentProblem.problemStatement, currentAnswer, grade, subject, language);
+            setEvaluation(result);
+        } catch (e: any) {
+            setError(e.message);
+        } finally {
+            setIsEvaluating(false);
+        }
+    };
+    
+    const goToQuestion = (index: number) => {
+        if (index >= 0 && index < problems.length) {
+            setCurrentIndex(index);
+            setShowSolution(false);
+            setEvaluation(null);
+            setError(null);
+        }
+    };
+
+    if (!problems || problems.length === 0) {
+        return <div className="bg-surface p-6 rounded-2xl border border-border text-center text-text-secondary">{t('noProblemsAvailable')}</div>;
+    }
+
+    return (
+        <div className="bg-surface p-6 rounded-2xl border border-border">
+            <div className="flex justify-between items-center mb-4">
+                <h4 className="font-bold text-lg text-text-primary">
+                    {t('writingPracticeFor')} "{currentProblem.level}"
+                </h4>
+                <span className="font-semibold text-text-secondary text-sm">
+                    {t('question')} {currentIndex + 1} / {problems.length}
+                </span>
+            </div>
+
+            <div className="bg-bg-primary p-4 rounded-lg border border-border">
+                <p className="font-semibold text-text-primary">{currentProblem.problemStatement}</p>
+            </div>
+            
+            <textarea
+                value={currentAnswer}
+                onChange={handleAnswerChange}
+                rows={8}
+                className="w-full mt-4"
+                placeholder={t('writeYourAnswerHere')}
+                disabled={showSolution}
+            />
+
+            {!showSolution && (
+                <div className="mt-4 text-center">
+                    <button onClick={handleEvaluate} disabled={!currentAnswer.trim()} className="btn-accent">
+                        {t('compareAndEvaluate')}
+                    </button>
+                </div>
+            )}
+            
+            {showSolution && (
+                <div className="mt-4 animate-fade-in space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <EvaluationCard title={t('yourAnswerComparison')} icon={PencilSquareIcon}>
+                            <p className="whitespace-pre-wrap">{currentAnswer}</p>
+                        </EvaluationCard>
+                        <EvaluationCard title={t('modelAnswer')} icon={DocumentTextIcon}>
+                            <StructuredText text={currentProblem.solution} />
+                        </EvaluationCard>
+                    </div>
+                    
+                    {isEvaluating && (
+                        <div className="flex justify-center items-center gap-2 p-4">
+                            <LoadingSpinner />
+                            <span className="text-text-secondary font-semibold">{t('aiIsEvaluating')}...</span>
+                        </div>
+                    )}
+                    
+                    {error && <p className="text-status-danger text-center">{error}</p>}
+
+                    {evaluation && (
+                        <div className="animate-fade-in grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <EvaluationCard title={t('markingScheme')} icon={ClipboardDocumentCheckIcon}>
+                                <StructuredText text={evaluation.markingScheme} />
+                            </EvaluationCard>
+                            <EvaluationCard title={t('personalizedFeedback')} icon={SparklesIcon}>
+                                <StructuredText text={evaluation.personalizedFeedback} />
+                            </EvaluationCard>
+                             <EvaluationCard title={t('proTipsForExams')} icon={StarIcon}>
+                                <StructuredText text={evaluation.proTips} />
+                            </EvaluationCard>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            <div className="flex justify-between items-center mt-6 pt-4 border-t border-border">
+                <button onClick={() => goToQuestion(currentIndex - 1)} disabled={currentIndex === 0} className="px-4 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm border border-border hover:bg-bg-primary transition disabled:opacity-50 flex items-center gap-2">
+                    <ChevronLeftIcon className="h-4 w-4" /> {t('previous')}
+                </button>
+                <button onClick={() => goToQuestion(currentIndex + 1)} disabled={currentIndex === problems.length - 1} className="px-4 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm border border-border hover:bg-bg-primary transition disabled:opacity-50 flex items-center gap-2">
+                    {t('next')} <ChevronRightIcon className="h-4 w-4" />
+                </button>
+            </div>
+        </div>
+    );
+};
 
 // --- END: Section-specific rendering components ---
 
 export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
-  grade, subject, chapter, student, language, onBackToChapters, onBackToSubjects, onChapterSelect, onUpdatePoints
+  grade, subject, chapter, student, language, onBackToChapters, onBackToSubjects, onChapterSelect, onUpdatePoints, onAddAchievement
 }) => {
     const { t, tCurriculum } = useLanguage();
+
+    const [variant, setVariant] = useState<Variant>('A');
+    const [isCompleted, setIsCompleted] = useState(false);
 
     const [learningModule, setLearningModule] = useState<LearningModule | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -372,6 +563,34 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
     const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
     const [loadingMessage, setLoadingMessage] = useState(t('aiGeneratingLesson'));
+
+    const handleLogEvent = useCallback((eventName: string, attributes: any) => {
+        analyticsService.logEvent(eventName, student, EXPERIMENT_ID, variant, attributes);
+    }, [student, variant]);
+    
+    useEffect(() => {
+        const assignedVariant = abTestingService.assignVariant(student.id, EXPERIMENT_ID);
+        setVariant(assignedVariant);
+
+        handleLogEvent('lesson_assigned', {
+            lesson_id: chapter.title,
+            teacher_id: null, // Placeholder
+        });
+        
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [student.id, chapter.title]);
+
+     // Dropout event logging
+    useEffect(() => {
+        return () => {
+            if (!isCompleted) {
+                handleLogEvent('dropout_event', {
+                    progress_percent: 0 // Placeholder, could be improved with more state
+                });
+            }
+        };
+    }, [isCompleted, handleLogEvent]);
+
 
     const handleReward = useCallback((points: number) => {
         onUpdatePoints(points);
@@ -396,6 +615,7 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
         setCompletedPracticeProblems([]); // Reset on new chapter load
         try {
             const progressKey = `practice-${student.id}-${grade.level}-${subject.name}-${chapter.title}`;
+            
             const [moduleResult, savedProgress] = await Promise.all([
                 contentService.getChapterContent(grade.level, subject.name, chapter, student, language),
                 pineconeService.getDoc<number[] | null>('progress', progressKey)
@@ -424,20 +644,35 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
         const progressKey = `practice-${student.id}-${grade.level}-${subject.name}-${chapter.title}`;
         try {
             await pineconeService.setDoc('progress', progressKey, newCompletedProblems);
-        } catch(e) { console.error("Failed to save practice progress:", e); }
+        } catch(e) {
+            console.error("Failed to save practice progress:", e);
+        }
     }, [completedPracticeProblems, student.id, grade.level, subject.name, chapter.title]);
     
     const sections = useMemo(() => {
         if (!learningModule) return [];
-        return [
+        const baseSections = [
             { id: 'mission-briefing', title: 'Mission Briefing', icon: LightBulbIcon },
             { id: 'core-concepts', title: 'Core Concept Training', icon: AcademicCapIcon },
             { id: 'practice-arena', title: 'The Practice Arena', icon: PuzzlePieceIcon },
+            { id: 'reflection', title: 'Reflection', icon: ClipboardDocumentCheckIcon },
             { id: 'application-lab', title: 'Application Lab', icon: SparklesIcon },
             { id: 'boss-fight', title: 'The Boss Fight', icon: CpuChipIcon },
             { id: 'mastery-zone', title: 'Mastery Zone', icon: StarIcon },
+            { id: 'writing-practice-zone', title: t('writingPracticeZoneTitle'), icon: PencilSquareIcon },
         ];
-    }, [learningModule]);
+        
+        // Reorder based on variant
+        if (variant === 'B') {
+            const practiceIndex = baseSections.findIndex(s => s.id === 'practice-arena');
+            const conceptsIndex = baseSections.findIndex(s => s.id === 'core-concepts');
+            if (practiceIndex !== -1 && conceptsIndex !== -1) {
+                [baseSections[practiceIndex], baseSections[conceptsIndex]] = [baseSections[conceptsIndex], baseSections[practiceIndex]];
+            }
+        }
+        
+        return baseSections;
+    }, [learningModule, variant, t]);
 
     const visitedSections = useRef(new Set<string>());
 
@@ -457,7 +692,9 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
         );
 
         Object.values(sectionRefs.current).forEach(ref => {
-            if (ref instanceof Element) { observer.observe(ref); }
+            if (ref instanceof Element) {
+                observer.observe(ref);
+            }
         });
 
         return () => observer.disconnect();
@@ -474,6 +711,42 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
     }
     if (error) return <div className="text-center p-8 bg-status-danger rounded-lg max-w-2xl mx-auto"><h3 className="text-xl font-bold text-status-danger mt-4">{t('errorOccurred')}</h3><p className="text-status-danger mt-2">{error}</p><button onClick={loadChapter} className="mt-6 flex items-center justify-center mx-auto px-6 py-2 bg-status-danger text-white font-bold rounded-lg shadow-md hover:opacity-80 transition" style={{ backgroundColor: 'rgb(var(--c-error))' }}><ArrowPathIcon className="h-5 w-5 mr-2" />{t('tryAgain')}</button></div>;
     if (!learningModule) return <div className="text-center"><p>{t('noContent')}</p></div>;
+    
+    const experimentBlock = variant === 'A' ? (
+        <>
+            <section id="core-concepts" ref={el => { if (el) sectionRefs.current['core-concepts'] = el; }}>
+                <h2 className="section-title"><AcademicCapIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='core-concepts')?.title}</h2>
+                <CoreConceptTrainingSection content={learningModule.coreConceptTraining} grade={grade} subject={subject} onLogEvent={handleLogEvent} />
+            </section>
+            <section id="practice-arena" ref={el => { if (el) sectionRefs.current['practice-arena'] = el; }}>
+                <h2 className="section-title"><PuzzlePieceIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='practice-arena')?.title}</h2>
+                <PracticeArenaSection 
+                    content={learningModule.practiceArena} 
+                    onReward={handleReward}
+                    completedProblems={completedPracticeProblems}
+                    onToggleComplete={handleTogglePracticeProblem}
+                    onLogEvent={handleLogEvent}
+                />
+            </section>
+        </>
+    ) : (
+        <>
+            <section id="practice-arena" ref={el => { if (el) sectionRefs.current['practice-arena'] = el; }}>
+                <h2 className="section-title"><PuzzlePieceIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='practice-arena')?.title}</h2>
+                <PracticeArenaSection 
+                    content={learningModule.practiceArena} 
+                    onReward={handleReward}
+                    completedProblems={completedPracticeProblems}
+                    onToggleComplete={handleTogglePracticeProblem}
+                    onLogEvent={handleLogEvent}
+                />
+            </section>
+            <section id="core-concepts" ref={el => { if (el) sectionRefs.current['core-concepts'] = el; }}>
+                <h2 className="section-title"><AcademicCapIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='core-concepts')?.title}</h2>
+                <CoreConceptTrainingSection content={learningModule.coreConceptTraining} grade={grade} subject={subject} onLogEvent={handleLogEvent} />
+            </section>
+        </>
+    );
 
     return (
     <div className="animate-fade-in">
@@ -485,48 +758,58 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
 
       <header className="mb-8">
         <h1 className="text-4xl lg:text-5xl font-extrabold text-text-primary tracking-tight">Mission: {tCurriculum(learningModule.chapterTitle)}</h1>
+         <p className="text-xs font-mono text-text-secondary mt-1">Experiment Variant: {variant}</p>
       </header>
       
         <div className="virtual-classroom-grid">
             <main id="smartboard" ref={mainRef} className="space-y-12">
                 
-                <section id="mission-briefing" ref={(el) => { if (el) sectionRefs.current['mission-briefing'] = el; }}>
+                <section id="mission-briefing" ref={el => { if (el) sectionRefs.current['mission-briefing'] = el; }}>
                     <h2 className="section-title"><LightBulbIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='mission-briefing')?.title}</h2>
                     <MissionBriefingSection content={learningModule.missionBriefing} />
                 </section>
                 
-                <section id="core-concepts" ref={(el) => { if (el) sectionRefs.current['core-concepts'] = el; }}>
-                    <h2 className="section-title"><AcademicCapIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='core-concepts')?.title}</h2>
-                    <CoreConceptTrainingSection content={learningModule.coreConceptTraining} grade={grade} subject={subject} />
+                {experimentBlock}
+
+                <section id="reflection" ref={el => { if (el) sectionRefs.current['reflection'] = el; }}>
+                    <h2 className="section-title"><ClipboardDocumentCheckIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='reflection')?.title}</h2>
+                    <ReflectionSection onLogEvent={handleLogEvent} />
                 </section>
-                
-                <section id="practice-arena" ref={(el) => { if (el) sectionRefs.current['practice-arena'] = el; }}>
-                    <h2 className="section-title"><PuzzlePieceIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='practice-arena')?.title}</h2>
-                    <PracticeArenaSection 
-                        content={learningModule.practiceArena} 
-                        onReward={handleReward}
-                        completedProblems={completedPracticeProblems}
-                        onToggleComplete={handleTogglePracticeProblem}
-                    />
-                </section>
-                
-                <section id="application-lab" ref={(el) => { if (el) sectionRefs.current['application-lab'] = el; }}>
+
+                <section id="application-lab" ref={el => { if (el) sectionRefs.current['application-lab'] = el; }}>
                     <h2 className="section-title"><SparklesIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='application-lab')?.title}</h2>
                     <ApplicationLabSection content={learningModule.practicalApplicationLab} />
                 </section>
                 
-                <section id="boss-fight" ref={(el) => { if (el) sectionRefs.current['boss-fight'] = el; }}>
+                <section id="boss-fight" ref={el => { if (el) sectionRefs.current['boss-fight'] = el; }}>
                     <h2 className="section-title"><CpuChipIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='boss-fight')?.title}</h2>
-                    <Quiz questions={learningModule.bossFight} onBack={() => {}} chapterTitle="Final Challenge" />
+                    <Quiz 
+                        questions={learningModule.bossFight} 
+                        onBack={() => {}} 
+                        chapterTitle="Final Challenge" 
+                        onLogEvent={handleLogEvent}
+                        isPostTest={true}
+                        onFinish={() => setIsCompleted(true)}
+                    />
                 </section>
                 
-                <section id="mastery-zone" ref={(el) => { if (el) sectionRefs.current['mastery-zone'] = el; }}>
+                <section id="mastery-zone" ref={el => { if (el) sectionRefs.current['mastery-zone'] = el; }}>
                     <h2 className="section-title"><StarIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='mastery-zone')?.title}</h2>
                     <MasteryZoneSection 
                         grade={grade.level}
                         subject={subject.name}
                         chapter={chapter.title}
                         existingProblems={learningModule.practiceArena.problems}
+                        language={language}
+                    />
+                </section>
+                
+                <section id="writing-practice-zone" ref={el => { if (el) sectionRefs.current['writing-practice-zone'] = el; }}>
+                    <h2 className="section-title"><PencilSquareIcon className="h-7 w-7 text-primary" /> {t('writingPracticeZoneTitle')}</h2>
+                    <WritingPracticeZone
+                        problems={learningModule.practiceArena.problems}
+                        grade={grade.level}
+                        subject={subject.name}
                         language={language}
                     />
                 </section>

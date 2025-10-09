@@ -1,14 +1,14 @@
 
 
-
-
-
-
+export interface Topic {
+  title: string;
+  subTopics?: Topic[];
+}
 
 export interface Chapter {
   title: string;
   tags?: string[];
-  topics: string[];
+  topics: Topic[];
 }
 
 export interface Subject {

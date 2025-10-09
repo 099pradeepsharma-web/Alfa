@@ -1,7 +1,7 @@
-
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, Chapter, Trigger, CoreConceptLesson, PracticeArena, PracticalApplicationLab, AptitudeQuestion, CareerGuidance, XpReward, VideoReward, StudyGoal, PracticeProblem, WrittenAnswerEvaluation, SATAnswerEvaluation } from '../types';
+import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, Chapter, Trigger, CoreConceptLesson, PracticeArena, PracticalApplicationLab, AptitudeQuestion, CareerGuidance, XpReward, VideoReward, StudyGoal, PracticeProblem, WrittenAnswerEvaluation, SATAnswerEvaluation, PerformanceRecord } from '../types';
 import { CURRICULUM } from '../data/curriculum';
+import { getLearningStreak } from './pineconeService';
 
 // The API key is sourced from the `process.env.API_KEY` environment variable.
 // To use a new key (e.g., from Vertex AI Studio), set this variable in your deployment environment.
@@ -123,7 +123,7 @@ const practicalApplicationLabSchema = {
         type: { type: Type.STRING, enum: ['virtualLab', 'simulation', 'project'] },
         title: { type: Type.STRING },
         description: { type: Type.STRING },
-        labInstructions: { type: Type.STRING, description: "Mandatory instructions for the student to complete the investment step.", nullable: true }
+        labInstructions: { type: Type.STRING, description: "Instructions for the student to complete the investment step, formatted as a markdown list.", nullable: true }
     },
     required: ['type', 'title', 'description']
 };
@@ -146,7 +146,7 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
         -   **ABSOLUTELY NO BOLD MARKDOWN:** Do NOT use markdown asterisks (**) for bolding anywhere in the response. The renderer does not support it. Use underlines for emphasis.
         -   **Point-wise Explanations:** For any point-wise explanations, you MUST use markdown lists (e.g., starting a line with a hyphen and a space: "- Point 1").
         -   **Strict Vertical Formatting:** ALL formula derivations and solved numerical examples MUST be presented vertically. Each step MUST be on a new line. You can use '=>' at the start of a line to show progression.
-        -   **Lab Instructions Formatting:** The \`labInstructions\` field MUST be a multi-line string. Start with a heading like "Instructions:", followed by a newline, and then a numbered or bulleted list using markdown. Each step must be on a new line.
+        -   **Lab Instructions Formatting:** The \`labInstructions\` field MUST be a multi-line string formatted as a markdown numbered or bulleted list. Each step must be on a new line. Do NOT include an "Instructions:" heading in the string content itself.
 
         **REQUIRED OUTPUT STRUCTURE:**
         -   **chapterTitle**: Must be exactly "${chapter.title}".
@@ -159,9 +159,9 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
             -   Provide **analytical insights** (e.g., special cases, graphical analysis, 'what if' scenarios).
             -   For highly visual concepts, you MAY include a 'videoPrompt'.
             -   Exactly two "Knowledge Check" multiple-choice questions with explanations.
-        -   **practiceArena (Variable Reward):** Provide a robust set of 8 practice problems: 3 'NCERT Basics', 3 'Reference Application' (inspired by H.C. Verma/R.D. Sharma), and 2 'Competitive Challenge' (Olympiad/JEE/NEET pattern). All solutions must follow the vertical step-by-step format.
+        -   **practiceArena (Variable Reward):** Provide a robust set of 8 practice problems: 3 'NCERT Basics', 3 'Reference Application' (inspired by H.C. Verma/R.D. Sharma), and 2 'Competitive Challenge' (Olympiad/JEE/NEET pattern). For each problem, you MUST provide a complete, final, and direct step-by-step solution. Do NOT provide hints or guided questions. The solution must be fully worked out to the final answer and follow the vertical step-by-step format.
         -   **practicalApplicationLab (Investment):** A mandatory activity (virtual lab, simulation, project).
-        -   **bossFight (Final Challenge):** A 10-question chapter-end test mixing MCQs, numericals, and assertion-reasoning questions.
+        -   **bossFight (Final Challenge):** A 10-question chapter-end test of high quality, mirroring board and competitive exam patterns. Mix MCQs, numericals, and assertion-reasoning questions. Ensure questions test deep understanding, not just recall.
     `;
 
     const learningModuleSchema = {
@@ -225,16 +225,22 @@ export const generateQuiz = async (keyConcepts: Concept[] | string[], language: 
     const conceptsContext = (typeof keyConcepts[0] === 'string') ? (keyConcepts as string[]).join('\n- ') : (keyConcepts as Concept[]).map(c => `Title: ${c.conceptTitle}\nExplanation: ${c.explanation}`).join('\n\n');
 
     const prompt = `
-        Based on the following key concepts, create a ${count}-question multiple-choice quiz. The questions
-        should test conceptual understanding and application of knowledge, not just rote memorization. The entire response, including all
-        questions, options, answers, explanations, and concept titles, must be in the ${language} language.
+        You are an expert question setter for Indian competitive exams (like Olympiads, NTSE, JEE/NEET foundation).
+        Based on the following key concepts for a student, create a high-quality, ${count}-question multiple-choice quiz.
+        The entire response must be in the ${language} language.
+
+        **CRITICAL INSTRUCTIONS for question quality:**
+        1.  **Test Application, Not Just Recall:** Questions must require conceptual understanding and application, not just rote memorization.
+        2.  **Use Scenarios:** Where possible, frame questions around real-world scenarios or application-based problems.
+        3.  **Plausible Distractors:** The incorrect options (distractors) must be plausible and based on common misconceptions.
+        4.  **Vary Difficulty:** Include a mix of medium to hard questions that challenge the student's thinking.
 
         For each question:
-        1.  Provide a clear, high-quality question that requires some thought.
-        2.  Provide four distinct and plausible options, with one being the correct answer.
-        3.  Indicate the correct answer.
-        4.  Provide a thorough explanation for why the correct answer is right and the others are wrong.
-        5.  **Crucially, you must associate each question with one of the provided concept titles.** Use the 'conceptTitle' field for this.
+        - Provide a clear, unambiguous question.
+        - Provide four distinct options.
+        - Indicate the correct answer.
+        - Provide a thorough explanation for why the correct answer is right and the others are wrong.
+        - **Crucially, associate each question with one of the provided concept titles using the 'conceptTitle' field.**
 
         Key Concepts:
         ---
@@ -264,19 +270,16 @@ export const generateQuiz = async (keyConcepts: Concept[] | string[], language: 
 
 export const generatePracticeExercises = async (concept: Concept, grade: string, language: string): Promise<QuizQuestion[]> => {
     const prompt = `
-        Generate 3 multiple-choice questions for a ${grade} student to practice and drill the specific concept of "${concept.conceptTitle}".
-        The entire response, including all questions, options, answers, explanations, and concept titles, must be in the ${language} language.
+        You are an expert question setter for Indian students for grade ${grade}.
+        Generate 3 high-quality multiple-choice questions to practice the specific concept of "${concept.conceptTitle}".
+        The entire response must be in the ${language} language.
 
-        The questions should be focused on reinforcing the core skill of the concept with high-quality, clear examples. They should be direct and clear.
-        For example, if the concept is 'Simple Addition', questions should be direct calculations like '5 + 7 = ?'.
-        If the concept is 'Identifying Nouns', questions should be like 'Which word in the following sentence is a noun?'.
-
-        For each question:
-        1. Provide a clear question.
-        2. Provide four distinct options, with one being the correct answer.
-        3. Indicate the correct answer.
-        4. Provide a helpful, brief explanation for the answer.
-        5. **Crucially, for the 'conceptTitle' field, you must use the exact title provided: "${concept.conceptTitle}"**.
+        **CRITICAL INSTRUCTIONS for question quality:**
+        1.  **Test Application:** Questions must require application of the concept, not just recall. Use scenarios or simple problems.
+        2.  **Plausible Options:** Incorrect options should be based on common mistakes students make.
+        3.  **Exam-Oriented:** The style should be suitable for reinforcing understanding for school and foundational competitive exams.
+        4.  **Clarity:** Ensure the question and explanation are clear and helpful.
+        5.  **Concept Title:** For the 'conceptTitle' field, you MUST use the exact title provided: "${concept.conceptTitle}".
 
         Concept Details for context:
         Explanation: ${concept.explanation}
@@ -511,39 +514,96 @@ const adaptiveActionSchema = {
     required: ['type', 'details']
 };
 
+const findWeakestAcademicArea = (performance: PerformanceRecord[], studentGrade: string): { subject: string, chapter: string } => {
+    const academicRecords = performance.filter(p => p.type === 'quiz' || p.type === 'exercise');
+    if (academicRecords.length > 0) {
+        academicRecords.sort((a, b) => a.score - b.score);
+        return { subject: academicRecords[0].subject, chapter: academicRecords[0].chapter };
+    }
+    const gradeData = CURRICULUM.find(g => g.level === studentGrade);
+    if (gradeData && gradeData.subjects.length > 0 && gradeData.subjects[0].chapters.length > 0) {
+        return { subject: gradeData.subjects[0].name, chapter: gradeData.subjects[0].chapters[0].title };
+    }
+    return { subject: 'Mathematics', chapter: 'Real Numbers' };
+};
+
 export const getAdaptiveNextStep = async (student: Student, language: string): Promise<AdaptiveAction> => {
+    const streak = await getLearningStreak(student.id);
+    const learningStreak = streak?.count || 0;
+
     const performanceSummary = student.performance.length > 0
-        ? student.performance.slice(0, 5).map(p => `- Scored ${p.score}% in ${p.chapter} (${p.subject})`).join('\n')
+        ? student.performance.slice(0, 10).map(p => `- Scored ${p.score}% in '${p.chapter}' (${p.subject}) on ${new Date(p.completedDate).toLocaleDateString()}`).join('\n')
         : "No performance data available yet.";
     
-    let weakSubject = null;
-    let weakChapter = null;
+    let curriculumContext = '';
     if (student.performance.length > 0) {
-        const sortedPerf = [...student.performance].sort((a,b) => a.score - b.score);
-        weakSubject = sortedPerf[0].subject;
-        weakChapter = sortedPerf[0].chapter;
+        const lastActivity = student.performance[0]; // Assumes performance is sorted date-descending
+        const gradeData = CURRICULUM.find(g => g.level === student.grade);
+        const subjectData = gradeData?.subjects.find(s => s.name === lastActivity.subject);
+        if (subjectData) {
+            const chapterTitles = subjectData.chapters.map(c => `'${c.title}'`).join(', ');
+            curriculumContext = `
+                **CURRICULUM CONTEXT for '${lastActivity.subject}':**
+                - The chapters are in this order: ${chapterTitles}.
+                - If you need to suggest a new chapter, find the last completed chapter in the student's history for that subject and suggest the one that comes after it in this list.
+            `;
+        }
     }
 
     const prompt = `
-        You are an expert, encouraging AI learning coach named Fitto. Your goal is to decide the single best next learning mission for a ${student.grade} student named ${student.name}.
-        The entire response must be in the ${language} language and strictly follow the provided JSON schema.
+        **SYSTEM ROLE:**
+        You are "Fitto", an AI Learning Strategist. Your goal is to implement an adaptive learning loop using a hybrid decision policy for the student described below. Your response must be in ${language} and strictly follow the provided JSON schema.
 
-        STUDENT CONTEXT:
+        **HYBRID DECISION POLICY:**
+        1.  **Safety & SEL Rules (Hard Constraints):** Prioritize student well-being. Inject social-emotional learning (SEL) activities or reviews when frustration or disengagement is detected.
+        2.  **Spaced Repetition Tuning (Mastery Rule):** For mastered skills (high scores), reduce practice frequency and introduce new or exploratory challenges to prevent boredom. For weak skills, increase practice frequency.
+        3.  **Contextual Bandit (Exploration Policy):** When unsure, or when a student is performing well, balance exploitation (choosing the highest-utility action, like reviewing a weak topic) with exploration (trying a different type of activity, like an IQ challenge, to see what engages the student).
+
+        **STUDENT MODEL:**
+        - Name: ${student.name}
         - Grade: ${student.grade}
-        - Recent Performance:
+        - Learning Streak: ${learningStreak} days. (A streak of 0 or 1 indicates low engagement).
+        - Recent Performance History (sorted by most recent first):
         ${performanceSummary}
 
-        RULES FOR DECIDING THE NEXT MISSION (in order of priority):
-        1. If it's been more than 4 academic missions since the last 'IQ_EXERCISE' or 'EQ_EXERCISE', there is a 50% chance you should recommend one of them to ensure holistic development. Choose one randomly and provide a fun reason.
-        2. If the student has performance data and their lowest score is below 65%, recommend 'ACADEMIC_REVIEW' for that specific chapter. The reasoning should be very encouraging, framing it as "strengthening the foundation".
-        3. If all recent scores are good (>= 65%), recommend 'ACADEMIC_NEW'. Identify the next logical chapter for the student to start.
-        4. If you can't determine the next chapter or there's no performance data, default to 'ACADEMIC_PRACTICE' on their most recently studied chapter to build confidence.
-        
-        YOUR TASK:
-        - Analyze the context and apply the rules to choose an 'AdaptiveActionType'.
-        - For academic actions, you MUST specify the 'subject' and 'chapter'. Use "${weakSubject || 'Mathematics'}" and "${weakChapter || 'Real Numbers'}" as your primary targets if needed.
-        - For IQ/EQ actions, specify a 'skill'.
-        - Write a compelling, personalized, and encouraging 'reasoning' string explaining *why* this is the perfect next mission for ${student.name}.
+        ${curriculumContext}
+
+        **STEP-BY-STEP ALGORITHM (Follow in strict priority order):**
+
+        **STEP 1: DETECT AFFECTIVE STATE (Safety & SEL Rules)**
+        *   **FRUSTRATION CHECK:** Analyze the last 5 activities. Has the student scored below 60% on the **exact same chapter** twice or more?
+        *   **IF YES (Frustrated):** The student needs an SEL intervention. Your *only* allowed actions are:
+            a) \`ACADEMIC_REVIEW\` of a clear prerequisite chapter to build foundational skills.
+            b) \`EQ_EXERCISE\` with the skill 'Resilience' to build a positive mindset.
+        *   Choose one of the above, provide your reasoning about rebuilding confidence, and **STOP**.
+
+        *   **ENGAGEMENT CHECK:** Is the learning streak less than 2 days?
+        *   **IF YES (Disengaged):** The student needs a motivation boost. There is a 50% chance you should recommend a non-academic, re-engaging task.
+        *   If this triggers, randomly choose between \`IQ_EXERCISE\` (any skill) or \`EQ_EXERCISE\` (any skill). The reasoning should be fun and low-pressure, like "Let's try a fun brain-teaser to warm up!" and **STOP**.
+
+        **STEP 2: APPLY SPACED REPETITION & MASTERY RULES**
+        *   **MASTERY CHECK (High-Performers):** Are all of the last 5 scores above 85%?
+        *   **IF YES (Mastery Achieved):** The student is excelling. Reduce practice frequency of old topics. There is a 60% chance you should choose an **exploration** action to prevent boredom:
+            a) \`ACADEMIC_NEW\`: The next logical chapter in their strongest subject.
+            b) \`IQ_EXERCISE\`: To sharpen adjacent cognitive skills.
+        *   If this rule applies, choose one and provide reasoning about "tackling a new challenge," then **STOP**.
+
+        *   **WEAKNESS CHECK (Increase Practice):** Find the performance record with the lowest score in recent history.
+        *   **IF the lowest score is below 80%:** This is the highest priority for learning gain.
+        *   The action is \`ACADEMIC_REVIEW\` for that specific subject and chapter.
+        *   Reasoning must be encouraging, framing it as an opportunity to "master a key concept." **CHOOSE THIS AND STOP**.
+
+        **STEP 3: DEFAULT (Contextual Bandit - Standard Progress)**
+        *   If none of the above rules have triggered a stop, it means the student is progressing steadily.
+        *   Default Action (Exploitation): \`ACADEMIC_NEW\`. Find the next logical chapter after their most recently completed one.
+        *   Exploration Chance (20%): As a bandit, you should sometimes explore. There's a 20% chance you can suggest an \`IQ_EXERCISE\` instead, with reasoning about "trying something different to keep learning fresh."
+
+        **YOUR TASK:**
+        - Execute the algorithm above.
+        - Select ONE action type: 'ACADEMIC_REVIEW', 'ACADEMIC_PRACTICE', 'ACADEMIC_NEW', 'IQ_EXERCISE', 'EQ_EXERCISE'.
+        - For academic actions, you MUST specify 'subject' and 'chapter'.
+        - For IQ/EQ, specify a 'skill'.
+        - Write a compelling, personalized, and encouraging 'reasoning' string that explains *why* this mission was chosen, referencing the student's state.
     `;
     
     try {
@@ -554,15 +614,11 @@ export const getAdaptiveNextStep = async (student: Student, language: string): P
         });
         const action = JSON.parse(response.text.trim()) as AdaptiveAction;
         
+        // Fallback logic in case the model fails to provide subject/chapter
         if (action.type.startsWith('ACADEMIC') && (!action.details.subject || !action.details.chapter)) {
-            const gradeData = CURRICULUM.find(g => g.level === student.grade);
-            if (weakSubject && weakChapter) {
-                action.details.subject = weakSubject;
-                action.details.chapter = weakChapter;
-            } else if (gradeData && gradeData.subjects[0] && gradeData.subjects[0].chapters[0]) {
-                action.details.subject = gradeData.subjects[0].name;
-                action.details.chapter = gradeData.subjects[0].chapters[0].title;
-            }
+            const weakArea = findWeakestAcademicArea(student.performance, student.grade);
+            action.details.subject = action.details.subject || weakArea.subject;
+            action.details.chapter = action.details.chapter || weakArea.chapter;
         }
         return action;
     } catch (error) {

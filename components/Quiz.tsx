@@ -8,9 +8,11 @@ interface QuizProps {
   onBack: () => void;
   chapterTitle: string;
   onFinish?: (result: { score: number, answers: {[key: number]: string} }) => void;
+  onLogEvent?: (eventName: string, attributes: any) => void;
+  isPostTest?: boolean;
 }
 
-const Quiz: React.FC<QuizProps> = React.memo(({ questions, onBack, chapterTitle, onFinish }) => {
+const Quiz: React.FC<QuizProps> = React.memo(({ questions, onBack, chapterTitle, onFinish, onLogEvent, isPostTest }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<{[key: number]: string}>({});
   const [showResults, setShowResults] = useState(false);
@@ -21,10 +23,21 @@ const Quiz: React.FC<QuizProps> = React.memo(({ questions, onBack, chapterTitle,
 
   const handleAnswerSelect = (option: string) => {
     if (isCurrentQuestionAnswered) return;
-    setSelectedAnswers({
-      ...selectedAnswers,
-      [currentQuestionIndex]: option,
-    });
+
+    const newAnswers = { ...selectedAnswers, [currentQuestionIndex]: option };
+    setSelectedAnswers(newAnswers);
+
+    if (onLogEvent) {
+        const question = questions[currentQuestionIndex];
+        const isCorrect = option === question.correctAnswer;
+        onLogEvent('item_attempt', {
+            item_id: question.question,
+            item_type: 'quiz_question',
+            correctness: isCorrect ? 1 : 0,
+            attempt_index: 1, // Simple implementation
+            response_time: null // Not tracked in this version
+        });
+    }
   };
 
   const handleNext = () => {
@@ -46,10 +59,24 @@ const Quiz: React.FC<QuizProps> = React.memo(({ questions, onBack, chapterTitle,
   }
 
   const handleFinish = () => {
-    const finalScore = Math.round((calculateScore() / questions.length) * 100);
-    setShowResults(true);
+    const finalScore = calculateScore();
+    const percentage = Math.round((finalScore / questions.length) * 100);
+    
+    if (isPostTest && onLogEvent) {
+        onLogEvent('posttest_submitted', {
+            score: percentage,
+            item_ids: questions.map(q => q.question)
+        });
+    }
+    
+    // For non-post-test quizzes, we show results.
+    // For post-tests, the parent component handles completion.
+    if (!isPostTest) {
+        setShowResults(true);
+    }
+
     if (onFinish) {
-      onFinish({ score: finalScore, answers: selectedAnswers });
+      onFinish({ score: percentage, answers: selectedAnswers });
     }
   };
 

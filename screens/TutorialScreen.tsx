@@ -131,6 +131,38 @@ const CompeteIllustration = () => (
         </g>
     </svg>
 );
+const CollaborationIllustration = () => (
+    <svg viewBox="0 0 100 80" className="w-auto h-24">
+        <style>
+            {`
+                @keyframes collaboration-line-draw { to { stroke-dashoffset: 0; } }
+                .collab-line {
+                    stroke-dasharray: 100;
+                    stroke-dashoffset: 100;
+                }
+                .collab-line-1 { animation: collaboration-line-draw 1s ease-out 0.5s forwards; }
+                .collab-line-2 { animation: collaboration-line-draw 1s ease-out 0.7s forwards; }
+                @keyframes collaboration-pop-in { from { transform: scale(0); } to { transform: scale(1); } }
+                .collab-pop { animation: collaboration-pop-in 0.5s ease-out forwards; }
+            `}
+        </style>
+        {/* Globe */}
+        <circle cx="50" cy="50" r="20" fill="rgba(var(--c-primary), 0.1)" stroke="rgb(var(--c-primary))" strokeWidth="1.5" />
+        <path d="M50 30 C 65 40, 65 60, 50 70" fill="none" stroke="rgb(var(--c-primary))" strokeWidth="1" opacity="0.5"/>
+        <path d="M35 40 C 45 45, 45 55, 35 60" fill="none" stroke="rgb(var(--c-primary))" strokeWidth="1" opacity="0.5"/>
+
+        {/* Avatars */}
+        <circle cx="15" cy="50" r="8" fill="rgb(var(--c-surface))" stroke="rgb(var(--c-accent))" strokeWidth="2" className="collab-pop" style={{animationDelay: '0.2s'}} />
+        <circle cx="85" cy="50" r="8" fill="rgb(var(--c-surface))" stroke="rgb(var(--c-accent))" strokeWidth="2" className="collab-pop" style={{animationDelay: '0.4s'}}/>
+
+        {/* Project Icon */}
+        <rect x="45" y="15" width="10" height="10" rx="2" fill="rgb(var(--c-success))" className="collab-pop" style={{animationDelay: '1s'}}/>
+
+        {/* Connecting Lines */}
+        <path d="M23 48 Q 40 30, 48 24" stroke="rgb(var(--c-accent))" strokeWidth="1.5" fill="none" className="collab-line collab-line-1" />
+        <path d="M77 48 Q 60 30, 52 24" stroke="rgb(var(--c-accent))" strokeWidth="1.5" fill="none" className="collab-line collab-line-2" />
+    </svg>
+);
 const ReadyIllustration = () => (
     <svg viewBox="0 0 100 80" className="w-auto h-24">
         <g>
@@ -188,8 +220,13 @@ const TutorialScreen: React.FC<TutorialScreenProps> = ({ onFinish }) => {
         },
         {
             illustration: <CompeteIllustration />,
-            titleKey: 'tutorialTitle_Compete',
-            descKey: 'tutorialDesc_Compete',
+            titleKey: 'tutorialTitle_CompeteGlory',
+            descKey: 'tutorialDesc_CompeteGlory',
+        },
+        {
+            illustration: <CollaborationIllustration />,
+            titleKey: 'tutorialTitle_CollaborateCreate',
+            descKey: 'tutorialDesc_CollaborateCreate',
         },
         {
             illustration: <ReadyIllustration />,

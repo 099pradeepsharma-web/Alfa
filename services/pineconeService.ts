@@ -274,6 +274,28 @@ export const setWellbeingModuleStatus = async (studentId: string, isAssigned: bo
     await db.setDoc('cache', key, isAssigned);
 };
 
+/**
+ * Checks if Leadership Circle participation has been enabled by a parent.
+ * @param studentId The ID of the student.
+ * @returns A promise that resolves to true if enabled, false otherwise.
+ */
+export const getLeadershipCircleStatus = async (studentId: string): Promise<boolean> => {
+    const key = `leadership-circle-enabled-${studentId}`;
+    const status = await db.getDoc<boolean>('cache', key);
+    return status === true;
+};
+
+/**
+ * Sets the enabled status of the Leadership Circle for a student.
+ * @param studentId The ID of the student.
+ * @param isEnabled The enabled status.
+ */
+export const setLeadershipCircleStatus = async (studentId: string, isEnabled: boolean): Promise<void> => {
+    const key = `leadership-circle-enabled-${studentId}`;
+    await db.setDoc('cache', key, isEnabled);
+};
+
+
 // --- New Functions for Achievements ---
 
 /**

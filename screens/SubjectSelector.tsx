@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Grade, Subject, Chapter, NextStepRecommendation } from '../types';
 import { ArrowLeftIcon, ChevronDownIcon, DocumentChartBarIcon, RocketLaunchIcon, BookOpenIcon } from '@heroicons/react/24/solid';
-import DiagnosticTest from './DiagnosticTest';
+import DiagnosticTest from '../components/DiagnosticTest';
 import { useLanguage } from '../contexts/Language-context';
-import { getIcon } from './IconMap';
-import RemediationScreen from '../screens/RemediationScreen';
+import { getIcon } from '../components/IconMap';
+import RemediationScreen from './RemediationScreen';
 import { useAuth } from '../contexts/AuthContext';
 
 interface SubjectSelectorProps {

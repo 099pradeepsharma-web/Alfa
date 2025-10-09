@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Student } from '../types';
 import { ArrowLeftIcon, ChevronRightIcon, CheckCircleIcon, CheckBadgeIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from '../contexts/Language-context';
-import { getWellbeingModuleStatus, setWellbeingModuleStatus } from '../services/pineconeService';
+import { getWellbeingModuleStatus, setWellbeingModuleStatus, getLeadershipCircleStatus, setLeadershipCircleStatus } from '../services/pineconeService';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 interface ParentDashboardProps {
@@ -13,23 +13,41 @@ interface ParentDashboardProps {
 
 export const ParentDashboard: React.FC<ParentDashboardProps> = React.memo(({ child, onSelectStudent, onBack }) => {
   const { t, tCurriculum } = useLanguage();
-  const [agreed, setAgreed] = useState(false);
-  const [isAssigned, setIsAssigned] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [agreedWellbeing, setAgreedWellbeing] = useState(false);
+  const [isWellbeingAssigned, setIsWellbeingAssigned] = useState(false);
+  const [isLoadingWellbeing, setIsLoadingWellbeing] = useState(true);
+  
+  const [agreedLeadership, setAgreedLeadership] = useState(false);
+  const [isLeadershipEnabled, setIsLeadershipEnabled] = useState(false);
+  const [isLoadingLeadership, setIsLoadingLeadership] = useState(true);
 
   useEffect(() => {
-    const checkStatus = async () => {
-        setIsLoading(true);
-        const status = await getWellbeingModuleStatus(child.id);
-        setIsAssigned(status);
-        setIsLoading(false);
+    const checkStatuses = async () => {
+        setIsLoadingWellbeing(true);
+        setIsLoadingLeadership(true);
+
+        const [wellbeingStatus, leadershipStatus] = await Promise.all([
+            getWellbeingModuleStatus(child.id),
+            getLeadershipCircleStatus(child.id)
+        ]);
+        
+        setIsWellbeingAssigned(wellbeingStatus);
+        setIsLeadershipEnabled(leadershipStatus);
+
+        setIsLoadingWellbeing(false);
+        setIsLoadingLeadership(false);
     };
-    checkStatus();
+    checkStatuses();
   }, [child.id]);
 
   const handleAssignModule = async () => {
     await setWellbeingModuleStatus(child.id, true);
-    setIsAssigned(true);
+    setIsWellbeingAssigned(true);
+  };
+  
+  const handleEnableLeadership = async () => {
+    await setLeadershipCircleStatus(child.id, true);
+    setIsLeadershipEnabled(true);
   };
 
   return (
@@ -75,9 +93,9 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = React.memo(({ chi
                     Assign the "The Great Transformation" module to help your child navigate their journey from teen to adult.
                 </p>
 
-                {isLoading ? (
+                {isLoadingWellbeing ? (
                     <div className="mt-4 flex justify-center"><LoadingSpinner /></div>
-                ) : isAssigned ? (
+                ) : isWellbeingAssigned ? (
                     <div className="mt-4 p-3 bg-surface text-text-primary rounded-lg font-semibold text-center flex items-center justify-center gap-2">
                         <CheckCircleIcon className="h-5 w-5 text-status-success" />
                         Module has been assigned to {child.name}.
@@ -89,8 +107,8 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = React.memo(({ chi
                                 id="terms-agree"
                                 type="checkbox"
                                 className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary mt-0.5"
-                                checked={agreed}
-                                onChange={(e) => setAgreed(e.target.checked)}
+                                checked={agreedWellbeing}
+                                onChange={(e) => setAgreedWellbeing(e.target.checked)}
                             />
                             <label htmlFor="terms-agree" className="text-sm text-text-secondary">
                                 I have reviewed the module's objectives and agree to assign this sensitive but important content to my child. I understand it covers topics related to adolescent development.
@@ -99,10 +117,49 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = React.memo(({ chi
                         <div className="mt-4 text-right">
                             <button
                                 onClick={handleAssignModule}
-                                disabled={!agreed}
+                                disabled={!agreedWellbeing}
                                 className="px-4 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm hover:bg-bg-primary transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Assign to {child.name}
+                            </button>
+                        </div>
+                    </>
+                )}
+            </div>
+            
+            <div className="mt-8 bg-bg-primary p-6 rounded-xl border border-border">
+                <h3 className="text-xl font-bold text-text-primary">Global Collaboration: Leadership Circle</h3>
+                <p className="text-sm text-text-secondary mt-1">
+                    Enable access for your child to participate in moderated, project-based collaborations with students from around the world. This feature helps develop communication, teamwork, and global awareness skills.
+                </p>
+                {isLoadingLeadership ? (
+                    <div className="mt-4 flex justify-center"><LoadingSpinner /></div>
+                ) : isLeadershipEnabled ? (
+                    <div className="mt-4 p-3 bg-surface text-text-primary rounded-lg font-semibold text-center flex items-center justify-center gap-2">
+                        <CheckCircleIcon className="h-5 w-5 text-status-success" />
+                        Leadership Circle is enabled for {child.name}.
+                    </div>
+                ) : (
+                    <>
+                        <div className="mt-4 flex items-start space-x-3">
+                            <input
+                                id="leadership-agree"
+                                type="checkbox"
+                                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary mt-0.5"
+                                checked={agreedLeadership}
+                                onChange={(e) => setAgreedLeadership(e.target.checked)}
+                            />
+                            <label htmlFor="leadership-agree" className="text-sm text-text-secondary">
+                                I understand that the Leadership Circle involves moderated communication with students from other countries, and I consent to my child's participation.
+                            </label>
+                        </div>
+                        <div className="mt-4 text-right">
+                            <button
+                                onClick={handleEnableLeadership}
+                                disabled={!agreedLeadership}
+                                className="px-4 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm hover:bg-bg-primary transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Enable Access for {child.name}
                             </button>
                         </div>
                     </>

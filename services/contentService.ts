@@ -1,4 +1,4 @@
-import { LearningModule, Student, Chapter } from '../types';
+import { LearningModule, Student, Chapter, Topic } from '../types';
 import * as geminiService from './geminiService';
 import * as pineconeService from './pineconeService';
 import { retrieveFromRag } from '../data/ragContent';
@@ -62,6 +62,18 @@ export const getChapterContent = async (
     } catch (error) {
         console.error(`Critical error: AI content generation failed for ${dbKey}.`, error);
         
+        // Helper function to flatten nested topics
+        const flattenTopics = (topics: Topic[]): string[] => {
+            let flatList: string[] = [];
+            topics.forEach(topic => {
+                flatList.push(topic.title);
+                if (topic.subTopics) {
+                    flatList = flatList.concat(flattenTopics(topic.subTopics));
+                }
+            });
+            return flatList;
+        };
+
         const fallbackContent: LearningModule = {
             chapterTitle: chapter.title,
             missionBriefing: [{
@@ -70,8 +82,8 @@ export const getChapterContent = async (
                 description: "We're having trouble connecting to our AI. Please check your connection and try again.",
                 pushNotification: "Can't load lesson. Tap to retry."
             }],
-            coreConceptTraining: chapter.topics.map(topic => ({
-                title: topic,
+            coreConceptTraining: flattenTopics(chapter.topics).map(topicTitle => ({
+                title: topicTitle,
                 explanation: "We're having trouble connecting to our AI to generate this lesson. This may be due to a connection issue or high demand on our AI services. Please try again in a few moments.",
                 knowledgeCheck: []
             })),
