@@ -1,7 +1,7 @@
 import { StudentQuestion, PerformanceRecord, AIFeedback, Achievement, StudyGoal } from '../types';
 
 const DB_NAME = 'AlfanumrikDB';
-const DB_VERSION = 1;
+const DB_VERSION = 3; // Incremented version to add user stores
 let db: IDBDatabase;
 
 // List of "tables" in our database
@@ -17,7 +17,10 @@ const STORES = [
     'videos',
     'conceptMaps',
     'achievements',
-    'studyGoals'
+    'studyGoals',
+    'users',
+    'teachers',
+    'parents'
 ];
 
 /**
@@ -53,7 +56,6 @@ const openDb = (): Promise<IDBDatabase> => {
                             questionStore.createIndex('studentId', 'studentId', { unique: false });
                             break;
                         case 'performance':
-                            // Using autoIncrement as PerformanceRecord has no unique ID
                             const perfStore = tempDb.createObjectStore('performance', { autoIncrement: true });
                             perfStore.createIndex('studentId', 'studentId', { unique: false });
                             break;
@@ -68,8 +70,18 @@ const openDb = (): Promise<IDBDatabase> => {
                             const goalStore = tempDb.createObjectStore('studyGoals', { keyPath: 'id' });
                             goalStore.createIndex('studentId', 'studentId', { unique: false });
                             break;
+                        case 'users':
+                            const userStore = tempDb.createObjectStore('users', { keyPath: 'id' });
+                            userStore.createIndex('email', 'email', { unique: true });
+                            break;
+                        case 'teachers':
+                             tempDb.createObjectStore('teachers', { keyPath: 'id' });
+                             break;
+                        case 'parents':
+                             tempDb.createObjectStore('parents', { keyPath: 'id' });
+                             break;
                         default:
-                            // For simple key-value stores like modules, reports, etc.
+                            // For simple key-value stores
                             tempDb.createObjectStore(storeName);
                             break;
                     }
@@ -89,34 +101,33 @@ const promisifyRequest = <T>(request: IDBRequest<T>): Promise<T> => {
 
 // --- API Implementation using IndexedDB ---
 
-type ObjectTables = 'modules' | 'reports' | 'progress' | 'diagrams' | 'cache' | 'videos' | 'conceptMaps';
-type ArrayTables = 'questions' | 'performance' | 'feedback' | 'achievements' | 'studyGoals';
+type ObjectStoreName = typeof STORES[number];
 
 /**
- * Gets a document from an object-based table by its ID.
+ * Gets a document from a table by its key.
  */
-export const getDoc = async <T>(table: ObjectTables, id: string | number): Promise<T | null> => {
+export const getDoc = async <T>(table: ObjectStoreName, key: IDBValidKey): Promise<T | null> => {
     const db = await openDb();
     const tx = db.transaction(table, 'readonly');
     const store = tx.objectStore(table);
-    const result = await promisifyRequest<T>(store.get(id as any)); // `any` for key flexibility
+    const result = await promisifyRequest<T>(store.get(key));
     return result ?? null;
 };
 
 /**
- * Sets (creates or overwrites) a document in an object-based table.
+ * Sets (creates or overwrites) a document in a table.
  */
-export const setDoc = async <T>(table: ObjectTables, id: string, data: T): Promise<void> => {
+export const setDoc = async <T>(table: ObjectStoreName, key: IDBValidKey, data: T): Promise<void> => {
     const db = await openDb();
     const tx = db.transaction(table, 'readwrite');
     const store = tx.objectStore(table);
-    await promisifyRequest(store.put(data, id));
+    await promisifyRequest(store.put(data, key));
 };
 
 /**
- * Adds a document to a collection (array-based table).
+ * Adds a document to a collection (table).
  */
-export const addDocToCollection = async (table: ArrayTables, doc: any): Promise<void> => {
+export const addDocToCollection = async (table: ObjectStoreName, doc: any): Promise<void> => {
     const db = await openDb();
     const tx = db.transaction(table, 'readwrite');
     const store = tx.objectStore(table);
@@ -124,23 +135,10 @@ export const addDocToCollection = async (table: ArrayTables, doc: any): Promise<
 };
 
 /**
- * Queries a collection (array-based table) for documents matching a predicate.
- * This performs a full table scan and filters in memory, similar to the old implementation,
- * but is much more efficient as it doesn't parse the entire DB string.
- */
-export const queryCollection = async <T>(table: ArrayTables, predicate: (item: T) => boolean): Promise<T[]> => {
-    const db = await openDb();
-    const tx = db.transaction(table, 'readonly');
-    const store = tx.objectStore(table);
-    const allItems = await promisifyRequest<T[]>(store.getAll());
-    return allItems.filter(predicate);
-};
-
-/**
  * Queries a collection using an index for high performance.
  */
 export const queryCollectionByIndex = async <T>(
-    table: ArrayTables, 
+    table: ObjectStoreName, 
     indexName: string, 
     queryValue: IDBValidKey
 ): Promise<T[]> => {
@@ -153,22 +151,52 @@ export const queryCollectionByIndex = async <T>(
 };
 
 /**
- * Updates a document in a collection by finding it via ID and replacing it.
+ * Updates a document in a collection by its key.
  */
-export const updateDocInCollection = async (table: 'questions' | 'studyGoals', id: string, updatedDoc: any): Promise<void> => {
+export const updateDocInCollection = async (table: 'questions' | 'studyGoals' | 'users' | 'teachers' | 'parents', key: IDBValidKey, updatedDoc: any): Promise<void> => {
     const db = await openDb();
     const tx = db.transaction(table, 'readwrite');
     const store = tx.objectStore(table);
-    // put() will update if key exists, which is ideal here.
     await promisifyRequest(store.put(updatedDoc));
 };
 
 /**
- * Deletes a document from a collection by its ID.
+ * Deletes a document from a collection by its key.
  */
-export const deleteDocInCollection = async (table: ArrayTables, id: string): Promise<void> => {
+export const deleteDocInCollection = async (table: ObjectStoreName, key: IDBValidKey): Promise<void> => {
     const db = await openDb();
     const tx = db.transaction(table, 'readwrite');
     const store = tx.objectStore(table);
-    await promisifyRequest(store.delete(id));
+    await promisifyRequest(store.delete(key));
+};
+
+/**
+ * Gets all documents from a table.
+ */
+export const getAllDocs = async <T>(table: ObjectStoreName): Promise<T[]> => {
+    const db = await openDb();
+    const tx = db.transaction(table, 'readonly');
+    const store = tx.objectStore(table);
+    const result = await promisifyRequest<T[]>(store.getAll());
+    return result ?? [];
+};
+
+/**
+ * Clears all documents from an object store.
+ */
+export const clearStore = async (table: ObjectStoreName): Promise<void> => {
+    const db = await openDb();
+    const tx = db.transaction(table, 'readwrite');
+    const store = tx.objectStore(table);
+    await promisifyRequest(store.clear());
+};
+
+/**
+ * Counts the number of documents in a store.
+ */
+export const countDocs = async (table: ObjectStoreName): Promise<number> => {
+    const db = await openDb();
+    const tx = db.transaction(table, 'readonly');
+    const store = tx.objectStore(table);
+    return await promisifyRequest(store.count());
 };

@@ -34,6 +34,7 @@ const GradeCard: React.FC<{ grade: Grade; onSelect: () => void; }> = React.memo(
             onClick={onSelect}
             className="group dashboard-highlight-card p-6 rounded-2xl text-left flex flex-col justify-between items-start"
             style={{ minHeight: '150px' }}
+            data-sound="click"
         >
             <div className="relative z-10">
                 <h3 className="text-xl font-bold text-text-primary group-hover:text-primary transition-colors">{tCurriculum(grade.level)}</h3>
@@ -51,7 +52,7 @@ const GradeSelector: React.FC<GradeSelectorProps> = ({ grades, onSelect, onBack 
   return (
     <div className="animate-fade-in">
       <div className="flex items-center mb-6">
-        <button onClick={onBack} className="flex items-center text-text-secondary hover:text-text-primary font-semibold transition">
+        <button onClick={onBack} className="flex items-center text-text-secondary hover:text-text-primary font-semibold transition" data-sound="click">
           <ArrowLeftIcon className="h-5 w-5 mr-2" />
           {t('backToDashboard')}
         </button>

@@ -3,8 +3,9 @@ import { Student, AdaptiveAction, LearningStreak, StudyGoal } from '../types';
 import { getLearningStreak } from '../services/pineconeService';
 import { getAdaptiveNextStep, generateStudyGoalSuggestions } from '../services/geminiService';
 import { useLanguage } from '../contexts/Language-context';
-import { ArrowRightIcon, BookOpenIcon, SparklesIcon, PuzzlePieceIcon, HeartIcon, TrophyIcon, MagnifyingGlassIcon, FireIcon, QuestionMarkCircleIcon, CubeIcon, UsersIcon, GlobeAltIcon, UserGroupIcon, ChatBubbleLeftRightIcon, BriefcaseIcon, Bars3Icon, ClipboardDocumentCheckIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/solid';
+import { ArrowRightIcon, BookOpenIcon, SparklesIcon, PuzzlePieceIcon, HeartIcon, TrophyIcon, MagnifyingGlassIcon, FireIcon, QuestionMarkCircleIcon, CubeIcon, UsersIcon, GlobeAltIcon, UserGroupIcon, ChatBubbleLeftRightIcon, BriefcaseIcon, Bars3Icon, ClipboardDocumentCheckIcon, PlusIcon, XMarkIcon, AcademicCapIcon } from '@heroicons/react/24/solid';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useSound } from '../hooks/useSound';
 
 const StatsCard: React.FC<{ icon: React.ElementType; label: string; value: string | number; colorClass: string; className?: string, style?: React.CSSProperties }> = ({ icon: Icon, label, value, colorClass, className, style }) => (
     <div className={`dashboard-highlight-card p-4 flex items-center gap-4 ${className}`} style={style}>
@@ -34,6 +35,7 @@ interface StudentDashboardProps {
   onStartCompetitions: () => void;
   onStartProjectHub: () => void;
   onStartPeerPedia: () => void;
+  onStartExamPrep: () => void;
   onAddGoal: (text: string) => Promise<void>;
   onToggleGoal: (goal: StudyGoal) => Promise<void>;
   onRemoveGoal: (goal: StudyGoal) => Promise<void>;
@@ -80,7 +82,7 @@ const MissionCard: React.FC<{ onStartMission: () => void, student: Student }> = 
                     </div>
                 </div>
             
-                <div className="mt-6 bg-slate-900/50 p-4 rounded-lg border border-border">
+                <div className="mt-6 bg-surface p-4 rounded-lg border border-border">
                     <p className="font-semibold text-sm text-primary mb-1 flex items-center gap-2">
                         <SparklesIcon className="h-5 w-5"/>
                         AI Recommendation
@@ -93,6 +95,7 @@ const MissionCard: React.FC<{ onStartMission: () => void, student: Student }> = 
                 <button
                     onClick={onStartMission}
                     className="flex items-center justify-center w-full md:w-auto px-6 py-3 btn-accent"
+                    data-sound="swoosh"
                 >
                     <span>{t('launchMission')}</span>
                     <ArrowRightIcon className="h-5 w-5 ml-2" />
@@ -103,7 +106,7 @@ const MissionCard: React.FC<{ onStartMission: () => void, student: Student }> = 
 };
 
 const FeatureCard: React.FC<{ icon: React.ElementType; title: string; description: string; onClick: () => void; }> = ({ icon: Icon, title, description, onClick }) => (
-    <button onClick={onClick} className="command-card w-full p-4 rounded-xl flex items-center gap-4 text-left">
+    <button onClick={onClick} className="command-card w-full p-4 rounded-xl flex items-center gap-4 text-left" data-sound="click">
        <Icon className="h-6 w-6 text-primary flex-shrink-0" />
        <div className="flex-grow">
             <h3 className="font-bold text-text-primary text-base">{title}</h3>
@@ -128,11 +131,13 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({
     onStartCompetitions,
     onStartProjectHub,
     onStartPeerPedia,
+    onStartExamPrep,
     onAddGoal,
     onToggleGoal,
     onRemoveGoal
 }) => {
     const { t, language } = useLanguage();
+    const { playSound } = useSound();
     const [learningStreak, setLearningStreak] = useState(0);
     const [newGoalText, setNewGoalText] = useState('');
     const [isAddingGoal, setIsAddingGoal] = useState(false);
@@ -170,6 +175,9 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
 
     const handleToggleGoal = async (goal: StudyGoal) => {
+        if (!goal.isCompleted) {
+            playSound('complete');
+        }
         await onToggleGoal(goal);
     };
 
@@ -198,17 +206,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 <h1 className="text-4xl font-bold text-text-primary">
                     {t('welcomeBack', { name: student.name.split(' ')[0] })}
                 </h1>
-                <p className="text-lg text-text-secondary mt-1">Your Epic Quest for Academic Mastery</p>
-            </div>
-
-            <div className="dashboard-highlight-card p-6">
-                <div className="flex justify-between items-center mb-2">
-                    <h2 className="text-lg font-bold text-text-primary">Overall Quest Progress</h2>
-                    <span className="font-bold text-accent xp-display">{Math.round(overallProgress)}%</span>
-                </div>
-                <div className="quest-progress-bar-container">
-                    <div className="quest-progress-bar" style={{width: `${overallProgress}%`}}></div>
-                </div>
+                <p className="text-lg text-text-secondary mt-1">{t('dashboardSubtitle')}</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -220,26 +218,22 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
                 {/* Main Content Area (Left) */}
                 <div className="lg:col-span-2 space-y-8">
-                    <div>
-                        <h2 className="text-2xl font-bold text-text-primary">Mission Hub</h2>
-                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <FeatureCard icon={MagnifyingGlassIcon} title="Syllabus Browser" description="Explore chapters, concepts, and practice." onClick={onBrowse} />
-                            <FeatureCard icon={ChatBubbleLeftRightIcon} title="AI Doubt Solver" description="Get instant help on any topic." onClick={onStartDoubtSolver} />
-                            <FeatureCard icon={BriefcaseIcon} title={t('careerCompassTitle')} description={t('careerCompassDesc')} onClick={onStartCareerGuidance} />
-                            <FeatureCard icon={TrophyIcon} title={t('competitionHubTitle')} description={t('competitionHubDesc')} onClick={onStartCompetitions} />
-
-                        </div>
+                    <div className="dashboard-highlight-card">
+                        <MissionCard onStartMission={onStartMission} student={student} />
                     </div>
                     
                     <div>
-                        <h2 className="text-2xl font-bold text-text-primary">Collaborate & Create</h2>
-                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <FeatureCard icon={CubeIcon} title="Innovation Lab" description="Solve real-world problems." onClick={onStartInnovationLab} />
-                            <FeatureCard icon={PuzzlePieceIcon} title={t('ctGymTitle')} description={t('ctGymDescription')} onClick={onStartCriticalThinking} />
-                            <FeatureCard icon={UsersIcon} title={t('pblHubTitle')} description={t('pblHubDesc')} onClick={onStartProjectHub} />
-                            <FeatureCard icon={UserGroupIcon} title={t('peerPediaTitle')} description={t('peerPediaDesc')} onClick={onStartPeerPedia} />
-                            <FeatureCard icon={GlobeAltIcon} title="Global Prep" description="Practice for SAT, ACT, & more." onClick={onStartGlobalPrep} />
-                            <FeatureCard icon={UserGroupIcon} title="Leadership Circle" description="Join debates & collaborations." onClick={onStartLeadershipCircle} />
+                        <h2 className="text-2xl font-bold text-text-primary">The Alfanumrik Advantage</h2>
+                        <p className="text-text-secondary text-sm mb-4">Explore our exclusive AI-powered tools to accelerate your learning.</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                           <FeatureCard icon={PuzzlePieceIcon} title={t('ctGymTitle')} description={t('ctGymDescription')} onClick={onStartCriticalThinking} />
+                           <FeatureCard icon={GlobeAltIcon} title={t('globalPrepTitle')} description={t('globalPrepDescription')} onClick={onStartGlobalPrep} />
+                           <FeatureCard icon={BriefcaseIcon} title={t('careerCompassTitle')} description={t('careerCompassDesc')} onClick={onStartCareerGuidance} />
+                           <FeatureCard icon={CubeIcon} title={t('alfanumrikLabTitle')} description={t('adaptiveStoryGeneratorDesc')} onClick={onStartInnovationLab} />
+                           <FeatureCard icon={UserGroupIcon} title={t('leadershipCircleTitle')} description={t('leadershipCircleDesc')} onClick={onStartLeadershipCircle} />
+                           <FeatureCard icon={UsersIcon} title={t('pblHubTitle')} description={t('pblHubDesc')} onClick={onStartProjectHub} />
+                           <FeatureCard icon={TrophyIcon} title={t('competitionHubTitle')} description={t('competitionHubDesc')} onClick={onStartCompetitions} />
+                           <FeatureCard icon={SparklesIcon} title={t('peerPediaTitle')} description={t('peerPediaDesc')} onClick={onStartPeerPedia} />
                         </div>
                     </div>
                 </div>
@@ -261,13 +255,13 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({
                                 className="flex-grow"
                                 aria-label="New study goal"
                             />
-                            <button type="submit" className="btn-accent p-3 flex-shrink-0" disabled={isAddingGoal || !newGoalText.trim()} aria-label="Set Goal">
+                            <button type="submit" className="btn-accent p-3 flex-shrink-0" disabled={isAddingGoal || !newGoalText.trim()} aria-label="Set Goal" data-sound="click">
                                 {isAddingGoal ? <LoadingSpinner /> : <PlusIcon className="h-5 w-5"/>}
                             </button>
                         </form>
 
                         <div className="my-4 pt-4 border-t border-dashed border-border text-center">
-                            <button onClick={handleSuggestGoals} disabled={isSuggesting} className="flex items-center justify-center mx-auto px-4 py-2 text-sm bg-surface border border-border text-text-primary font-semibold rounded-lg hover:bg-bg-primary transition shadow-sm disabled:opacity-50">
+                            <button onClick={handleSuggestGoals} disabled={isSuggesting} className="flex items-center justify-center mx-auto px-4 py-2 text-sm bg-surface border border-border text-text-primary font-semibold rounded-lg hover:bg-bg-primary transition shadow-sm disabled:opacity-50" data-sound="click">
                                 {isSuggesting ? (
                                     <><LoadingSpinner /><span className="ml-2">Getting suggestions...</span></>
                                 ) : (
@@ -282,6 +276,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({
                                             key={index}
                                             onClick={() => setNewGoalText(suggestion)}
                                             className="w-full text-left p-2 text-sm bg-bg-primary rounded-md hover:bg-surface border border-transparent hover:border-border transition"
+                                            data-sound="click"
                                         >
                                             {suggestion}
                                         </button>
@@ -304,7 +299,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({
                                         <label htmlFor={`goal-${goal.id}`} className="flex-grow cursor-pointer text-text-primary">
                                             {goal.text}
                                         </label>
-                                        <button onClick={() => handleRemoveGoal(goal)} className="todo-delete-btn" aria-label={`Remove goal: ${goal.text}`}>
+                                        <button onClick={() => handleRemoveGoal(goal)} className="todo-delete-btn" aria-label={`Remove goal: ${goal.text}`} data-sound="click">
                                             <XMarkIcon className="h-4 w-4" />
                                         </button>
                                     </div>
@@ -315,9 +310,12 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({
                         </div>
                     </div>
 
-                    {/* Today's Mission */}
-                    <div className="dashboard-highlight-card">
-                        <MissionCard onStartMission={onStartMission} student={student} />
+                    <div className="dashboard-highlight-card p-6">
+                        <h2 className="text-2xl font-bold text-text-primary">Study Library</h2>
+                        <p className="text-text-secondary text-sm mt-1 mb-4">Explore your curriculum.</p>
+                        <FeatureCard icon={MagnifyingGlassIcon} title="Browse Syllabus" description="Explore chapters, concepts, and practice." onClick={onBrowse} />
+                        <FeatureCard icon={ChatBubbleLeftRightIcon} title="AI Doubt Solver" description="Get instant help on any topic." onClick={onStartDoubtSolver} />
+                        <FeatureCard icon={AcademicCapIcon} title={t('examPrepCenterTitle')} description={t('examPrepCenterDesc')} onClick={onStartExamPrep} />
                     </div>
                 </div>
             </div>

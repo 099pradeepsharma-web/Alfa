@@ -45,7 +45,6 @@ const questionBankSchema = {
 
 
 export const generateQuestionBankQuestions = async (grade: string, subject: string, chapter: string, language: string): Promise<QuestionBankItem[]> => {
-    // FIX: Escaped inner backticks in the prompt string to prevent syntax errors.
     const prompt = `
         Act as an expert question paper setter for the Indian CBSE curriculum. Your task is to generate a comprehensive and diverse sample of 25-30 questions for a question bank.
         The questions must be for a ${grade} student, studying the chapter "${chapter}" in the subject "${subject}".

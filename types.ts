@@ -1,4 +1,4 @@
-
+// --- Core Curriculum & User Types ---
 
 export interface Topic {
   title: string;
@@ -7,8 +7,9 @@ export interface Topic {
 
 export interface Chapter {
   title: string;
-  tags?: string[];
+  // imageUrl?: string; // This is part of the LearningModule now, not the static curriculum.
   topics: Topic[];
+  tags?: string[];
 }
 
 export interface Subject {
@@ -23,110 +24,15 @@ export interface Grade {
   subjects: Subject[];
 }
 
-export interface Concept {
-  conceptTitle: string;
-  explanation: string;
-  realWorldExample: string;
-  diagramDescription: string;
-}
-
-// --- NEW "GAMIFIED, HOOK-DRIVEN" LEARNING MODULE STRUCTURE ---
-
-export interface Trigger {
-    triggerType: 'paradoxicalQuestion' | 'realWorldVideo' | 'interdisciplinaryConnection';
-    title: string; // The main hook/question.
-    description: string; // Elaboration or context. For 'realWorldVideo', this is the video prompt.
-    pushNotification: string; // A short, punchy text for a push notification.
-}
-
-export interface CoreConceptLesson {
-    title: string;
-    videoUrl?: string; // or videoPrompt for generation
-    videoPrompt?: string;
-    explanation: string;
-    knowledgeCheck: QuizQuestion[]; // 2 questions
-}
-
-export interface PracticeProblem {
-    level: 'Level 1: NCERT Basics' | 'Level 2: Reference Application' | 'Level 3: Competitive Challenge';
-    problemStatement: string;
-    solution: string;
-}
-
-export interface XpReward {
-    type: 'xp';
-    points: number;
-}
-export interface VideoReward {
-    type: 'video';
-    title: string;
-    videoPrompt: string;
-}
-
-export interface PracticeArena {
-    problems: PracticeProblem[];
-    reward?: XpReward | VideoReward;
-}
-
-export interface PracticalApplicationLab {
-    type: 'virtualLab' | 'simulation' | 'project';
-    title: string;
-    description: string;
-    labInstructions?: string;
-}
-
-export interface LearningModule {
-  chapterTitle: string;
-  missionBriefing: Trigger[];
-  coreConceptTraining: CoreConceptLesson[];
-  practiceArena: PracticeArena;
-  practicalApplicationLab: PracticalApplicationLab;
-  bossFight: QuizQuestion[]; // The final chapter test
-  // FIX: Added optional 'categorizedProblems' to support lazy-loading sections in ConceptCard.tsx.
-  categorizedProblems?: CategorizedProblems;
-}
-
-
-export interface QuizQuestion {
-  question: string;
-  options: string[];
-  correctAnswer: string;
-  explanation: string;
-  conceptTitle: string; // Link question to a specific concept
-  type?: 'ACADEMIC' | 'IQ' | 'EQ';
-  skill?: string;
-  difficulty?: 'Easy' | 'Medium' | 'Hard';
-}
-
-// New type for adaptive learning recommendation
-export interface NextStepRecommendation {
-    recommendationText: string;
-    nextChapterTitle: string | null;
-    action: 'REVIEW' | 'CONTINUE' | 'REVISE_PREREQUISITE' | 'START_CRITICAL_THINKING' | 'START_WELLBEING';
-    prerequisiteChapterTitle?: string | null;
-}
-
-
-// New types for Teacher/Parent roles
 export interface PerformanceRecord {
   subject: string;
   chapter: string;
-  score: number; // as a percentage
+  score: number;
   completedDate: string;
   type?: 'quiz' | 'exercise' | 'iq' | 'eq';
-  context?: string; // e.g., concept title for exercises, or skill for IQ/EQ
+  context?: string;
 }
 
-// --- New Type for Gamified Learning ---
-export interface Achievement {
-  id: string; // e.g., 'chapter-champion'
-  name: string;
-  description: string;
-  icon: string; // Heroicon name or URL
-  timestamp: string; // ISO date string when it was earned
-}
-
-// New type for student-set goals
 export interface StudyGoal {
   id: string;
   text: string;
@@ -134,20 +40,28 @@ export interface StudyGoal {
   createdAt: string;
 }
 
+export interface Achievement {
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+    timestamp: string;
+}
+
 export interface Student {
   id: string;
   name: string;
-  grade: string;
   email?: string;
+  grade: string;
   avatarUrl: string;
   avatarSeed?: string;
+  points: number;
+  performance: PerformanceRecord[];
+  achievements: Achievement[];
+  studyGoals: StudyGoal[];
   school?: string;
   city?: string;
   board?: string;
-  performance: PerformanceRecord[];
-  achievements: Achievement[];
-  points: number;
-  studyGoals: StudyGoal[];
 }
 
 export interface Teacher {
@@ -165,50 +79,83 @@ export interface Parent {
 }
 
 
-// New type for progress tracking
-export type ChapterProgress = {
-  [conceptTitle: string]: {
-    status: 'locked' | 'novice' | 'competent' | 'master';
-    score: number;
-    failedAttempts: number;
-  };
+// --- Content & Learning Module Types ---
+
+export interface Trigger {
+    triggerType: 'paradoxicalQuestion' | 'realWorldVideo' | 'interdisciplinaryConnection';
+    title: string;
+    description: string;
+    pushNotification: string;
+}
+
+export interface CoreConceptLesson {
+    title: string;
+    videoPrompt?: string | null;
+    explanation: string;
+    knowledgeCheck: QuizQuestion[];
+}
+
+export interface PracticeProblem {
+    level: 'Level 1: NCERT Basics' | 'Level 2: Reference Application' | 'Level 3: Competitive Challenge';
+    problemStatement: string;
+    solution: string;
+}
+
+export interface XpReward {
+    type: 'xp';
+    points: number;
+}
+export interface VideoReward {
+    type: 'video';
+    title: string;
+    videoPrompt: string;
+}
+export interface PracticeArena {
+    problems: PracticeProblem[];
+    reward?: XpReward | VideoReward;
+}
+
+// Union type for all possible lab types
+export type Lab = InteractiveVideoSimulation | VirtualLab | InteractiveExplainer | AdaptiveStory | {
+    type: 'project';
+    title: string;
+    description: string;
+    labInstructions?: string;
 };
 
-// New types for Student Q&A feature
-export interface AIAnalysis {
-  modelAnswer: string;
-  pedagogicalNotes: string; // Private notes for the teacher
-}
+// FIX: Redefined PracticalApplicationLab as a discriminated union to enable type narrowing in switch statements.
+// This resolves type errors when passing the lab content to specific player components.
+export type PracticalApplicationLab = InteractiveVideoSimulation | VirtualLab | InteractiveExplainer | AdaptiveStory | {
+    type: 'project';
+    title: string;
+    description: string;
+    labInstructions?: string;
+};
 
-export interface FittoResponse {
-    isRelevant: boolean;
-    responseText: string;
-}
 
-export interface StudentQuestion {
-  id: string; // a unique id like a timestamp
-  studentId: string;
-  studentName: string;
-  grade: string;
-  subject: string;
-  chapter: string;
-  concept: string;
-  questionText: string;
-  timestamp: string;
-  analysis?: AIAnalysis; // To store the AI feedback for the teacher
-  fittoResponse?: FittoResponse; // To store the AI mentor's direct response to the student
-}
-
-// New Type for AI Tutor Chat
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'model';
-  text: string;
-  state?: 'thinking' | 'error';
+export interface LearningModule {
+    chapterTitle: string;
+    missionBriefing: Trigger[];
+    coreConceptTraining: CoreConceptLesson[];
+    practiceArena: PracticeArena;
+    practicalApplicationLab: PracticalApplicationLab;
+    bossFight: QuizQuestion[];
+    categorizedProblems?: any; // Added to satisfy ConceptCard
 }
 
 
-// --- New Types for Adaptive Learning Engine ---
+// --- Quiz & Exercise Types ---
+
+export interface QuizQuestion {
+    question: string;
+    options: string[];
+    correctAnswer: string;
+    explanation: string;
+    conceptTitle: string;
+    type?: 'ACADEMIC' | 'IQ' | 'EQ';
+    skill?: string;
+    difficulty?: 'Easy' | 'Medium' | 'Hard';
+}
 
 export interface IQExercise {
     question: string;
@@ -227,161 +174,104 @@ export interface EQExercise {
     skill: 'Empathy' | 'Self-awareness' | 'Resilience' | 'Social Skills';
 }
 
-export type AdaptiveActionType = 'ACADEMIC_REVIEW' | 'ACADEMIC_PRACTICE' | 'ACADEMIC_NEW' | 'IQ_EXERCISE' | 'EQ_EXERCISE';
+
+// --- AI & Recommendation Types ---
+
+export interface Concept {
+    conceptTitle: string;
+    explanation: string;
+    realWorldExample: string;
+    diagramDescription: string;
+}
+
+export interface NextStepRecommendation {
+    recommendationText: string;
+    action: 'REVIEW' | 'CONTINUE' | 'REVISE_PREREQUISITE' | 'START_CRITICAL_THINKING' | 'START_WELLBEING';
+    nextChapterTitle?: string | null;
+    prerequisiteChapterTitle?: string | null;
+}
 
 export interface AdaptiveAction {
-    type: AdaptiveActionType;
+    type: 'ACADEMIC_REVIEW' | 'ACADEMIC_PRACTICE' | 'ACADEMIC_NEW' | 'IQ_EXERCISE' | 'EQ_EXERCISE';
     details: {
         subject?: string;
         chapter?: string;
         concept?: string;
         skill?: string;
-        reasoning: string; // AI's explanation for why this action was chosen
+        reasoning: string;
         confidence?: number;
     };
 }
 
-// --- New Type for Learning Streak ---
-export interface LearningStreak {
-    count: number;
-    lastDate: string; // YYYY-MM-DD
-}
-
-
-// --- New Types for Question Bank ---
-export type QuestionType = 'MCQ' | 'Short Answer' | 'Long Answer';
-export type DifficultyLevel = 'Easy' | 'Medium' | 'Hard';
-export type BloomTaxonomyLevel = 'Remembering' | 'Understanding' | 'Applying' | 'Analyzing' | 'Evaluating' | 'Creating';
-
-interface BaseQuestion {
-    questionText: string;
-    difficulty: DifficultyLevel;
-    bloomTaxonomy: BloomTaxonomyLevel;
-    isCompetencyBased: boolean;
-    isPreviousYearQuestion: boolean;
-}
-
-interface MCQDetails extends BaseQuestion {
-    questionType: 'MCQ';
-    options: string[];
-    correctAnswer: string;
-    explanation: string;
-}
-
-interface ShortAnswerDetails extends BaseQuestion {
-    questionType: 'Short Answer';
-    markingScheme: string;
-    modelAnswer: string;
-    answerWritingGuidance: string;
-}
-
-interface LongAnswerDetails extends BaseQuestion {
-    questionType: 'Long Answer';
-    markingScheme: string;
-    modelAnswer: string;
-    answerWritingGuidance: string;
-}
-
-export type QuestionBankItem = MCQDetails | ShortAnswerDetails | LongAnswerDetails;
-
-export interface CategorizedProblems {
-  conceptual: QuestionBankItem[];
-  application: QuestionBankItem[];
-  higherOrderThinking: QuestionBankItem[];
-}
-
-// --- New Types for Curriculum Generation ---
-export interface CurriculumOutlineChapter {
-    chapterTitle: string;
-    learningObjectives: string[];
-}
-
-// --- New Type for AI Content Feedback ---
-export interface AIFeedback {
-  id: string;
-  userRole: 'teacher' | 'parent';
-  studentId: string;
-  contentIdentifier: string; // e.g., report-teacher-1-en
-  rating: 'up' | 'down';
-  comment?: string;
-  timestamp: string;
-}
-
-// --- New Types for FAQ/Tutorial ---
-export interface FAQItem {
-  questionKey: string;
-  answerKey: string;
-}
-
-export interface FAQSection {
-  role: 'student' | 'teacher' | 'parent';
-  titleKey: string;
-  items: FAQItem[];
-}
-
-// --- New Types for Project-Based Learning ---
-export interface ProjectSubmission {
-  studentId: string;
-  studentName: string;
-  studentAvatarUrl: string;
-  solutionText: string;
-  solutionUrl?: string; // Optional link to a presentation, video, etc.
-  submittedDate: string;
-}
-
-export interface Project {
-  id: string;
-  title: string;
-  subject: string;
-  grade: string;
-  priority?: 'High' | 'Medium' | 'Low';
-  problemStatement: string;
-  objectives: string[];
-  guidingQuestions: string[];
-  submissions: ProjectSubmission[];
-}
-
-
-// --- New Types for Peer Teaching Network ---
-export interface PeerExplanation {
-  id: string;
-  studentId: string;
-  studentName: string;
-  studentAvatarUrl: string;
-  subject: string;
-  chapter: string;
-  concept: string;
-  explanationText: string;
-  submittedDate: string;
-}
-
-// --- New Types for Competitive Features ---
-export interface LeaderboardEntry {
-  studentId: string;
-  name: string;
-  avatarUrl: string;
-  points: number;
-  rank: number;
-}
-
-export interface Competition {
-  id: string;
-  title: string;
-  subject: string;
-  grade: string;
-  description: string;
-  prize: string;
-  status: 'Ongoing' | 'Upcoming' | 'Completed';
-}
-
-export interface HallOfFameEntry {
+export interface StudentQuestion {
+    id: string;
+    studentId: string;
     studentName: string;
-    achievement: string;
-    year: number;
-    avatarUrl: string;
+    grade: string;
+    subject: string;
+    chapter: string;
+    concept: string;
+    questionText: string;
+    timestamp: string;
+    fittoResponse?: FittoResponse;
 }
 
-// --- New Types for Career Guidance ---
+export interface FittoResponse {
+    isRelevant: boolean;
+    responseText: string;
+}
+
+export interface AIAnalysis {
+    modelAnswer: string;
+    pedagogicalNotes: string;
+}
+
+export interface WrittenAnswerEvaluation {
+    modelAnswer: string;
+    markingScheme: string;
+    personalizedFeedback: string;
+    proTips: string;
+}
+
+export interface SATAnswerEvaluation {
+    modelApproach: string;
+    personalizedFeedback: string;
+    keyConcept: string;
+    proTips: string;
+}
+
+
+// --- Feature-specific Types ---
+
+export interface ChatMessage {
+    id: string;
+    role: 'user' | 'model';
+    text: string;
+    state?: 'thinking' | 'error';
+}
+
+export interface StoryNodeChoice {
+  text: string;
+  nextNodeId: string;
+  feedback: string;
+}
+
+export interface StoryNode {
+  id: string;
+  text: string;
+  choices: StoryNodeChoice[];
+  isEnding: boolean;
+}
+
+export interface AdaptiveStory {
+  type: 'adaptiveStory';
+  id: string;
+  title: string;
+  introduction: string;
+  startNodeId: string;
+  nodes: StoryNode[];
+}
+
 export type AptitudeTrait = 'Logical Reasoning' | 'Verbal Ability' | 'Numerical Aptitude' | 'Spatial Awareness';
 
 export interface AptitudeQuestion {
@@ -392,92 +282,155 @@ export interface AptitudeQuestion {
     explanation: string;
 }
 
-export interface AptitudeTestResult {
-    scores: { [trait: string]: { correct: number; total: number } };
-    summary: string; // AI-generated summary
-}
-
-export interface CareerSuggestion {
-    careerName: string;
-    description: string;
-    requiredSubjects: string[];
-}
-
-export interface StreamRecommendation {
-    streamName: 'Science' | 'Commerce' | 'Humanities/Arts';
-    recommendationReason: string;
-    suggestedCareers: CareerSuggestion[];
-}
-
 export interface CareerGuidance {
     introduction: string;
-    streamRecommendations: StreamRecommendation[];
+    streamRecommendations: {
+        streamName: 'Science' | 'Commerce' | 'Humanities/Arts';
+        recommendationReason: string;
+        suggestedCareers: {
+            careerName: string;
+            description: string;
+            requiredSubjects: string[];
+        }[];
+    }[];
     conclusion: string;
 }
 
-// --- NEW: Type for Answer Writing Practice ---
-export interface WrittenAnswerEvaluation {
-    modelAnswer: string;
-    markingScheme: string;
-    personalizedFeedback: string;
-    proTips: string;
+export interface CurriculumOutlineChapter {
+    chapterTitle: string;
+    learningObjectives: string[];
 }
 
-// --- NEW: Type for SAT Answer Evaluation ---
-export interface SATAnswerEvaluation {
-    modelApproach: string;
-    personalizedFeedback: string;
-    keyConcept: string;
-    proTips: string;
+export interface QuestionBankItem {
+    questionText: string;
+    questionType: 'MCQ' | 'Short Answer' | 'Long Answer';
+    difficulty: 'Easy' | 'Medium' | 'Hard';
+    bloomTaxonomy: 'Remembering' | 'Understanding' | 'Applying' | 'Analyzing' | 'Evaluating' | 'Creating';
+    isCompetencyBased: boolean;
+    isPreviousYearQuestion: boolean;
+    options?: string[];
+    correctAnswer?: string;
+    explanation?: string;
+    markingScheme?: string;
+    modelAnswer?: string;
+    answerWritingGuidance?: string;
 }
 
+export interface ChapterProgress {
+    completedConcepts: string[];
+    lastAccessed: string;
+}
 
-// --- FIX: Add missing types for interactive content components ---
+export interface AIFeedback {
+    id: string;
+    userRole: 'teacher' | 'parent';
+    studentId: string;
+    contentIdentifier: string;
+    rating: 'up' | 'down';
+    comment?: string;
+    timestamp: string;
+}
+
+export interface LearningStreak {
+    count: number;
+    lastDate: string; // YYYY-MM-DD
+}
+
+export interface FAQItem {
+    questionKey: string;
+    answerKey: string;
+}
+
+export interface FAQSection {
+    role: 'student' | 'teacher' | 'parent';
+    titleKey: string;
+    items: FAQItem[];
+}
+
 export interface InteractiveVideoSimulation {
+    type: 'simulation';
     title: string;
-    // FIX: Added missing 'description' property used in VideoSimulationPlayer.tsx.
     description: string;
     videoPrompt: string;
 }
 
-export interface VirtualLabVariable {
-    name: string;
-    options: string[];
-}
-
 export interface VirtualLab {
+    type: 'virtualLab';
     title: string;
     description: string;
+    variables: { name: string; options: string[] }[];
     baseScenarioPrompt: string;
     outcomePromptTemplate: string;
-    variables: VirtualLabVariable[];
-}
-
-export interface StoryNodeChoice {
-  text: string;
-  feedback: string;
-  nextNodeId: string;
-}
-export interface StoryNode {
-  id: string;
-  text: string;
-  choices: StoryNodeChoice[];
-  isEnding: boolean;
-}
-export interface AdaptiveStory {
-  title: string;
-  introduction: string;
-  startNodeId: string;
-  nodes: StoryNode[];
-}
-
-export interface ExplainerVariable {
-    name: string;
-    options: string[];
 }
 export interface InteractiveExplainer {
+    type: 'interactiveExplainer';
     title: string;
     description: string;
+    variables: { name: string; options: string[] }[];
     videoPromptTemplate: string;
-    variables: ExplainerVariable[];
+}
+
+export interface LeaderboardEntry {
+    studentId: string;
+    name: string;
+    avatarUrl: string;
+    points: number;
+    rank: number;
+}
+export interface Competition {
+    id: string;
+    title: string;
+    subject: string;
+    grade: string;
+    description: string;
+    prize: string;
+    status: 'Ongoing' | 'Upcoming' | 'Completed';
+}
+export interface HallOfFameEntry {
+    studentName: string;
+    achievement: string;
+    year: number;
+    avatarUrl: string;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  subject: string;
+  grade: string;
+  priority: 'High' | 'Medium' | 'Low';
+  problemStatement: string;
+  objectives: string[];
+  guidingQuestions: string[];
+  submissions: ProjectSubmission[];
+}
+
+export interface ProjectSubmission {
+  studentId: string;
+  studentName: string;
+  studentAvatarUrl: string;
+  solutionText: string;
+  solutionUrl?: string;
+  submittedDate: string;
+}
+
+export interface PeerExplanation {
+    id: string;
+    studentId: string;
+    studentName: string;
+    studentAvatarUrl: string;
+    subject: string;
+    chapter: string;
+    concept: string;
+    explanationText: string;
+    submittedDate: string;
+}
+
+export interface BoardPaper {
+    year: number;
+    grade: string;
+    subject: string;
+    paperTitle: string;
+    questions: string[];
+    solutions: string[];
 }

@@ -4,7 +4,7 @@ import { ArrowLeftIcon, ChevronDownIcon, DocumentChartBarIcon, RocketLaunchIcon,
 import DiagnosticTest from '../components/DiagnosticTest';
 import { useLanguage } from '../contexts/Language-context';
 import { getIcon } from '../components/IconMap';
-import RemediationScreen from './RemediationScreen';
+import RemediationScreen from '../screens/RemediationScreen';
 import { useAuth } from '../contexts/AuthContext';
 
 interface SubjectSelectorProps {
@@ -50,13 +50,13 @@ const SubjectSelector: React.FC<SubjectSelectorProps> = ({ grade, selectedSubjec
             recommendation={remediationInfo.recommendation}
             onProceed={handleProceedFromRemediation}
             onBack={() => setRemediationInfo(null)}
-            student={currentUser}
+            student={currentUser as Student}
             language={language}
         />
     );
   }
 
-  if (testingChapter && selectedSubject && onChapterSelect) {
+  if (testingChapter && selectedSubject && onChapterSelect && currentUser) {
     return (
       <DiagnosticTest
         language={language}

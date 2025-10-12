@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Grade, Subject, Chapter, NextStepRecommendation } from '../types';
+// FIX: Added Student to imports to resolve type errors
+import { Grade, Subject, Chapter, NextStepRecommendation, Student } from '../types';
 import { ArrowLeftIcon, ChevronDownIcon, DocumentChartBarIcon, RocketLaunchIcon, BookOpenIcon } from '@heroicons/react/24/solid';
 import DiagnosticTest from './DiagnosticTest';
 import { useLanguage } from '../contexts/Language-context';
@@ -50,13 +51,14 @@ const SubjectSelector: React.FC<SubjectSelectorProps> = ({ grade, selectedSubjec
             recommendation={remediationInfo.recommendation}
             onProceed={handleProceedFromRemediation}
             onBack={() => setRemediationInfo(null)}
-            student={currentUser}
+// FIX: Cast currentUser to Student as this component is only used in the student flow.
+            student={currentUser as Student}
             language={language}
         />
     );
   }
 
-  if (testingChapter && selectedSubject && onChapterSelect) {
+  if (testingChapter && selectedSubject && onChapterSelect && currentUser) {
     return (
       <DiagnosticTest
         language={language}
@@ -120,6 +122,7 @@ const SubjectSelector: React.FC<SubjectSelectorProps> = ({ grade, selectedSubjec
                 <ul className="space-y-4 mt-4">
                   {selectedSubject.chapters.map((chapter) => (
                     <li key={chapter.title} className="mission-card">
+{/* FIX: Removed chapter.imageUrl as it no longer exists on the Chapter type. */}
                         <div className="mission-card-header">
                             <h4 className="font-bold text-lg text-text-primary">Mission: {tCurriculum(chapter.title)}</h4>
                             {chapter.tags && chapter.tags.length > 0 && (

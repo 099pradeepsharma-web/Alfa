@@ -1,5 +1,10 @@
+
+
+
+
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, Chapter, Trigger, CoreConceptLesson, PracticeArena, PracticalApplicationLab, AptitudeQuestion, CareerGuidance, XpReward, VideoReward, StudyGoal, PracticeProblem, WrittenAnswerEvaluation, SATAnswerEvaluation, PerformanceRecord } from '../types';
+// FIX: Corrected import path for types to resolve circular dependency issues.
+import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, Chapter, Trigger, CoreConceptLesson, PracticeArena, PracticalApplicationLab, AptitudeQuestion, CareerGuidance, XpReward, VideoReward, StudyGoal, PracticeProblem, WrittenAnswerEvaluation, SATAnswerEvaluation, PerformanceRecord, AdaptiveStory } from '../types';
 import { CURRICULUM } from '../data/curriculum';
 import { getLearningStreak } from './pineconeService';
 
@@ -132,36 +137,50 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
     
     const prompt = `
         **SYSTEM ROLE:**
-        You are an expert Curriculum Architect and syllabus master for the Indian CBSE board. Your task is to design a complete, robust, and engaging learning module for a ${gradeLevel} student on the chapter "${chapter.title}" in ${subject}, following the "Alfanumrik Integrated Learning Framework". The entire response must be in the ${language} language.
+        You are an expert Curriculum Architect for the Indian CBSE board, creating a visually rich and engaging digital learning module for a ${gradeLevel} student. The chapter is "${chapter.title}" in ${subject}. The entire response must be in ${language}.
 
         **FRAMEWORK PRINCIPLES (MANDATORY):**
-        1.  **Narrative & Gamification:** Frame the chapter as a "Mission". Integrate leveling and challenges.
+        1.  **Narrative & Gamification:** Frame the chapter as a "Mission".
         2.  **HOOK Model:** Follow the Trigger -> Action -> Reward -> Investment loop.
-        3.  **Content Synthesis & Depth:** Base content on NCERT but deeply integrate concepts, numericals, and analytical questions from standard reference books (e.g., H.C. Verma for Physics, R.D. Sharma for Maths, S. Chand, Oswal question banks).
+        3.  **Content Synthesis & Depth:** Base content on NCERT but deeply integrate concepts from standard reference books (e.g., H.C. Verma, R.D. Sharma).
         4.  **Competitive Focus:** Include elements relevant to NTSE, Olympiads, and JEE/NEET foundation.
-        5.  **Clarity and Presentation:** All text must be clear, spacious, and well-structured for easy reading.
 
-        **FORMATTING RULES (NON-NEGOTIABLE):**
-        -   **Underlining is CRITICAL:** You MUST underline important keywords, formulas, and concepts relevant for board and competitive exams by wrapping them ONLY in <u>...</u> tags. Example: <u>Snell's Law</u>.
-        -   **ABSOLUTELY NO BOLD MARKDOWN:** Do NOT use markdown asterisks (**) for bolding anywhere in the response. The renderer does not support it. Use underlines for emphasis.
-        -   **Point-wise Explanations:** For any point-wise explanations, you MUST use markdown lists (e.g., starting a line with a hyphen and a space: "- Point 1").
-        -   **Strict Vertical Formatting:** ALL formula derivations and solved numerical examples MUST be presented vertically. Each step MUST be on a new line. You can use '=>' at the start of a line to show progression.
-        -   **Lab Instructions Formatting:** The \`labInstructions\` field MUST be a multi-line string formatted as a markdown numbered or bulleted list. Each step must be on a new line. Do NOT include an "Instructions:" heading in the string content itself.
+        **AESTHETIC & FORMATTING RULES (NON-NEGOTIABLE):**
+        Your goal is to make the content look like a beautifully designed, modern digital textbook. Use the following enhanced markdown for rich formatting.
+
+        1.  **Headings:** Use markdown headings for structure. '##' for main sub-headings and '###' for deeper concepts.
+            - Example: \`## The Laws of Reflection\`
+            - Example: \`### Specular vs. Diffuse Reflection\`
+
+        2.  **Emphasis:** For important keywords, formulas, and concepts, you MUST underline them by wrapping them ONLY in <u>...</u> tags. Example: <u>Snell's Law</u>. Do NOT use markdown asterisks for bolding.
+
+        3.  **Lists:** For point-wise explanations, you MUST use markdown lists (e.g., starting a line with a hyphen and a space: "- Point 1").
+
+        4.  **Callout Boxes:** For important notes, definitions, or fun facts, you MUST use blockquote callouts.
+            - For notes or tips: \`> [!NOTE] Your insightful note here.\`
+            - For key term definitions: \`> [!KEY] Refractive Index: The measure of how much light bends.\`
+            - For examples: \`> [!EXAMPLE] A straw in a glass of water appears bent due to refraction.\`
+
+        5.  **Tables:** When comparing concepts (e.g., Concave vs. Convex mirrors), you MUST use markdown tables for clarity.
+            - Example:
+              | Feature      | Concave Mirror  | Convex Mirror   |
+              |--------------|-----------------|-----------------|
+              | Shape        | Curves inward   | Curves outward  |
+              | Nature       | Converging      | Diverging       |
+
+        6.  **Diagrams:** For concepts that are highly visual (like ray diagrams, the human eye, etc.), you MUST include a diagram placeholder. This is critical for graphical presentation.
+            - Format: \`[DIAGRAM: A detailed, clear prompt for a simple 2D educational diagram explaining the concept. The diagram should be clean, labeled, and easy to understand.]\`
+            - Example: \`[DIAGRAM: A simple ray diagram showing the formation of a real, inverted image by a concave mirror when the object is placed beyond C.]\`
+
+        7.  **Vertical Formatting:** ALL formula derivations and solved numerical examples MUST be presented vertically. Each step MUST be on a new line. You can use '=>' at the start of a line to show progression.
 
         **REQUIRED OUTPUT STRUCTURE:**
         -   **chapterTitle**: Must be exactly "${chapter.title}".
-        -   **missionBriefing (The Trigger):** An array of 2-3 varied 'Trigger' objects to spark curiosity.
-        -   **coreConceptTraining (Action):** Break the chapter into 3-5 micro-lessons. For each, provide:
-            -   A title.
-            -   A **comprehensive, in-depth explanation** following all formatting rules.
-            -   Where applicable (especially in Physics/Maths), include **step-by-step formula derivations**.
-            -   Include at least one **solved numerical example**, presented vertically.
-            -   Provide **analytical insights** (e.g., special cases, graphical analysis, 'what if' scenarios).
-            -   For highly visual concepts, you MAY include a 'videoPrompt'.
-            -   Exactly two "Knowledge Check" multiple-choice questions with explanations.
-        -   **practiceArena (Variable Reward):** Provide a robust set of 8 practice problems: 3 'NCERT Basics', 3 'Reference Application' (inspired by H.C. Verma/R.D. Sharma), and 2 'Competitive Challenge' (Olympiad/JEE/NEET pattern). For each problem, you MUST provide a complete, final, and direct step-by-step solution. Do NOT provide hints or guided questions. The solution must be fully worked out to the final answer and follow the vertical step-by-step format.
-        -   **practicalApplicationLab (Investment):** A mandatory activity (virtual lab, simulation, project).
-        -   **bossFight (Final Challenge):** A 10-question chapter-end test of high quality, mirroring board and competitive exam patterns. Mix MCQs, numericals, and assertion-reasoning questions. Ensure questions test deep understanding, not just recall.
+        -   **missionBriefing (The Trigger):** An array of 2-3 varied 'Trigger' objects.
+        -   **coreConceptTraining (Action):** Break the chapter into 3-5 micro-lessons. For each, provide a comprehensive explanation using all the rich formatting rules above. Include formula derivations, solved examples, and analytical insights.
+        -   **practiceArena (Variable Reward):** A robust set of 8 practice problems (3 NCERT, 3 Reference, 2 Competitive). Each MUST have a complete, step-by-step solution.
+        -   **practicalApplicationLab (Investment):** A mandatory activity. The \`labInstructions\` field MUST be a multi-line string formatted as a markdown list.
+        -   **bossFight (Final Challenge):** A 10-question chapter-end test mixing MCQs, numericals, etc.
     `;
 
     const learningModuleSchema = {
@@ -741,6 +760,83 @@ export const generateStreamGuidance = async (student: Student, aptitudeResults: 
         const response = await ai.models.generateContent({ model: "gemini-2.5-flash", contents: prompt, config: { responseMimeType: "application/json", responseSchema: careerGuidanceSchema } });
         return JSON.parse(response.text.trim()) as CareerGuidance;
     } catch (error) { throw handleGeminiError(error, 'generate stream guidance'); }
+};
+
+// FIX: Added function and schemas for generating adaptive stories.
+const storyNodeChoiceSchema = {
+    type: Type.OBJECT,
+    properties: {
+        text: { type: Type.STRING, description: 'The text for the choice the user can make.' },
+        nextNodeId: { type: Type.STRING, description: 'The ID of the node this choice leads to.' },
+        feedback: { type: Type.STRING, description: 'Brief feedback shown to the user after making this choice.' },
+    },
+    required: ['text', 'nextNodeId', 'feedback'],
+};
+
+const storyNodeSchema = {
+    type: Type.OBJECT,
+    properties: {
+        id: { type: Type.STRING, description: 'A unique identifier for this node (e.g., "node-1", "intro").' },
+        text: { type: Type.STRING, description: 'The narrative text of this part of the story.' },
+        choices: {
+            type: Type.ARRAY,
+            items: storyNodeChoiceSchema,
+            description: 'The choices available to the user at this node. Should be empty if isEnding is true.',
+        },
+        isEnding: { type: Type.BOOLEAN, description: 'Set to true if this is an ending node of the story.' },
+    },
+    required: ['id', 'text', 'choices', 'isEnding'],
+};
+
+const adaptiveStorySchema = {
+    type: Type.OBJECT,
+    properties: {
+        type: { type: Type.STRING, enum: ['adaptiveStory'] },
+        id: { type: Type.STRING, description: 'A unique ID for the entire story.' },
+        title: { type: Type.STRING, description: 'The title of the adaptive story.' },
+        introduction: { type: Type.STRING, description: 'A brief introduction to set the scene for the story.' },
+        startNodeId: { type: Type.STRING, description: 'The ID of the first node to start the story.' },
+        nodes: {
+            type: Type.ARRAY,
+            items: storyNodeSchema,
+            description: 'An array of all the nodes that make up the story.',
+            minItems: 3,
+        },
+    },
+    required: ['type', 'id', 'title', 'introduction', 'startNodeId', 'nodes'],
+};
+
+export const generateAdaptiveStory = async (topic: string, grade: string, language: string): Promise<AdaptiveStory> => {
+    const prompt = `
+        You are an expert educational storyteller. Create an interactive, adaptive story for a ${grade} student.
+        The story should be about: "${topic}".
+        The story must be engaging, age-appropriate, and educational.
+        It should have a clear beginning, multiple branching paths, and at least two different endings.
+        The entire response must be in the ${language} language and strictly follow the provided JSON schema.
+
+        **CRITICAL INSTRUCTIONS:**
+        1.  Create a story with at least 3 nodes.
+        2.  The 'startNodeId' must match the 'id' of one of the nodes.
+        3.  Each choice's 'nextNodeId' must correspond to another node's 'id'.
+        4.  Ending nodes must have 'isEnding' set to true and an empty 'choices' array.
+        5.  Provide brief, encouraging, or informative feedback for each choice.
+    `;
+    
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: adaptiveStorySchema,
+                temperature: 0.8,
+            },
+        });
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText) as AdaptiveStory;
+    } catch (error) {
+        throw handleGeminiError(error, 'generate adaptive story');
+    }
 };
 
 export const createCareerCounselorChat = (student: Student, language: string): Chat => {

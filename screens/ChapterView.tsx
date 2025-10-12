@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Grade, Subject, Chapter, LearningModule, Student, Trigger, CoreConceptLesson, PracticeArena, PracticalApplicationLab, QuizQuestion, XpReward, VideoReward, PracticeProblem, WrittenAnswerEvaluation } from '../types';
+import { Grade, Subject, Chapter, LearningModule, Student, Trigger, CoreConceptLesson, PracticeArena, PracticalApplicationLab, QuizQuestion, XpReward, VideoReward, PracticeProblem, WrittenAnswerEvaluation, InteractiveVideoSimulation, VirtualLab, AdaptiveStory, InteractiveExplainer } from '../types';
 import * as contentService from '../services/contentService';
 import * as pineconeService from '../services/pineconeService';
 import * as geminiService from '../services/geminiService';
@@ -12,6 +12,11 @@ import { ArrowPathIcon, BookOpenIcon, BeakerIcon, LightBulbIcon, CpuChipIcon, Ac
 import StructuredText from '../components/StructuredText';
 import Confetti from '../components/Confetti';
 import ConceptVideoPlayer from '../components/ConceptVideoPlayer';
+import VideoSimulationPlayer from '../components/VideoSimulationPlayer';
+import VirtualLabPlayer from '../components/VirtualLabPlayer';
+import AdaptiveStoryPlayer from '../components/AdaptiveStoryPlayer';
+import InteractiveExplainerPlayer from '../components/InteractiveExplainerPlayer';
+
 
 interface ChapterViewProps {
   grade: Grade;
@@ -205,19 +210,88 @@ const PracticeArenaSection: React.FC<{
     );
 };
 
-const ApplicationLabSection: React.FC<{ content: PracticalApplicationLab }> = ({ content }) => (
-    <div className="application-lab-section">
-        <h4 className="font-bold text-lg text-primary">{content.title}</h4>
-        <p className="text-text-secondary mt-1">{content.description}</p>
-        {content.labInstructions && (
-             <div className="mt-4 p-4 bg-surface rounded-lg">
-                <div className="prose prose-lg max-w-none dark:prose-invert">
-                    <StructuredText text={content.labInstructions} />
-                </div>
-             </div>
-        )}
-    </div>
-);
+const ApplicationLabSection: React.FC<{ 
+    content: PracticalApplicationLab; 
+    grade: Grade; 
+    subject: Subject; 
+    chapter: Chapter;
+}> = ({ content, grade, subject, chapter }) => {
+    // A simple wrapper to provide context for the various lab types.
+    const LabWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+        <div className="application-lab-section">
+            {children}
+        </div>
+    );
+
+    switch (content.type) {
+// FIX: Cast `content` to the specific type expected by the child component. The discriminated union in types.ts allows this.
+        case 'simulation':
+            return (
+                <LabWrapper>
+                    <VideoSimulationPlayer 
+                        simulationData={content as InteractiveVideoSimulation} 
+                        dbKey={`sim-video-${grade.level}-${subject.name}-${chapter.title}`}
+                        grade={grade}
+                        subject={subject}
+                        chapter={chapter}
+                    />
+                </LabWrapper>
+            );
+// FIX: Cast `content` to the specific type expected by the child component.
+        case 'virtualLab':
+            return (
+                <LabWrapper>
+                    <VirtualLabPlayer 
+                        labData={content as VirtualLab}
+                        grade={grade}
+                        subject={subject}
+                        chapter={chapter}
+                    />
+                </LabWrapper>
+            );
+// FIX: Cast `content` to the specific type expected by the child component.
+        case 'adaptiveStory':
+            return (
+                <LabWrapper>
+                    <AdaptiveStoryPlayer storyData={content as AdaptiveStory} />
+                </LabWrapper>
+            );
+// FIX: Cast `content` to the specific type expected by the child component.
+        case 'interactiveExplainer':
+            return (
+                <LabWrapper>
+                     <InteractiveExplainerPlayer
+                        explainerData={content as InteractiveExplainer}
+                        grade={grade}
+                        subject={subject}
+                        chapter={chapter}
+                    />
+                </LabWrapper>
+            );
+        case 'project':
+             return (
+                <LabWrapper>
+                    <h4 className="font-bold text-lg text-primary">{content.title}</h4>
+                    <p className="text-text-secondary mt-1">{content.description}</p>
+                    {content.labInstructions && (
+                         <div className="mt-4 p-4 bg-surface rounded-lg">
+                            <h5 className="font-bold text-text-primary">Instructions</h5>
+                            <div className="prose prose-lg max-w-none dark:prose-invert">
+                               <StructuredText text={content.labInstructions} />
+                            </div>
+                         </div>
+                    )}
+                </LabWrapper>
+            );
+        default:
+            return (
+                <LabWrapper>
+                    <h4 className="font-bold text-lg text-primary">{content.title}</h4>
+                    <p className="text-text-secondary mt-1">{content.description}</p>
+                </LabWrapper>
+            );
+    }
+};
 
 const ReflectionSection: React.FC<{ onLogEvent: (eventName: string, attributes: any) => void }> = ({ onLogEvent }) => {
     const [confidence, setConfidence] = useState(0);
@@ -267,18 +341,11 @@ const EvaluationCard: React.FC<{ title: string; icon: React.ElementType; childre
 );
 
 const MasteryZoneSection: React.FC<{ grade: string, subject: string, chapter: string, existingProblems: PracticeProblem[], language: string }> = ({ grade, subject, chapter, existingProblems, language }) => {
-    const [activeTab, setActiveTab] = useState<'mastery' | 'writing'>('mastery');
+    const { t } = useLanguage();
     
     const [moreProblems, setMoreProblems] = useState<PracticeProblem[] | null>(null);
     const [isLoadingProblems, setIsLoadingProblems] = useState(false);
     const [problemError, setProblemError] = useState<string | null>(null);
-
-    const [challengeQuestion, setChallengeQuestion] = useState<string | null>(null);
-    const [isLoadingChallenge, setIsLoadingChallenge] = useState(false);
-    const [challengeError, setChallengeError] = useState<string | null>(null);
-    const [studentAnswer, setStudentAnswer] = useState('');
-    const [evaluation, setEvaluation] = useState<WrittenAnswerEvaluation | null>(null);
-    const [isEvaluating, setIsEvaluating] = useState(false);
 
     const handleGenerateProblems = async () => {
         setIsLoadingProblems(true);
@@ -292,120 +359,31 @@ const MasteryZoneSection: React.FC<{ grade: string, subject: string, chapter: st
             setIsLoadingProblems(false);
         }
     };
-    
-    const handleGetChallenge = async () => {
-        setIsLoadingChallenge(true);
-        setChallengeError(null);
-        setStudentAnswer('');
-        setEvaluation(null);
-        try {
-            const question = await geminiService.getWritingChallengeQuestion(grade, subject, chapter, language);
-            setChallengeQuestion(question);
-        } catch (e: any) {
-            setChallengeError(e.message);
-        } finally {
-            setIsLoadingChallenge(false);
-        }
-    };
-    
-    const handleEvaluateAnswer = async () => {
-        if (!challengeQuestion || !studentAnswer) return;
-        setIsEvaluating(true);
-        setChallengeError(null);
-        try {
-            const result = await geminiService.evaluateWrittenAnswer(challengeQuestion, studentAnswer, grade, subject, language);
-            setEvaluation(result);
-        } catch(e: any) {
-            setChallengeError(e.message);
-        } finally {
-            setIsEvaluating(false);
-        }
-    };
 
     return (
-        <div className="bg-surface p-6 rounded-2xl border border-border">
-            <div className="flex border-b border-border mb-4">
-                <button
-                    onClick={() => setActiveTab('mastery')}
-                    className={`px-4 py-2 font-semibold text-sm transition-colors ${activeTab === 'mastery' ? 'text-primary border-b-2 border-primary' : 'text-text-secondary hover:text-text-primary'}`}
-                >
-                    Subject Mastery
-                </button>
-                <button
-                    onClick={() => setActiveTab('writing')}
-                    className={`px-4 py-2 font-semibold text-sm transition-colors ${activeTab === 'writing' ? 'text-primary border-b-2 border-primary' : 'text-text-secondary hover:text-text-primary'}`}
-                >
-                    Practice Writing
-                </button>
-            </div>
-
-            {activeTab === 'mastery' && (
-                <div className="animate-fade-in">
-                    <p className="text-text-secondary mt-1 mb-4">Challenge yourself with unique, competitive exam-focused questions.</p>
-                    <button onClick={handleGenerateProblems} disabled={isLoadingProblems} className="btn-accent flex items-center justify-center w-full sm:w-auto">
-                        {isLoadingProblems ? <><LoadingSpinner /><span className="ml-2">Generating...</span></> : <><SparklesIcon className="h-5 w-5 mr-2" />Generate More Practice Questions</>}
-                    </button>
-                    {problemError && <p className="text-status-danger mt-2">{problemError}</p>}
-                    {moreProblems && (
-                        <div className="mt-4 space-y-4 animate-fade-in">
-                            {moreProblems.map((p, i) => (
-                                <div key={i} className="practice-problem-card !mt-0">
-                                    <div className="practice-problem-header">
-                                        <h4 className="font-bold text-text-primary">Challenge Problem {i + 1}</h4>
-                                        <span className={`problem-level-badge level-${p.level.charAt(6)}`}>{p.level}</span>
-                                    </div>
-                                    <div className="practice-problem-body prose max-w-none dark:prose-invert">
-                                        <p className="text-text-secondary mb-2"><strong>Problem:</strong> {p.problemStatement}</p>
-                                        <details>
-                                            <summary className="cursor-pointer font-semibold text-primary">View Solution</summary>
-                                            <div className="mt-2 text-primary"><StructuredText text={p.solution} /></div>
-                                        </details>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
-            
-            {activeTab === 'writing' && (
-                <div className="animate-fade-in">
-                    <p className="text-text-secondary mt-1 mb-4">Hone your exam writing skills with AI-powered feedback based on CBSE guidelines.</p>
-                     <button onClick={handleGetChallenge} disabled={isLoadingChallenge} className="btn-accent flex items-center justify-center w-full sm:w-auto">
-                        {isLoadingChallenge ? <><LoadingSpinner /><span className="ml-2">Generating...</span></> : <><SparklesIcon className="h-5 w-5 mr-2" />Get a Writing Challenge</>}
-                    </button>
-                    {challengeError && <p className="text-status-danger mt-2">{challengeError}</p>}
-
-                    {challengeQuestion && (
-                        <div className="mt-4 animate-fade-in space-y-4">
-                            <div className="bg-bg-primary p-4 rounded-lg border border-border">
-                                <p className="font-semibold text-text-primary">{challengeQuestion}</p>
+        <div className="mastery-zone">
+            <p className="text-text-secondary mt-1 mb-4">Challenge yourself with unique, competitive exam-focused questions.</p>
+            <button onClick={handleGenerateProblems} disabled={isLoadingProblems} className="btn-accent flex items-center justify-center w-full sm:w-auto">
+                {isLoadingProblems ? <><LoadingSpinner /><span className="ml-2">Generating...</span></> : <><SparklesIcon className="h-5 w-5 mr-2" />Generate More Practice Questions</>}
+            </button>
+            {problemError && <p className="text-status-danger mt-2">{problemError}</p>}
+            {moreProblems && (
+                <div className="mt-4 space-y-4 animate-fade-in">
+                    {moreProblems.map((p, i) => (
+                        <div key={i} className="practice-problem-card !mt-0">
+                            <div className="practice-problem-header">
+                                <h4 className="font-bold text-text-primary">Challenge Problem {i + 1}</h4>
+                                <span className={`problem-level-badge level-${p.level.charAt(6)}`}>{p.level}</span>
                             </div>
-                            <textarea value={studentAnswer} onChange={e => setStudentAnswer(e.target.value)} rows={5} className="w-full" placeholder="Write your answer here..." />
-                            <button onClick={handleEvaluateAnswer} disabled={isEvaluating || !studentAnswer.trim()} className="btn-accent flex items-center justify-center w-full sm:w-auto">
-                               {isEvaluating ? <><LoadingSpinner /><span className="ml-2">Evaluating...</span></> : <>Evaluate My Answer</>}
-                            </button>
-                        </div>
-                    )}
-                    
-                    {evaluation && (
-                        <div className="mt-6 animate-fade-in">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <EvaluationCard title="Model Answer" icon={DocumentTextIcon}>
-                                    <StructuredText text={evaluation.modelAnswer} />
-                                </EvaluationCard>
-                                <EvaluationCard title="Marking Scheme" icon={ClipboardDocumentCheckIcon}>
-                                    <StructuredText text={evaluation.markingScheme} />
-                                </EvaluationCard>
-                                <EvaluationCard title="Personalized Feedback" icon={SparklesIcon}>
-                                    <StructuredText text={evaluation.personalizedFeedback} />
-                                </EvaluationCard>
-                                <EvaluationCard title="Pro Tips for Exams" icon={StarIcon}>
-                                    <StructuredText text={evaluation.proTips} />
-                                </EvaluationCard>
+                            <div className="practice-problem-body prose max-w-none dark:prose-invert">
+                                <p className="text-text-secondary mb-2"><strong>Problem:</strong> {p.problemStatement}</p>
+                                <details>
+                                    <summary className="cursor-pointer font-semibold text-primary">View Solution</summary>
+                                    <div className="mt-2 text-primary"><StructuredText text={p.solution} /></div>
+                                </details>
                             </div>
                         </div>
-                    )}
+                    ))}
                 </div>
             )}
         </div>
@@ -426,7 +404,8 @@ const WritingPracticeZone: React.FC<{
     const [error, setError] = useState<string | null>(null);
     const [showSolution, setShowSolution] = useState(false);
 
-    const currentProblem = problems[currentIndex];
+    const relevantProblems = useMemo(() => problems.filter(p => p.level !== 'Level 1: NCERT Basics'), [problems]);
+    const currentProblem = relevantProblems[currentIndex];
     const currentAnswer = writtenAnswers[currentIndex] || '';
 
     const handleAnswerChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -434,7 +413,7 @@ const WritingPracticeZone: React.FC<{
     };
 
     const handleEvaluate = async () => {
-        if (!currentAnswer.trim()) return;
+        if (!currentAnswer.trim() || !currentProblem) return;
         setIsEvaluating(true);
         setError(null);
         setEvaluation(null);
@@ -450,7 +429,7 @@ const WritingPracticeZone: React.FC<{
     };
     
     const goToQuestion = (index: number) => {
-        if (index >= 0 && index < problems.length) {
+        if (index >= 0 && index < relevantProblems.length) {
             setCurrentIndex(index);
             setShowSolution(false);
             setEvaluation(null);
@@ -458,18 +437,18 @@ const WritingPracticeZone: React.FC<{
         }
     };
 
-    if (!problems || problems.length === 0) {
-        return <div className="bg-surface p-6 rounded-2xl border border-border text-center text-text-secondary">{t('noProblemsAvailable')}</div>;
+    if (!relevantProblems || relevantProblems.length === 0) {
+        return <div className="writing-practice-zone text-center text-text-secondary">{t('noProblemsAvailable')}</div>;
     }
 
     return (
-        <div className="bg-surface p-6 rounded-2xl border border-border">
+        <div className="writing-practice-zone">
             <div className="flex justify-between items-center mb-4">
                 <h4 className="font-bold text-lg text-text-primary">
                     {t('writingPracticeFor')} "{currentProblem.level}"
                 </h4>
                 <span className="font-semibold text-text-secondary text-sm">
-                    {t('question')} {currentIndex + 1} / {problems.length}
+                    {t('question')} {currentIndex + 1} / {relevantProblems.length}
                 </span>
             </div>
 
@@ -534,7 +513,7 @@ const WritingPracticeZone: React.FC<{
                 <button onClick={() => goToQuestion(currentIndex - 1)} disabled={currentIndex === 0} className="px-4 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm border border-border hover:bg-bg-primary transition disabled:opacity-50 flex items-center gap-2">
                     <ChevronLeftIcon className="h-4 w-4" /> {t('previous')}
                 </button>
-                <button onClick={() => goToQuestion(currentIndex + 1)} disabled={currentIndex === problems.length - 1} className="px-4 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm border border-border hover:bg-bg-primary transition disabled:opacity-50 flex items-center gap-2">
+                <button onClick={() => goToQuestion(currentIndex + 1)} disabled={currentIndex === relevantProblems.length - 1} className="px-4 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm border border-border hover:bg-bg-primary transition disabled:opacity-50 flex items-center gap-2">
                     {t('next')} <ChevronRightIcon className="h-4 w-4" />
                 </button>
             </div>
@@ -778,7 +757,12 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
 
                 <section id="application-lab" ref={el => { if (el) sectionRefs.current['application-lab'] = el; }}>
                     <h2 className="section-title"><SparklesIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='application-lab')?.title}</h2>
-                    <ApplicationLabSection content={learningModule.practicalApplicationLab} />
+                    <ApplicationLabSection 
+                        content={learningModule.practicalApplicationLab} 
+                        grade={grade}
+                        subject={subject}
+                        chapter={chapter}
+                    />
                 </section>
                 
                 <section id="boss-fight" ref={el => { if (el) sectionRefs.current['boss-fight'] = el; }}>

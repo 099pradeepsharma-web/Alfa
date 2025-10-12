@@ -178,7 +178,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToAuth, onNavigateT
                         <div className="bg-surface p-8 rounded-2xl">
                             <div className={`audience-tab-content ${activeAudienceTab === 'middle-school' ? 'active animate-fade-in' : ''}`}>
                                  <div className="grid md:grid-cols-2 gap-8 items-center">
-                                    <img src="https://images.unsplash.com/photo-1574717024633-596a280789d3?q=80&w=2070&auto=format&fit=crop" alt="Indian middle school students" className="rounded-xl w-full h-full object-cover" />
+                                    <img src="https://images.unsplash.com/photo-1594409855543-7f2b18600d1a?q=80&w=2070&auto=format&fit=crop" alt="Two young female students studying together with a laptop" className="rounded-xl w-full h-full object-cover" />
                                     <div>
                                         <h3 className="text-2xl font-bold text-text-primary">Middle School (6–8)</h3>
                                         <p className="text-text-secondary mt-2">Build strong fundamentals and spark a love for learning with our interactive, concept-driven approach.</p>
@@ -194,7 +194,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToAuth, onNavigateT
                             </div>
                             <div className={`audience-tab-content ${activeAudienceTab === 'high-school' ? 'active animate-fade-in' : ''}`}>
                                 <div className="grid md:grid-cols-2 gap-8 items-center">
-                                    <img src="https://images.unsplash.com/photo-1618355725229-799ae136928e?q=80&w=1964&auto=format&fit=crop" alt="Indian high school students" className="rounded-xl w-full h-full object-cover" />
+                                    <img src="https://images.unsplash.com/photo-1628191010210-a54de435944d?q=80&w=2070&auto=format&fit=crop" alt="A classroom of high school students listening to a lecture" className="rounded-xl w-full h-full object-cover" />
                                     <div>
                                         <h3 className="text-2xl font-bold text-text-primary">High School (9-12)</h3>
                                         <p className="text-text-secondary mt-2">Build a rock-solid foundation, ace your board exams, and get a head start on competitive exam preparation.</p>
@@ -209,7 +209,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToAuth, onNavigateT
                             </div>
                             <div className={`audience-tab-content ${activeAudienceTab === 'competitive' ? 'active animate-fade-in' : ''}`}>
                                 <div className="grid md:grid-cols-2 gap-8 items-center">
-                                    <img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=2070&auto=format&fit=crop" alt="Indian students in a library" className="rounded-xl w-full h-full object-cover" />
+                                    <img src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?q=80&w=2070&auto=format&fit=crop" alt="A student in a library looking at a bookshelf, representing focused study" className="rounded-xl w-full h-full object-cover" />
                                     <div>
                                         <h3 className="text-2xl font-bold text-text-primary">Competitive Exam Prep (JEE, NEET)</h3>
                                         <p className="text-text-secondary mt-2">Achieve top ranks with our structured curriculum, rigorous mock tests, and expert faculty from top institutes.</p>

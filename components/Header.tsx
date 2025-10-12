@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { HomeIcon, LanguageIcon, MagnifyingGlassIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from '../contexts/Language-context';
@@ -13,7 +12,6 @@ interface HeaderProps {
     curriculum: Grade[];
     onSearchSelect: (grade: Grade, subject: Subject, chapter: Chapter) => void;
     isLoggedIn: boolean;
-    // FIX: Renamed 'currentUser' to 'user' and updated type to handle any logged-in user role.
     user: Student | Teacher | Parent | null;
     userRole: 'student' | 'teacher' | 'parent' | null;
     onUpdateProfile: (data: any) => Promise<void>;
@@ -35,7 +33,6 @@ const Header: React.FC<HeaderProps> = ({
     curriculum, 
     onSearchSelect, 
     isLoggedIn, 
-    // FIX: Destructure 'user' instead of 'currentUser'.
     user,
     userRole,
     onUpdateProfile,
@@ -176,13 +173,11 @@ const Header: React.FC<HeaderProps> = ({
               )}
               {isLoggedIn && (
                   <>
-                      {/* FIX: Use a type guard to ensure 'user' is a Student before accessing student-specific properties. */}
                       {userRole === 'student' && user && 'avatarUrl' in user && (
                           <button onClick={() => setIsProfileModalOpen(true)} className="rounded-full w-10 h-10 overflow-hidden border-2 border-slate-600 hover:border-primary transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-primary">
                               <img src={user.avatarUrl} alt="User profile" className="w-full h-full object-cover" />
                           </button>
                       )}
-                      {/* FIX: Display the name for teacher/parent roles correctly. */}
                       {userRole !== 'student' && user && (
                            <span className="font-semibold text-text-secondary">{user.name}</span>
                       )}
@@ -194,7 +189,6 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
       </header>
-      {/* FIX: Use a type guard to ensure 'user' is a Student before rendering the student-only ProfileModal. */}
       {userRole === 'student' && user && 'avatarUrl' in user && (
         <ProfileModal 
           isOpen={isProfileModalOpen}

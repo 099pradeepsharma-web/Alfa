@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface PointsToastProps {
   points: number;
@@ -6,17 +6,27 @@ interface PointsToastProps {
 }
 
 const PointsToast: React.FC<PointsToastProps> = ({ points, onClose }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 2000); // Disappear after 2 seconds
+  const [isExiting, setIsExiting] = useState(false);
 
-    return () => clearTimeout(timer);
+  useEffect(() => {
+    // The animation itself is 1.5s. We'll start fading out a bit before it ends.
+    const exitTimer = setTimeout(() => {
+      setIsExiting(true);
+    }, 1200);
+
+    const closeTimer = setTimeout(() => {
+      onClose();
+    }, 1500); // Fully close after animation duration
+
+    return () => {
+      clearTimeout(exitTimer);
+      clearTimeout(closeTimer);
+    };
   }, [onClose]);
 
   return (
     <div className="points-toast">
-      <div className="bg-green-500 text-white font-bold py-2 px-4 rounded-full shadow-lg">
+      <div className={`points-burst-toast ${isExiting ? 'opacity-0' : ''}`}>
         +{points} XP
       </div>
     </div>

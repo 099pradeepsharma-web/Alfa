@@ -34,10 +34,18 @@ export const assignVariant = (userId: string, experimentId: string): Variant => 
     const storageKey = `${EXPERIMENT_STORAGE_PREFIX}${experimentId}-${userId}`;
 
     // 1. Check for a stored variant first
-    const storedVariant = localStorage.getItem(storageKey);
-    if (storedVariant === 'A' || storedVariant === 'B') {
-        return storedVariant;
+    try {
+        const storedVariant = localStorage.getItem(storageKey);
+        if (storedVariant === 'A' || storedVariant === 'B') {
+            return storedVariant;
+        }
+    } catch (e) {
+        console.error("Could not access localStorage for A/B testing.", e);
+        // Fallback to non-persistent assignment if localStorage is unavailable
+        const hash = simpleHash(userId + experimentId);
+        return hash % 2 === 0 ? 'A' : 'B';
     }
+
 
     // 2. If not stored, assign deterministically
     const hashValue = simpleHash(userId + experimentId);

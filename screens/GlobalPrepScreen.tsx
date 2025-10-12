@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../contexts/Language-context';
-import { ArrowLeft, Globe, BookOpen, Check, FileText, Languages as LanguageIcon, Lightbulb, MessageSquare, Target, Star, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
-// FIX: Imported DocumentTextIcon from heroicons.
-import { DocumentTextIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon, GlobeAltIcon, BookOpenIcon, CheckIcon, LanguageIcon, LightbulbIcon, ChatBubbleBottomCenterTextIcon, TrophyIcon, StarIcon, ChevronRightIcon, CheckCircleIcon, XCircleIcon, DocumentTextIcon, ForwardIcon, RocketLaunchIcon, SparklesIcon, UsersIcon } from '@heroicons/react/24/solid';
 import { QuizQuestion, SATAnswerEvaluation } from '../types';
 import * as geminiService from '../services/geminiService';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -39,10 +37,10 @@ const GlobalPrepScreen: React.FC<GlobalPrepScreenProps> = ({ onBack }) => {
     const [isEvaluating, setIsEvaluating] = useState(false);
 
     const exams = [
-        { id: 'sat', title: t('satTitle'), description: t('satDescription'), icon: BookOpen, status: 'active' },
-        { id: 'act', title: t('actTitle'), description: t('actDescription'), icon: Check, status: 'coming_soon' },
+        { id: 'sat', title: t('satTitle'), description: t('satDescription'), icon: BookOpenIcon, status: 'active' },
+        { id: 'act', title: t('actTitle'), description: t('actDescription'), icon: CheckIcon, status: 'coming_soon' },
         { id: 'toefl', title: t('toeflTitle'), description: t('toeflDescription'), icon: LanguageIcon, status: 'coming_soon' },
-        { id: 'ielts', title: t('ieltsTitle'), description: t('ieltsDescription'), icon: FileText, status: 'coming_soon' },
+        { id: 'ielts', title: t('ieltsTitle'), description: t('ieltsDescription'), icon: DocumentTextIcon, status: 'coming_soon' },
     ];
 
     const handleStartPractice = async (examId: string) => {
@@ -133,7 +131,7 @@ const GlobalPrepScreen: React.FC<GlobalPrepScreenProps> = ({ onBack }) => {
         return (
             <div className="animate-fade-in">
                 <button onClick={handleBackToHub} className="flex items-center text-primary hover:text-primary-dark font-semibold transition mb-6" style={{color: 'rgb(var(--c-primary))'}}>
-                    <ArrowLeft className="h-5 w-5 mr-2" />
+                    <ArrowLeftIcon className="h-5 w-5 mr-2" />
                     {t('globalPrepTitle')}
                 </button>
                 <div className="dashboard-highlight-card p-8">
@@ -165,7 +163,7 @@ const GlobalPrepScreen: React.FC<GlobalPrepScreenProps> = ({ onBack }) => {
                         <div className="mt-6 animate-fade-in space-y-6">
                             <div className="p-4 bg-surface rounded-lg">
                                 <p className={`font-bold text-lg flex items-center gap-2 ${selectedAnswer === currentQuestion.correctAnswer ? 'text-status-success' : 'text-status-danger'}`}>
-                                    {selectedAnswer === currentQuestion.correctAnswer ? <CheckCircle className="h-6 w-6"/> : <XCircle className="h-6 w-6"/>}
+                                    {selectedAnswer === currentQuestion.correctAnswer ? <CheckCircleIcon className="h-6 w-6"/> : <XCircleIcon className="h-6 w-6"/>}
                                     {selectedAnswer === currentQuestion.correctAnswer ? t('correct') : t('incorrect')}
                                 </p>
                                 <div className="mt-2 prose max-w-none dark:prose-invert text-sm">
@@ -190,14 +188,14 @@ const GlobalPrepScreen: React.FC<GlobalPrepScreenProps> = ({ onBack }) => {
                             {evaluation && (
                                 <div className="mt-6 animate-fade-in grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <EvaluationCard title={t('modelApproach')} icon={DocumentTextIcon}><StructuredText text={evaluation.modelApproach}/></EvaluationCard>
-                                    <EvaluationCard title={t('feedbackOnYourApproach')} icon={MessageSquare}><StructuredText text={evaluation.personalizedFeedback}/></EvaluationCard>
-                                    <EvaluationCard title={t('keyConceptTested')} icon={Target}><p>{evaluation.keyConcept}</p></EvaluationCard>
-                                    <EvaluationCard title={t('proTipsForSAT')} icon={Star}><StructuredText text={evaluation.proTips}/></EvaluationCard>
+                                    <EvaluationCard title={t('feedbackOnYourApproach')} icon={ChatBubbleBottomCenterTextIcon}><StructuredText text={evaluation.personalizedFeedback}/></EvaluationCard>
+                                    <EvaluationCard title={t('keyConceptTested')} icon={TrophyIcon}><p>{evaluation.keyConcept}</p></EvaluationCard>
+                                    <EvaluationCard title={t('proTipsForSAT')} icon={StarIcon}><StructuredText text={evaluation.proTips}/></EvaluationCard>
                                 </div>
                             )}
                              <div className="text-right mt-6">
                                 <button onClick={handleNextQuestion} className="btn-accent flex items-center ml-auto">
-                                    {isLastQuestion ? t('finishTest') : t('nextQuestion')} <ChevronRight className="h-5 w-5 ml-1"/>
+                                    {isLastQuestion ? t('finishTest') : t('nextQuestion')} <ChevronRightIcon className="h-5 w-5 ml-1"/>
                                 </button>
                             </div>
                         </div>
@@ -210,13 +208,13 @@ const GlobalPrepScreen: React.FC<GlobalPrepScreenProps> = ({ onBack }) => {
     return (
         <div className="animate-fade-in">
             <button onClick={onBack} className="flex items-center text-primary hover:text-primary-dark font-semibold transition mb-6" style={{color: 'rgb(var(--c-primary))'}}>
-                <ArrowLeft className="h-5 w-5 mr-2" />
+                <ArrowLeftIcon className="h-5 w-5 mr-2" />
                 {t('backToDashboard')}
             </button>
 
             <div className="dashboard-highlight-card p-8">
                 <div className="text-center">
-                    <Globe className="h-12 w-12 mx-auto text-primary" style={{color: 'rgb(var(--c-primary))'}} />
+                    <GlobeAltIcon className="h-12 w-12 mx-auto text-primary" style={{color: 'rgb(var(--c-primary))'}} />
                     <h2 className="text-3xl font-bold text-text-primary mt-2">{t('globalPrepTitle')}</h2>
                     <p className="text-text-secondary mt-1 max-w-2xl mx-auto">
                         {t('globalPrepDescription')}
@@ -230,7 +228,7 @@ const GlobalPrepScreen: React.FC<GlobalPrepScreenProps> = ({ onBack }) => {
                         const Icon = exam.icon;
                         const isActive = exam.status === 'active';
                         return (
-                            <div key={exam.id} className={`realm-card p-6 flex flex-col ${!isActive ? 'opacity-60' : ''}`}>
+                            <div key={exam.id} className={`bg-bg-primary p-6 rounded-xl border border-border flex flex-col ${!isActive ? 'opacity-60' : ''}`}>
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-primary-light rounded-lg">
                                         <Icon className="h-7 w-7 text-primary-dark"/>

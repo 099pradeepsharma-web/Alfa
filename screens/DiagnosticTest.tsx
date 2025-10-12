@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Grade, Subject, QuizQuestion, Chapter, NextStepRecommendation } from '../types';
+// FIX: Updated imports to use the correct exported members from geminiService.
 import { generateComprehensiveDiagnosticTest, generateComprehensiveDiagnosticRecommendation } from '../services/geminiService';
 import Quiz from '../components/Quiz';
 import LoadingSpinner from '../components/LoadingSpinner';
+// FIX: Added new icons for the updated results view.
 import { ArrowLeftIcon, LightBulbIcon, ForwardIcon, AcademicCapIcon, PuzzlePieceIcon, HeartIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from '../contexts/Language-context';
 
@@ -12,6 +14,7 @@ interface DiagnosticTestProps {
     chapter?: Chapter;
     language: string;
     onBack: () => void;
+    // FIX: Changed prop type to pass the full recommendation object, fixing the type error in the parent component.
     onTestComplete?: (recommendation: NextStepRecommendation) => void;
 }
 
@@ -20,6 +23,7 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isTestCompleted, setIsTestCompleted] = useState(false);
+    // FIX: Use a state object for detailed scores instead of a single score.
     const [scores, setScores] = useState<{ academic: number; iq: number; eq: number; total: number } | null>(null);
     const { t, tCurriculum } = useLanguage();
 
@@ -31,10 +35,12 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
             try {
                 setIsLoading(true);
                 setError(null);
+                // FIX: Use a fallback chapter if one isn't provided, as the new API requires it.
                 const effectiveChapter = chapter || subject.chapters[0];
                 if (!effectiveChapter) {
                     throw new Error("No chapters available for this subject.");
                 }
+                // FIX: Called the correct 'generateComprehensiveDiagnosticTest' function.
                 const questions = await generateComprehensiveDiagnosticTest(grade.level, subject.name, effectiveChapter.title, language);
                 setTestQuestions(questions);
             } catch (err: any) {
@@ -46,6 +52,7 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
         fetchTest();
     }, [grade.level, subject.name, chapter, subject.chapters, language, t]);
     
+    // FIX: Replaced old handler with a new comprehensive one that calculates detailed scores and calls the correct recommendation function.
     const handleQuizFinish = useCallback(async (result: { score: number; answers: { [key: number]: string; } }) => {
         if (!testQuestions || !onTestComplete) return;
 
@@ -83,6 +90,7 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
         }
 
         try {
+            // FIX: Added the missing 'subject.chapters' argument to the function call.
             const rec = await generateComprehensiveDiagnosticRecommendation(grade.level, subject.name, effectiveChapter.title, calculatedScores, language, subject.chapters);
             setRecommendation(rec);
         } catch (err: any) {
@@ -92,6 +100,7 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
         }
     }, [chapter, subject.chapters, grade.level, subject.name, testQuestions, language, onTestComplete]);
 
+    // FIX: Updated logic to pass the full recommendation object to the onTestComplete callback.
     const handleRecommendationAction = () => {
         if (recommendation && onTestComplete) {
             onTestComplete(recommendation);
@@ -115,11 +124,12 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
         </div>;
     }
     
+    // FIX: Replaced entire results view with the new comprehensive one.
     if (isTestCompleted && scores) {
         return (
              <div className="dashboard-highlight-card p-8 animate-fade-in text-center">
                 <h2 className="text-3xl font-bold text-text-primary">{t('testComplete')}</h2>
-                <p className="text-lg text-text-secondary mt-1">{t('youScored', { score: Math.round(scores.total / 100 * (testQuestions?.length || 10)), total: testQuestions?.length })}</p>
+                <p className="text-lg text-text-secondary mt-1">{t('youScored', { score: Math.round(scores.total * (testQuestions?.length || 10) / 100), total: testQuestions?.length })}</p>
 
                 <div className="my-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
                     <ScoreCard icon={AcademicCapIcon} title="Academic Readiness" score={scores.academic} />
@@ -163,6 +173,7 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
     return null;
 };
 
+// FIX: Added ScoreCard sub-component for the new results view.
 const ScoreCard: React.FC<{icon: React.ElementType, title: string, score: number}> = ({ icon: Icon, title, score }) => {
     const getScoreColor = (s: number) => {
         if (s >= 80) return 'text-status-success';
@@ -180,6 +191,7 @@ const ScoreCard: React.FC<{icon: React.ElementType, title: string, score: number
     );
 };
 
+// FIX: Added helper function for recommendation button text.
 const getRecommendationButtonText = (rec: NextStepRecommendation, t: Function, tCurriculum: Function) => {
     switch (rec.action) {
         case 'REVISE_PREREQUISITE':

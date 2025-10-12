@@ -1,9 +1,11 @@
 import { Student, Teacher, Parent } from '../types';
 
-export const MOCK_STUDENTS: Student[] = [
+export const MOCK_STUDENTS: (Student & { password?: string })[] = [
   {
     id: '1',
     name: 'Ananya Sharma',
+    email: 'student@alfanumrik.com',
+    password: 'password123',
     grade: 'Grade 10',
     avatarUrl: `https://i.pravatar.cc/150?u=ananya`,
     points: 1250,
@@ -20,6 +22,8 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '2',
     name: 'Rohan Verma',
+    email: 'rohan@example.com',
+    password: 'password123',
     grade: 'Grade 8',
     avatarUrl: `https://i.pravatar.cc/150?u=rohan`,
     points: 980,
@@ -34,6 +38,8 @@ export const MOCK_STUDENTS: Student[] = [
   {
     id: '3',
     name: 'Priya Singh',
+    email: 'priya@example.com',
+    password: 'password123',
     grade: 'Grade 10',
     avatarUrl: `https://i.pravatar.cc/150?u=priya`,
     points: 1100,
@@ -52,7 +58,7 @@ export const MOCK_TEACHERS: (Teacher & { password?: string })[] = [
     name: 'Mrs. Gita Kapoor',
     email: 'teacher@alfanumrik.com',
     password: 'password123',
-    studentIds: ['1', '3'], // Ananya and Priya
+    studentIds: ['1', '2', '3'], 
   }
 ];
 

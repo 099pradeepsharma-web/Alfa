@@ -47,7 +47,7 @@ const MissionIllustration = () => (
                 }
             `}
         </style>
-        <path d="M10 70 Q 30 10, 50 40 T 90 20" stroke="rgb(var(--c-border))" strokeWidth="2" fill="none" className="mission-path-tut" />
+        <path d="M10 70 Q 30 10, 50 40 T 90 20" stroke="rgb(var(--c-border-color))" strokeWidth="2" fill="none" className="mission-path-tut" />
         <path d="M5 5 L10 10 L5 15" fill="none" stroke="rgb(var(--c-primary))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" transform="translate(-10 -5)">
             <animateMotion dur="2s" repeatCount="1" fill="freeze" path="M10 70 Q 30 10, 50 40 T 90 20" />
         </path>
@@ -70,7 +70,7 @@ const DoubtResolutionIllustration = () => (
         </style>
         <circle cx="25" cy="50" r="15" fill="rgb(var(--c-primary))" />
         <circle cx="25" cy="50" r="7" fill="rgb(var(--c-surface))" style={{ animation: 'fitto-wink-tut 3s infinite ease-in-out' }} />
-        <path d="M45 45 L 75 45 A 10 10 0 0 1 85 55 L 85 60 A 10 10 0 0 1 75 70 L 50 70 A 5 5 0 0 1 45 65 Z" fill="rgb(var(--c-bg-card-hover))" style={{ animation: 'bubble-pop-tut 0.5s ease-out 0.2s forwards' }} />
+        <path d="M45 45 L 75 45 A 10 10 0 0 1 85 55 L 85 60 A 10 10 0 0 1 75 70 L 50 70 A 5 5 0 0 1 45 65 Z" fill="rgba(var(--c-surface), 1)" style={{ animation: 'bubble-pop-tut 0.5s ease-out 0.2s forwards' }} />
         <text x="50" y="60" fontSize="8" fill="rgb(var(--c-text-primary))" style={{ animation: 'text-fade-in-tut 1s ease-out 0.5s forwards' }}>Hello!</text>
     </svg>
 );
@@ -83,8 +83,8 @@ const CultureIllustration = () => (
                 .swipe-rect-tut { animation: swipe-tut 0.7s ease-out 0.5s forwards; }
             `}
         </style>
-        <rect x="5" y="10" width="90" height="60" rx="5" fill="rgb(var(--c-surface))" stroke="rgb(var(--c-border))" strokeWidth="2"/>
-        <line x1="50" y1="10" x2="50" y2="70" stroke="rgb(var(--c-border))" strokeWidth="2" />
+        <rect x="5" y="10" width="90" height="60" rx="5" fill="rgb(var(--c-surface))" stroke="rgb(var(--c-border-color))" strokeWidth="2"/>
+        <line x1="50" y1="10" x2="50" y2="70" stroke="rgb(var(--c-border-color))" strokeWidth="2" />
         <path d="M20 30 L 30 50 L 40 40" stroke="rgb(var(--c-text-secondary))" fill="none" strokeWidth="2" />
         <rect x="15" y="55" width="25" height="5" fill="rgb(var(--c-text-secondary))" opacity="0.5"/>
         <rect x="50" y="10" height="60" fill="rgb(var(--c-primary-light))" className="swipe-rect-tut" />
@@ -96,8 +96,8 @@ const CultureIllustration = () => (
 );
 const CareerIllustration = () => (
     <svg viewBox="0 0 100 80" className="w-auto h-24">
-        <circle cx="50" cy="40" r="30" fill="none" stroke="rgb(var(--c-border))" strokeWidth="2" />
-        <g stroke="rgb(var(--c-border))" strokeWidth="1">
+        <circle cx="50" cy="40" r="30" fill="none" stroke="rgb(var(--c-border-color))" strokeWidth="2" />
+        <g stroke="rgb(var(--c-border-color))" strokeWidth="1">
             <path d="M50 10 L 50 70" />
             <path d="M29.02 25 L 70.98 55" />
             <path d="M29.02 55 L 70.98 25" />
@@ -182,8 +182,8 @@ const TutorialStep: React.FC<{ icon: React.ReactNode; title: string; description
     return (
         <div className="flex flex-col items-center text-center p-6 animate-fade-in">
             <div className="mb-6">{icon}</div>
-            <h3 className="text-3xl font-bold text-slate-800 dark:text-slate-100">{title}</h3>
-            <p className="mt-2 text-lg text-slate-500 dark:text-slate-400 max-w-md">{description}</p>
+            <h3 className="text-3xl font-bold text-text-primary">{title}</h3>
+            <p className="mt-2 text-lg text-text-secondary max-w-md">{description}</p>
         </div>
     );
 };
@@ -252,8 +252,8 @@ const TutorialScreen: React.FC<TutorialScreenProps> = ({ onFinish }) => {
     const isLastStep = currentStep === steps.length - 1;
 
     return (
-        <div className="fixed inset-0 bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4">
-            <div className="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8 flex flex-col justify-between min-h-[500px]">
+        <div className="fixed inset-0 bg-bg-primary/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4">
+            <div className="bg-surface w-full max-w-2xl rounded-2xl shadow-2xl border border-border p-8 flex flex-col justify-between min-h-[500px]">
                 <div className="flex-grow flex items-center justify-center">
                     <TutorialStep 
                         icon={steps[currentStep].illustration}
@@ -269,7 +269,7 @@ const TutorialScreen: React.FC<TutorialScreenProps> = ({ onFinish }) => {
                             <div
                                 key={index}
                                 className={`h-1.5 rounded-full transition-all duration-500 ${
-                                    currentStep >= index ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'
+                                    currentStep >= index ? 'bg-primary' : 'bg-border'
                                 }`}
                                 style={{
                                     width: `${100 / steps.length}%`,
@@ -281,20 +281,20 @@ const TutorialScreen: React.FC<TutorialScreenProps> = ({ onFinish }) => {
 
                     {/* Navigation */}
                     <div className="flex items-center gap-4">
-                         <button onClick={onFinish} className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+                         <button onClick={onFinish} className="text-sm font-semibold text-text-secondary hover:text-text-primary">
                             {t('skipTutorial')}
                         </button>
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={handlePrev}
                                 disabled={currentStep === 0}
-                                className="p-2 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 disabled:opacity-50"
+                                className="p-2 rounded-full bg-bg-primary text-text-secondary hover:bg-border disabled:opacity-50"
                             >
                                 <ArrowLeftIcon className="h-5 w-5" />
                             </button>
                             <button
                                 onClick={handleNext}
-                                className="flex items-center gap-2 px-6 py-2 text-white font-bold rounded-lg btn-primary-gradient"
+                                className="flex items-center gap-2 px-6 py-2 btn-accent"
                             >
                                 <span>{isLastStep ? t('letsGo') : t('next')}</span>
                                 {!isLastStep && <ArrowRightIcon className="h-5 w-5" />}

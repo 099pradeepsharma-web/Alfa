@@ -17,7 +17,7 @@ type Status = 'idle' | 'generating' | 'ready' | 'error';
 
 const loadingMessages = [
     "Contacting the AI animation studio...",
-    "This is a special one-time process...",
+    "This is a special one-time generation...",
     "Your unique video will help other students learn!",
     "Storyboarding the key concepts...",
     "Setting up the digital scene for animation...",
@@ -99,9 +99,9 @@ const InteractiveExplainerPlayer: React.FC<InteractiveExplainerPlayerProps> = ({
     }, [selectedOptions, explainerData, areAllOptionsSelected, grade, subject, chapter, videoUrl, t]);
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-6 transition-shadow hover:shadow-md not-prose">
-            <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{explainerData.title}</h3>
-            <p className="text-slate-600 dark:text-slate-300 mt-2">{explainerData.description}</p>
+        <div className="bg-slate-800/50 border border-border rounded-xl p-6 transition-shadow hover:shadow-md not-prose">
+            <h3 className="text-2xl font-bold text-text-primary">{explainerData.title}</h3>
+            <p className="text-text-secondary mt-2">{explainerData.description}</p>
             
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 {explainerData.variables.map(variable => (

@@ -1,27 +1,23 @@
 
-
-
-
 import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { Grade, Subject, Chapter, Student, NextStepRecommendation, Concept, StudyGoal, AdaptiveAction, Teacher, Parent, Achievement } from './types';
 import { getCurriculum } from './services/curriculumService';
-import { MOCK_STUDENTS } from './data/mockData';
 import { createTutorChat } from './services/geminiService';
 import { Chat } from '@google/genai';
 import { ExclamationTriangleIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from './contexts/Language-context';
 import LoadingSpinner from './components/LoadingSpinner';
-import { createAvatar } from '@dicebear/core';
-import { lorelei } from '@dicebear/collection';
 import { useAuth } from './contexts/AuthContext';
 import { ALL_ACHIEVEMENTS } from './data/achievements';
+import { useSound } from './hooks/useSound';
 
 // --- Lazy Loading Screens and Components for Performance Optimization ---
 const Header = lazy(() => import('./components/Header'));
 const Footer = lazy(() => import('./components/Footer'));
 const GradeSelector = lazy(() => import('./components/GradeSelector'));
 const SubjectSelector = lazy(() => import('./components/SubjectSelector'));
-const ChapterView = lazy(() => import('./components/ChapterView').then(module => ({ default: module.ChapterView })));
+// FIX: Correctly handle named export for React.lazy
+const ChapterView = lazy(() => import('./screens/ChapterView').then(module => ({ default: module.ChapterView })));
 const AuthScreen = lazy(() => import('./screens/AuthScreen'));
 const StudentDashboard = lazy(() => import('./screens/StudentDashboard'));
 const PersonalizedPathScreen = lazy(() => import('./screens/PersonalizedPathScreen'));
@@ -43,31 +39,34 @@ const TermsScreen = lazy(() => import('./screens/TermsScreen'));
 const LandingPage = lazy(() => import('./screens/LandingPage'));
 const ContactScreen = lazy(() => import('./screens/ContactScreen'));
 const TeacherDashboard = lazy(() => import('./screens/TeacherDashboard'));
+// FIX: Correctly handle named export for React.lazy
 const ParentDashboard = lazy(() => import('./screens/ParentDashboard').then(module => ({ default: module.ParentDashboard })));
 const StudentPerformanceView = lazy(() => import('./screens/StudentPerformanceView'));
 const AchievementToast = lazy(() => import('./components/AchievementToast'));
 const PointsToast = lazy(() => import('./components/PointsToast'));
+const ExamPrepScreen = lazy(() => import('./screens/ExamPrepScreen'));
 
 
-type StudentView = 'dashboard' | 'path' | 'browse' | 'wellbeing' | 'tutor' | 'tutorial' | 'competitions' | 'career_guidance' | 'innovation_lab' | 'critical_thinking' | 'global_prep' | 'leadership_circle' | 'ai_chatbot' | 'project_hub' | 'peer_pedia';
+type StudentView = 'dashboard' | 'path' | 'browse' | 'wellbeing' | 'tutor' | 'tutorial' | 'competitions' | 'career_guidance' | 'innovation_lab' | 'critical_thinking' | 'global_prep' | 'leadership_circle' | 'ai_chatbot' | 'project_hub' | 'peer_pedia' | 'exam_prep';
 type AppView = 'student_flow' | 'privacy_policy' | 'faq' | 'about' | 'terms' | 'contact';
-type UserRole = 'student' | 'teacher' | 'parent' | null;
 
 const App: React.FC = () => {
-  // Global State
-  const { currentUser, users, logout: studentLogout, updateUser, addStudyGoal, toggleStudyGoal, removeStudyGoal, addAchievement } = useAuth();
+  // Global State from Contexts
+  const { 
+    currentUser, currentRole, isAuthenticated, users, 
+    logout, updateUser, addStudyGoal, toggleStudyGoal, removeStudyGoal, addAchievement 
+  } = useAuth();
   const [appView, setAppView] = useState<AppView>('student_flow');
   const { language, isLoaded: translationsLoaded } = useLanguage();
+  const { playSound } = useSound();
 
   // Curriculum State
   const [curriculum, setCurriculum] = useState<Grade[]>([]);
   const [isLoadingCurriculum, setIsLoadingCurriculum] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Auth & Role State
+  // Navigation State
   const [showAuthScreen, setShowAuthScreen] = useState(false);
-  const [loggedInUser, setLoggedInUser] = useState<Teacher | Parent | null>(null);
-  const [loggedInRole, setLoggedInRole] = useState<UserRole>(null);
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
 
   // Student-specific State
@@ -84,6 +83,22 @@ const App: React.FC = () => {
   // Gamification UI State
   const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
   const [awardedPoints, setAwardedPoints] = useState<number | null>(null);
+
+  // --- Sound Effect Integration ---
+  useEffect(() => {
+    const handleInteractionSound = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const soundElement = target.closest('[data-sound]');
+      if (soundElement) {
+        const soundName = soundElement.getAttribute('data-sound');
+        if (soundName === 'click' || soundName === 'complete' || soundName === 'swoosh') {
+          playSound(soundName as any);
+        }
+      }
+    };
+    document.addEventListener('click', handleInteractionSound);
+    return () => document.removeEventListener('click', handleInteractionSound);
+  }, [playSound]);
 
   const loadCurriculum = useCallback(async () => {
     setIsLoadingCurriculum(true);
@@ -102,94 +117,52 @@ const App: React.FC = () => {
   useEffect(() => {
     loadCurriculum();
   }, [loadCurriculum]);
-
-  const handleLogout = useCallback(() => {
-    studentLogout();
-    setLoggedInUser(null);
-    setLoggedInRole(null);
-    setViewingStudent(null);
-    setStudentView('dashboard');
-    setSelectedGrade(null);
-    setSelectedSubject(null);
-    setSelectedChapter(null);
-    setShowAuthScreen(false);
-  }, [studentLogout]);
-
-  const handleNonStudentLogin = useCallback((user: Teacher | Parent, role: 'teacher' | 'parent') => {
-      setLoggedInUser(user);
-      setLoggedInRole(role);
-      setShowAuthScreen(false);
-  }, []);
   
   const handleBackToDashboard = useCallback(() => {
     setStudentView('dashboard');
-    setViewingStudent(null);
-    if(loggedInRole) setLoggedInRole(loggedInRole); // stay in teacher/parent view
-  }, [loggedInRole]);
+    setViewingStudent(null); // Clear any student being viewed by a teacher/parent
+  }, []);
   
   const handleGoHome = useCallback(() => {
     setStudentView('dashboard');
     setAppView('student_flow');
     setShowAuthScreen(false);
     setViewingStudent(null);
-    // For teacher/parent, going "home" means back to their dashboard, not student's
-    if (loggedInRole === 'teacher' || loggedInRole === 'parent') {
-        // Nothing to do, they are already on their dashboard. viewingStudent is cleared.
-    }
-  }, [loggedInRole]);
+  }, []);
 
-  const handleNavigateToContact = useCallback(() => setAppView('contact'), []);
-
-  const handleBackToGrades = useCallback(() => {
+  const handleLogout = useCallback(() => {
+    logout();
+    setStudentView('dashboard');
     setSelectedGrade(null);
     setSelectedSubject(null);
     setSelectedChapter(null);
-  }, []);
-
-  const handleGradeSelect = useCallback((grade: Grade) => {
-    setSelectedGrade(grade);
-    setSelectedSubject(null);
-    setSelectedChapter(null);
-  }, []);
-
-  const handleSubjectSelect = useCallback((subject: Subject) => {
-    setSelectedSubject(subject);
-    setSelectedChapter(null);
-  }, []);
+    setShowAuthScreen(false);
+  }, [logout]);
   
-  const handleChapterSelect = useCallback((chapter: Chapter) => {
-    setSelectedChapter(chapter);
-  }, []);
-
-  const handleBackToSubjects = useCallback(() => {
-    setSelectedSubject(null);
-    setSelectedChapter(null);
-  }, []);
-
-  const handleBackToChapters = useCallback(() => {
-    setSelectedChapter(null);
-  }, []);
+  // --- Navigation Handlers ---
+  const handleNavigateToContact = useCallback(() => setAppView('contact'), []);
+  const handleBackToGrades = useCallback(() => { setSelectedGrade(null); setSelectedSubject(null); setSelectedChapter(null); }, []);
+  const handleGradeSelect = useCallback((grade: Grade) => { setSelectedGrade(grade); setSelectedSubject(null); setSelectedChapter(null); }, []);
+  const handleSubjectSelect = useCallback((subject: Subject) => { setSelectedSubject(subject); setSelectedChapter(null); }, []);
+  const handleChapterSelect = useCallback((chapter: Chapter) => { setSelectedChapter(chapter); }, []);
+  const handleBackToSubjects = useCallback(() => { setSelectedSubject(null); setSelectedChapter(null); }, []);
+  const handleBackToChapters = useCallback(() => { setSelectedChapter(null); }, []);
 
   const handleStartBrowsing = useCallback(() => {
-    if (currentUser) {
+    if (currentRole === 'student') {
+        const student = currentUser as Student;
         if (!selectedGrade) {
-            const studentGrade = curriculum.find(g => g.level === currentUser.grade);
-            if (studentGrade) {
-                setSelectedGrade(studentGrade);
-            }
+            const studentGrade = curriculum.find(g => g.level === student.grade);
+            if (studentGrade) setSelectedGrade(studentGrade);
         }
         setStudentView('browse');
     }
-  }, [currentUser, curriculum, selectedGrade]);
+  }, [currentUser, currentRole, curriculum, selectedGrade]);
   
   const handleRecommendation = useCallback((recommendation: NextStepRecommendation) => {
     switch (recommendation.action) {
-        case 'START_CRITICAL_THINKING':
-            setStudentView('critical_thinking');
-            break;
-        case 'START_WELLBEING':
-            setStudentView('wellbeing');
-            break;
+        case 'START_CRITICAL_THINKING': setStudentView('critical_thinking'); break;
+        case 'START_WELLBEING': setStudentView('wellbeing'); break;
         case 'REVISE_PREREQUISITE':
             if (recommendation.prerequisiteChapterTitle && selectedSubject) {
                 const chapter = selectedSubject.chapters.find(c => c.title === recommendation.prerequisiteChapterTitle);
@@ -207,46 +180,17 @@ const App: React.FC = () => {
     }
   }, [selectedSubject]);
 
-
-  const handleStartWellbeingModule = useCallback(() => {
-    setStudentView('wellbeing');
-  }, []);
-  
   const handleStartTutorSession = useCallback((concepts: Concept[]) => {
-    if (!selectedGrade || !selectedSubject || !selectedChapter) return;
+    if (!selectedGrade || !selectedSubject || !selectedChapter || currentRole !== 'student') return;
     const chatSession = createTutorChat(selectedGrade.level, selectedSubject.name, selectedChapter.title, language, concepts);
     setTutorChat(chatSession);
     setStudentView('tutor');
-}, [selectedGrade, selectedSubject, selectedChapter, language]);
+  }, [selectedGrade, selectedSubject, selectedChapter, language, currentRole]);
 
-  const handleEndTutorSession = useCallback(() => {
-      setTutorChat(null);
-      setStudentView('browse'); // Go back to the chapter view
-  }, []);
+  const handleEndTutorSession = useCallback(() => { setTutorChat(null); setStudentView('browse'); }, []);
+  const handleFinishTutorial = useCallback(() => { try { localStorage.setItem('alfanumrik-tutorial-seen', 'true'); } catch (e) { console.error("Failed to save tutorial status:", e); } setStudentView('dashboard'); }, []);
   
-  const handleStartTutorial = useCallback(() => {
-      setStudentView('tutorial');
-  }, []);
-
-  const handleFinishTutorial = useCallback(() => {
-      try {
-          localStorage.setItem('alfanumrik-tutorial-seen', 'true');
-      } catch (e) {
-          console.error("Failed to save tutorial status to localStorage:", e);
-      }
-      setStudentView('dashboard');
-  }, []);
-
-  const handleStartInnovationLab = useCallback(() => setStudentView('innovation_lab'), []);
-  const handleStartCriticalThinking = useCallback(() => setStudentView('critical_thinking'), []);
-  const handleStartGlobalPrep = useCallback(() => setStudentView('global_prep'), []);
-  const handleStartLeadershipCircle = useCallback(() => setStudentView('leadership_circle'), []);
-  const handleStartCareerGuidance = useCallback(() => setStudentView('career_guidance'), []);
-  const handleStartDoubtSolver = useCallback(() => setStudentView('ai_chatbot'), []);
-  const handleStartCompetitions = useCallback(() => setStudentView('competitions'), []);
-  const handleStartProjectHub = useCallback(() => setStudentView('project_hub'), []);
-  const handleStartPeerPedia = useCallback(() => setStudentView('peer_pedia'), []);
-
+  const handleStartStudentView = useCallback((view: StudentView) => setStudentView(view), []);
   const handleSearchSelect = useCallback((grade: Grade, subject: Subject, chapter: Chapter) => {
     setSelectedGrade(grade);
     setSelectedSubject(subject);
@@ -256,57 +200,42 @@ const App: React.FC = () => {
   }, []);
   
   const handleAddAchievement = useCallback((achievementId: string) => {
-    if (!currentUser || currentUser.achievements.some(a => a.id === achievementId)) return;
+    if (currentRole !== 'student') return;
+    const student = currentUser as Student;
+    if (student.achievements.some(a => a.id === achievementId)) return;
     
     const achievementData = ALL_ACHIEVEMENTS.find(a => a.id === achievementId);
     if (achievementData) {
         addAchievement(achievementId);
-        const achievementWithTimestamp: Achievement = {
-            ...achievementData,
-            timestamp: new Date().toISOString()
-        };
+        const achievementWithTimestamp: Achievement = { ...achievementData, timestamp: new Date().toISOString() };
         setShowAchievement(achievementWithTimestamp);
     }
-  }, [addAchievement, currentUser]);
+  }, [addAchievement, currentUser, currentRole]);
 
   const updateStudentPoints = useCallback((pointsToAdd: number) => {
-    if (!currentUser) return;
-    updateUser({ ...currentUser, points: currentUser.points + pointsToAdd });
-    if (pointsToAdd > 0) {
-        setAwardedPoints(pointsToAdd);
-    }
-  }, [currentUser, updateUser]);
+    if (currentRole !== 'student' || !currentUser) return;
+    updateUser({ ...(currentUser as Student), points: (currentUser as Student).points + pointsToAdd });
+    if (pointsToAdd > 0) setAwardedPoints(pointsToAdd);
+  }, [currentUser, currentRole, updateUser]);
 
-  const updateUserProfile = useCallback(async (updatedData: { name: string; grade: string; school: string; city: string; board: string; avatarSeed: string; }) => {
-    if (!currentUser) return;
+  const updateUserProfile = useCallback(async (updatedData: Partial<Student>) => {
+    if (currentRole !== 'student' || !currentUser) return;
     setProfileUpdateLoading(true);
     setProfileUpdateError(null);
     try {
-        const seed = updatedData.avatarSeed.trim() || updatedData.name.trim();
-        const avatar = createAvatar(lorelei, { seed });
-        const newAvatarUrl = await avatar.toDataUri();
-
-        updateUser({
-            ...currentUser,
-            name: updatedData.name,
-            grade: updatedData.grade,
-            school: updatedData.school,
-            city: updatedData.city,
-            board: updatedData.board,
-            avatarSeed: updatedData.avatarSeed,
-            avatarUrl: newAvatarUrl,
-        });
+        await updateUser({ ...currentUser, ...updatedData } as Student);
     } catch (err: any) {
         setProfileUpdateError(err.message);
-        throw err; // Re-throw for the modal to catch
+        throw err;
     } finally {
         setProfileUpdateLoading(false);
     }
-  }, [currentUser, updateUser]);
+  }, [currentUser, currentRole, updateUser]);
 
   const handleMissionComplete = useCallback((action: AdaptiveAction) => {
-    if (action.details.subject && action.details.chapter) {
-        const grade = curriculum.find(g => g.level === currentUser?.grade);
+    if (action.details.subject && action.details.chapter && currentRole === 'student') {
+        const student = currentUser as Student;
+        const grade = curriculum.find(g => g.level === student.grade);
         const subject = grade?.subjects.find(s => s.name === action.details.subject);
         const chapter = subject?.chapters.find(c => c.title === action.details.chapter);
         
@@ -314,45 +243,31 @@ const App: React.FC = () => {
             setSelectedGrade(grade);
             setSelectedSubject(subject);
             setSelectedChapter(chapter);
-            setStudentView('browse'); // Set the view to browse, which will render ChapterView
+            setStudentView('browse');
         } else {
-            console.warn("Could not find chapter from mission, returning to dashboard.");
-            setStudentView('dashboard'); // Fallback to dashboard
+            setStudentView('dashboard');
         }
     } else {
-        setStudentView('dashboard'); // Fallback for non-academic missions
+        setStudentView('dashboard');
     }
-  }, [curriculum, currentUser]);
+  }, [curriculum, currentUser, currentRole]);
 
   const renderStudentBrowseFlow = () => {
-    if (!selectedGrade) {
-      return <GradeSelector grades={curriculum} onSelect={handleGradeSelect} onBack={handleBackToDashboard} />;
-    }
-    if (!selectedSubject) {
-        return <SubjectSelector grade={selectedGrade} onSubjectSelect={handleSubjectSelect} onBack={handleBackToGrades} onRecommendation={handleRecommendation} />;
-    }
-    if (!selectedChapter) {
-        return <SubjectSelector grade={selectedGrade} selectedSubject={selectedSubject} onSubjectSelect={handleSubjectSelect} onChapterSelect={handleChapterSelect} onBack={handleBackToSubjects} onRecommendation={handleRecommendation} />;
-    }
-     if (currentUser) {
-        return <ChapterView 
-            grade={selectedGrade} 
-            subject={selectedSubject} 
-            chapter={selectedChapter}
-            student={currentUser}
-            language={language}
-            onBackToChapters={handleBackToChapters}
-            onBackToSubjects={handleBackToSubjects}
-            onChapterSelect={handleChapterSelect}
-            onUpdatePoints={updateStudentPoints}
-            onAddAchievement={handleAddAchievement}
-        />;
-    }
-    return null;
+    const student = currentUser as Student;
+    if (!selectedGrade) return <GradeSelector grades={curriculum} onSelect={handleGradeSelect} onBack={handleBackToDashboard} />;
+    if (!selectedSubject) return <SubjectSelector grade={selectedGrade} onSubjectSelect={handleSubjectSelect} onBack={handleBackToGrades} onRecommendation={handleRecommendation} />;
+    if (!selectedChapter) return <SubjectSelector grade={selectedGrade} selectedSubject={selectedSubject} onSubjectSelect={handleSubjectSelect} onChapterSelect={handleChapterSelect} onBack={handleBackToSubjects} onRecommendation={handleRecommendation} />;
+    
+    return <ChapterView 
+        grade={selectedGrade} subject={selectedSubject} chapter={selectedChapter} student={student} language={language}
+        onBackToChapters={handleBackToChapters} onBackToSubjects={handleBackToSubjects} onChapterSelect={handleChapterSelect}
+        onUpdatePoints={updateStudentPoints} onAddAchievement={handleAddAchievement}
+    />;
   };
   
   const renderStudentFlow = () => {
-    if (!currentUser) return null;
+    const student = currentUser as Student;
+    if (!student) return null;
 
     if (studentView === 'dashboard') {
         const hasSeenTutorial = localStorage.getItem('alfanumrik-tutorial-seen') === 'true';
@@ -361,244 +276,116 @@ const App: React.FC = () => {
             return <div className="flex justify-center items-center h-64"><LoadingSpinner /></div>;
         }
     }
+    
+    const commonDashboardProps = {
+        student: student, users: users,
+        onStartMission: () => handleStartStudentView('path'), onBrowse: handleStartBrowsing,
+        onStartWellbeing: () => handleStartStudentView('wellbeing'), onStartTutorial: () => handleStartStudentView('tutorial'),
+        onStartInnovationLab: () => handleStartStudentView('innovation_lab'), onStartCriticalThinking: () => handleStartStudentView('critical_thinking'),
+        onStartGlobalPrep: () => handleStartStudentView('global_prep'), onStartLeadershipCircle: () => handleStartStudentView('leadership_circle'),
+        onStartCareerGuidance: () => handleStartStudentView('career_guidance'), onStartDoubtSolver: () => handleStartStudentView('ai_chatbot'),
+        onStartCompetitions: () => handleStartStudentView('competitions'), onStartProjectHub: () => handleStartStudentView('project_hub'),
+        onStartPeerPedia: () => handleStartStudentView('peer_pedia'), onStartExamPrep: () => handleStartStudentView('exam_prep'),
+        onAddGoal: addStudyGoal, onToggleGoal: toggleStudyGoal, onRemoveGoal: removeStudyGoal,
+    };
 
     switch(studentView) {
-        case 'tutorial':
-            return <TutorialScreen onFinish={handleFinishTutorial} />;
-        case 'dashboard':
-            return <StudentDashboard 
-                        student={currentUser}
-                        // FIX: Removed unused 'users' prop
-                        onStartMission={() => setStudentView('path')} 
-                        onBrowse={handleStartBrowsing} 
-                        onStartWellbeing={handleStartWellbeingModule} 
-                        onStartTutorial={handleStartTutorial} 
-                        onStartInnovationLab={handleStartInnovationLab} 
-                        onStartCriticalThinking={handleStartCriticalThinking} 
-                        onStartGlobalPrep={handleStartGlobalPrep} 
-                        onStartLeadershipCircle={handleStartLeadershipCircle} 
-                        onStartCareerGuidance={handleStartCareerGuidance} 
-                        onStartDoubtSolver={handleStartDoubtSolver} 
-                        onStartCompetitions={handleStartCompetitions} 
-                        onStartProjectHub={handleStartProjectHub} 
-                        onStartPeerPedia={handleStartPeerPedia}
-                        onAddGoal={addStudyGoal}
-                        onToggleGoal={toggleStudyGoal}
-                        onRemoveGoal={removeStudyGoal}
-                    />;
-        case 'path':
-            return <PersonalizedPathScreen student={currentUser} onBack={handleBackToDashboard} onMissionComplete={handleMissionComplete} />;
-        case 'browse':
-            return renderStudentBrowseFlow();
-        case 'tutor':
-            return <TutorSessionScreen student={currentUser} chat={tutorChat!} onBack={handleEndTutorSession} />;
-        case 'ai_chatbot':
-            return <AIChatbotScreen student={currentUser} onBack={handleBackToDashboard} />;
-        case 'innovation_lab':
-            return <InnovationLabScreen onBack={handleBackToDashboard} />;
-        case 'critical_thinking':
-            return <CriticalThinkingScreen onBack={handleBackToDashboard} />;
-        case 'global_prep':
-            return <GlobalPrepScreen onBack={handleBackToDashboard} />;
-        case 'leadership_circle':
-            return <LeadershipCircleScreen student={currentUser} onBack={handleBackToDashboard} />;
-        case 'competitions':
-            return <CompetitionScreen onBack={handleBackToDashboard} />;
-        case 'project_hub':
-            return <ProjectHubScreen student={currentUser} onBack={handleBackToDashboard} />;
-        case 'peer_pedia':
-            return <PeerPediaScreen student={currentUser} onBack={handleBackToDashboard} />;
-        case 'career_guidance':
-            return <CareerGuidanceScreen student={currentUser} onBack={handleBackToDashboard} />;
+        case 'tutorial': return <TutorialScreen onFinish={handleFinishTutorial} />;
+        case 'dashboard': return <StudentDashboard {...commonDashboardProps} />;
+        case 'path': return <PersonalizedPathScreen student={student} onBack={handleBackToDashboard} onMissionComplete={handleMissionComplete} />;
+        case 'browse': return renderStudentBrowseFlow();
+        case 'tutor': return <TutorSessionScreen student={student} chat={tutorChat!} onBack={handleEndTutorSession} />;
+        case 'ai_chatbot': return <AIChatbotScreen student={student} onBack={handleBackToDashboard} />;
+        case 'innovation_lab': return <InnovationLabScreen onBack={handleBackToDashboard} />;
+        case 'critical_thinking': return <CriticalThinkingScreen onBack={handleBackToDashboard} />;
+        case 'global_prep': return <GlobalPrepScreen onBack={handleBackToDashboard} />;
+        case 'leadership_circle': return <LeadershipCircleScreen student={student} onBack={handleBackToDashboard} />;
+        case 'competitions': return <CompetitionScreen onBack={handleBackToDashboard} />;
+        case 'project_hub': return <ProjectHubScreen student={student} onBack={handleBackToDashboard} />;
+        case 'peer_pedia': return <PeerPediaScreen student={student} onBack={handleBackToDashboard} />;
+        case 'career_guidance': return <CareerGuidanceScreen student={student} onBack={handleBackToDashboard} />;
+        case 'exam_prep': return <ExamPrepScreen student={student} onBack={handleBackToDashboard} />;
         case 'wellbeing': {
-            if (!currentUser) return null;
-            const wellbeingChapter: Chapter = { title: 'The Great Transformation: Navigating Your Journey from Teen to Adult', topics: [] };
-            const wellbeingSubject: Subject = {
-                name: 'Personal Growth & Well-being',
-                icon: 'SparklesIcon',
-                chapters: [wellbeingChapter]
-            };
-            const wellbeingGrade: Grade = {
-                level: currentUser.grade,
-                description: 'Special Module',
-                subjects: [wellbeingSubject]
-            };
-            return <ChapterView 
-                grade={wellbeingGrade} 
-                subject={wellbeingSubject} 
-                chapter={wellbeingChapter}
-                student={currentUser}
-                language={language}
-                onBackToChapters={handleBackToDashboard}
-                onBackToSubjects={handleBackToDashboard}
-                onChapterSelect={() => {}}
-                onUpdatePoints={updateStudentPoints}
-                onAddAchievement={handleAddAchievement}
-            />;
+            const wellbeingChapter: Chapter = { title: 'The Great Transformation: Navigating Your Journey from Teen to Adult', topics: [], tags: [] };
+            const wellbeingSubject: Subject = { name: 'Personal Growth & Well-being', icon: 'SparklesIcon', chapters: [wellbeingChapter] };
+            const wellbeingGrade: Grade = { level: student.grade, description: 'Special Module', subjects: [wellbeingSubject] };
+            return <ChapterView grade={wellbeingGrade} subject={wellbeingSubject} chapter={wellbeingChapter} student={student} language={language} onBackToChapters={handleBackToDashboard} onBackToSubjects={handleBackToDashboard} onChapterSelect={() => {}} onUpdatePoints={updateStudentPoints} onAddAchievement={handleAddAchievement} />;
         }
-        default:
-            return <StudentDashboard 
-                        student={currentUser}
-                        // FIX: Removed unused 'users' prop
-                        onStartMission={() => setStudentView('path')} 
-                        onBrowse={handleStartBrowsing} 
-                        onStartWellbeing={handleStartWellbeingModule} 
-                        onStartTutorial={handleStartTutorial} 
-                        onStartInnovationLab={handleStartInnovationLab} 
-                        onStartCriticalThinking={handleStartCriticalThinking} 
-                        onStartGlobalPrep={handleStartGlobalPrep} 
-                        onStartLeadershipCircle={handleStartLeadershipCircle} 
-                        onStartCareerGuidance={handleStartCareerGuidance} 
-                        onStartDoubtSolver={handleStartDoubtSolver} 
-                        onStartCompetitions={handleStartCompetitions} 
-                        onStartProjectHub={handleStartProjectHub} 
-                        onStartPeerPedia={handleStartPeerPedia}
-                        onAddGoal={addStudyGoal}
-                        onToggleGoal={toggleStudyGoal}
-                        onRemoveGoal={removeStudyGoal}
-                    />;
+        default: return <StudentDashboard {...commonDashboardProps} />;
     }
   };
 
   const renderContent = () => {
-    const isUserLoggedIn = !!currentUser || !!loggedInUser;
-
-    // --- Global Views (accessible before and after login) ---
     switch(appView) {
-      case 'privacy_policy':
-        return <PrivacyPolicyScreen onBack={handleGoHome} />;
-      case 'faq':
-        return <FAQScreen onBack={handleGoHome} />;
-      case 'about':
-        return <AboutScreen onBack={handleGoHome} />;
-      case 'terms':
-        return <TermsScreen onBack={handleGoHome} />;
-      case 'contact':
-        return <ContactScreen onBack={handleGoHome} />;
-      case 'student_flow':
-      default:
-        // Fall through to main logic
-        break;
+      case 'privacy_policy': return <PrivacyPolicyScreen onBack={handleGoHome} />;
+      case 'faq': return <FAQScreen onBack={handleGoHome} />;
+      case 'about': return <AboutScreen onBack={handleGoHome} />;
+      case 'terms': return <TermsScreen onBack={handleGoHome} />;
+      case 'contact': return <ContactScreen onBack={handleGoHome} />;
+      default: break;
     }
 
-    // --- Logged-Out Flow ---
-    if (!isUserLoggedIn) {
-        if(showAuthScreen) {
-            return <AuthScreen onBack={() => setShowAuthScreen(false)} onNonStudentLogin={handleNonStudentLogin} />;
-        }
-        return <LandingPage 
-            onNavigateToAuth={() => setShowAuthScreen(true)} 
-            onNavigateToContact={handleNavigateToContact} 
-            onNavigateToAbout={() => setAppView('about')} 
-        />;
+    if (!isAuthenticated) {
+        if(showAuthScreen) return <AuthScreen onBack={() => setShowAuthScreen(false)} />;
+        return <LandingPage onNavigateToAuth={() => setShowAuthScreen(true)} onNavigateToContact={handleNavigateToContact} onNavigateToAbout={() => setAppView('about')} />;
     }
     
-    // --- Logged-In Flow ---
     if (isLoadingCurriculum || !translationsLoaded) {
-        return (
-            <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
-                <LoadingSpinner />
-                <p className="mt-4 text-text-secondary text-lg">Loading curriculum...</p>
-            </div>
-        );
+        return <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]"><LoadingSpinner /><p className="mt-4 text-text-secondary text-lg">Loading curriculum...</p></div>;
     }
     
     if (error) {
-        return (
-            <div className="text-center p-8 bg-status-danger rounded-lg max-w-2xl mx-auto">
-                <ExclamationTriangleIcon className="h-12 w-12 mx-auto text-status-danger" />
-                <h3 className="text-xl font-bold text-status-danger mt-4">Could Not Load App Content</h3>
-                <p className="text-status-danger mt-2">{error}</p>
-                <button 
-                    onClick={loadCurriculum} 
-                    className="mt-6 flex items-center justify-center mx-auto px-6 py-2 bg-status-danger text-white font-bold rounded-lg shadow-md hover:opacity-80 transition"
-                    style={{ backgroundColor: 'rgb(var(--c-error))' }}
-                >
-                    <ArrowPathIcon className="h-5 w-5 mr-2" />
-                    Retry
-                </button>
-            </div>
-        );
+        return <div className="text-center p-8 bg-status-danger rounded-lg max-w-2xl mx-auto"><ExclamationTriangleIcon className="h-12 w-12 mx-auto text-status-danger" /><h3 className="text-xl font-bold text-status-danger mt-4">Could Not Load App Content</h3><p className="text-status-danger mt-2">{error}</p><button onClick={loadCurriculum} className="mt-6 flex items-center justify-center mx-auto px-6 py-2 bg-status-danger text-white font-bold rounded-lg shadow-md hover:opacity-80 transition" style={{ backgroundColor: 'rgb(var(--c-error))' }}><ArrowPathIcon className="h-5 w-5 mr-2" />Retry</button></div>;
     }
     
     if (viewingStudent) {
-        return <StudentPerformanceView 
-                    userRole={loggedInRole as 'teacher' | 'parent'} 
-                    student={viewingStudent} 
-                    language={language} 
-                    onBack={() => setViewingStudent(null)} 
-                />;
+        return <StudentPerformanceView userRole={currentRole as 'teacher' | 'parent'} student={viewingStudent} language={language} onBack={() => setViewingStudent(null)} />;
     }
 
-    if (loggedInRole === 'teacher' && loggedInUser) {
-        const teacher = loggedInUser as Teacher;
-        const myStudents = MOCK_STUDENTS.filter(s => teacher.studentIds.includes(s.id));
-        return <TeacherDashboard students={myStudents} onSelectStudent={setViewingStudent} onBack={handleLogout} />;
+    if (currentRole === 'teacher') {
+        const teacher = currentUser as Teacher;
+        return <TeacherDashboard students={users.filter(s => teacher.studentIds.includes(s.id))} onSelectStudent={setViewingStudent} onBack={handleLogout} />;
     }
     
-    if (loggedInRole === 'parent' && loggedInUser) {
-        const parent = loggedInUser as Parent;
-        const myChild = MOCK_STUDENTS.find(s => parent.childIds.includes(s.id));
+    if (currentRole === 'parent') {
+        const parent = currentUser as Parent;
+        const myChild = users.find(s => parent.childIds.includes(s.id));
         if (!myChild) return <p>Child data not found.</p>;
         return <ParentDashboard child={myChild} onSelectStudent={setViewingStudent} onBack={handleLogout} />;
     }
 
-    // Default to student flow if a student is logged in
-    if (currentUser) {
-        return renderStudentFlow();
-    }
+    if (currentRole === 'student') return renderStudentFlow();
     
-    // Fallback if something is wrong with login state
     return <LandingPage onNavigateToAuth={() => setShowAuthScreen(true)} onNavigateToContact={handleNavigateToContact} onNavigateToAbout={() => setAppView('about')} />;
   };
-  
-  const isAnyUserLoggedIn = !!currentUser || !!loggedInUser;
-  const userForHeader = currentUser || loggedInUser;
-  const userRoleForHeader = currentUser ? 'student' : loggedInRole;
 
   return (
-    <div className={`flex flex-col min-h-screen ${!isAnyUserLoggedIn ? 'landing-page' : ''}`}>
-      {isAnyUserLoggedIn && userForHeader && (
-        <Suspense fallback={<header className="h-[73px] bg-surface border-b border-border-color"></header>}>
+    <div className={`flex flex-col min-h-screen bg-bg-primary ${!isAuthenticated ? 'landing-page' : ''}`}>
+      {isAuthenticated && currentUser && (
+        <Suspense fallback={<header className="h-[73px] bg-surface border-b border-border"></header>}>
             <Header 
-              onGoHome={handleGoHome} 
-              showHomeButton={true}
-              curriculum={curriculum}
-              onSearchSelect={handleSearchSelect}
-              isLoggedIn={isAnyUserLoggedIn}
-              user={userForHeader}
-              userRole={userRoleForHeader}
-              onUpdateProfile={updateUserProfile}
-              profileUpdateLoading={profileUpdateLoading}
-              profileUpdateError={profileUpdateError}
+              onGoHome={handleGoHome} showHomeButton={true} curriculum={curriculum} onSearchSelect={handleSearchSelect}
+              isLoggedIn={isAuthenticated} user={currentUser} userRole={currentRole}
+              onUpdateProfile={updateUserProfile} profileUpdateLoading={profileUpdateLoading} profileUpdateError={profileUpdateError}
               onLogout={handleLogout}
             />
         </Suspense>
       )}
-      <main className={`${isAnyUserLoggedIn ? 'container mx-auto p-4 md:p-8' : ''} flex-grow`}>
+      <main className={`${isAuthenticated ? 'container mx-auto p-4 md:p-8' : ''} flex-grow`}>
         <Suspense fallback={<div className="flex justify-center items-center h-64"><LoadingSpinner /></div>}>
             {renderContent()}
         </Suspense>
       </main>
-      {isAnyUserLoggedIn && (
+      {!showAuthScreen && (
         <Suspense fallback={null}>
-            <Footer 
-                onShowAbout={() => setAppView('about')}
-                onShowPrivacyPolicy={() => setAppView('privacy_policy')}
-                onShowTerms={() => setAppView('terms')}
-                onShowFaq={() => setAppView('faq')}
-            />
+            <Footer onShowAbout={() => setAppView('about')} onShowPrivacyPolicy={() => setAppView('privacy_policy')} onShowTerms={() => setAppView('terms')} onShowFaq={() => setAppView('faq')} />
         </Suspense>
       )}
       {showAchievement && (
-        <Suspense fallback={null}>
-            <AchievementToast achievement={showAchievement} onClose={() => setShowAchievement(null)} />
-        </Suspense>
+        <Suspense fallback={null}><AchievementToast achievement={showAchievement} onClose={() => setShowAchievement(null)} /></Suspense>
       )}
-       {awardedPoints && (
-        <Suspense fallback={null}>
-            <PointsToast points={awardedPoints} onClose={() => setAwardedPoints(null)} />
-        </Suspense>
+       {awardedPoints !== null && (
+        <Suspense fallback={null}><PointsToast points={awardedPoints} onClose={() => setAwardedPoints(null)} /></Suspense>
       )}
     </div>
   );

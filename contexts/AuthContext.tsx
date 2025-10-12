@@ -1,18 +1,23 @@
 import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
-import { Student, StudyGoal, Achievement } from '../types';
-import { MOCK_STUDENTS } from '../data/mockData';
-import { createAvatar } from '@dicebear/core';
-import { lorelei } from '@dicebear/collection';
+import { Student, Teacher, Parent, StudyGoal, Achievement } from '../types';
+import * as authService from '../services/authService';
 import * as pineconeService from '../services/pineconeService';
 import { ALL_ACHIEVEMENTS } from '../data/achievements';
+import LoadingSpinner from '../components/LoadingSpinner';
+
+type Role = 'student' | 'teacher' | 'parent';
+type CurrentUser = Student | Teacher | Parent;
 
 interface AuthContextType {
-  currentUser: Student | null;
+  currentUser: CurrentUser | null;
+  currentRole: Role | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
   users: Student[];
-  login: (studentId: string) => void;
+  login: (role: Role, email: string, password: string) => Promise<void>;
   logout: () => void;
-  signup: (userData: { name: string, grade: string, email: string }) => Promise<void>;
-  updateUser: (updatedUser: Student) => void;
+  signup: (userData: { name: string, grade: string, email: string, password: string }) => Promise<void>;
+  updateUser: (updatedUser: Student) => Promise<void>;
   addStudyGoal: (goalText: string) => Promise<void>;
   toggleStudyGoal: (goal: StudyGoal) => Promise<void>;
   removeStudyGoal: (goal: StudyGoal) => Promise<void>;
@@ -22,127 +27,125 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<Student | null>(() => {
-    try {
-        const storedUser = sessionStorage.getItem('alfanumrik-currentUser');
-        return storedUser ? JSON.parse(storedUser) : null;
-    } catch (e) {
-        return null;
-    }
-  });
-  
-  const [allUsers, setAllUsers] = useState<Student[]>(MOCK_STUDENTS);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [currentRole, setCurrentRole] = useState<Role | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [users, setUsers] = useState<Student[]>([]);
 
+  // Initialize auth state on app load
   useEffect(() => {
-    try {
-        if (currentUser) {
-            sessionStorage.setItem('alfanumrik-currentUser', JSON.stringify(currentUser));
-        } else {
-            sessionStorage.removeItem('alfanumrik-currentUser');
+    const initialize = async () => {
+      await authService.initializeDatabase();
+      const session = authService.getSession();
+      if (session) {
+        setCurrentUser(session.user);
+        setCurrentRole(session.role);
+        if (session.user.id && session.role === 'student') {
+            const goals = await pineconeService.getStudyGoals(session.user.id);
+            setCurrentUser(prev => prev ? {...prev, studyGoals: goals} : null);
         }
-    } catch (e) {
-        console.error("Failed to update sessionStorage", e);
-    }
-  }, [currentUser]);
-
-  // Effect to load study goals from DB when a user is logged in
-  useEffect(() => {
-    if (currentUser?.id) {
-        const loadGoals = async () => {
-            const goals = await pineconeService.getStudyGoals(currentUser.id);
-            // Update user state only if the goals are different, to avoid loops
-            if (JSON.stringify(goals) !== JSON.stringify(currentUser.studyGoals)) {
-                setCurrentUser(prevUser => prevUser ? { ...prevUser, studyGoals: goals } : null);
-            }
-        };
-        loadGoals();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.id]); // Depend on ID to run once per user session
-
-
-  const login = useCallback((studentId: string) => {
-    const user = allUsers.find(u => u.id === studentId);
-    if (user) {
-      setCurrentUser(user);
-    }
-  }, [allUsers]);
-
-  const logout = useCallback(() => {
-    setCurrentUser(null);
-  }, []);
-  
-  const signup = useCallback(async (userData: { name: string, grade: string, email: string }) => {
-    const seed = userData.name.trim();
-    const avatar = createAvatar(lorelei, { seed });
-    const avatarUrl = await avatar.toDataUri();
-    
-    const newUser: Student = {
-        id: `user-${Date.now()}`,
-        name: userData.name,
-        grade: userData.grade,
-        email: userData.email,
-        avatarUrl: avatarUrl,
-        avatarSeed: seed,
-        performance: [],
-        achievements: [],
-        points: 0,
-        studyGoals: [],
+      }
+      setIsLoading(false);
     };
-    setAllUsers(prev => [...prev, newUser]);
-    setCurrentUser(newUser);
+    initialize();
   }, []);
-  
-  const updateUser = useCallback((updatedUser: Student) => {
-    setCurrentUser(updatedUser);
-    setAllUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
-  }, []);
-  
+
+  const login = async (role: Role, email: string, password: string) => {
+    const { user, role: loggedInRole } = await authService.login(role, email, password);
+    setCurrentUser(user);
+    setCurrentRole(loggedInRole);
+    if (user.id && loggedInRole === 'student') {
+      const goals = await pineconeService.getStudyGoals(user.id);
+      setCurrentUser(prev => prev ? {...prev, studyGoals: goals} : null);
+    }
+  };
+
+  const signup = async (userData: { name: string, grade: string, email: string, password: string }) => {
+    const { user, role } = await authService.signup(userData);
+    setCurrentUser(user);
+    setCurrentRole(role);
+  };
+
+  const logout = () => {
+    authService.logout();
+    setCurrentUser(null);
+    setCurrentRole(null);
+  };
+
+  const updateUser = async (updatedData: Student) => {
+      if (!currentUser || currentRole !== 'student') throw new Error("Not authorized to update student profile.");
+      
+      const updatedUser = await authService.updateStudent(updatedData);
+      
+      const session = { user: updatedUser, role: 'student' as Role };
+      authService.saveSession(session);
+      setCurrentUser(updatedUser);
+  };
+
   const addStudyGoal = useCallback(async (goalText: string) => {
-    if (!currentUser) return;
+    if (!currentUser || currentRole !== 'student') return;
     const newGoal = await pineconeService.addStudyGoal(currentUser.id, goalText);
-    setCurrentUser(prev => prev ? { ...prev, studyGoals: [newGoal, ...prev.studyGoals] } : null);
-  }, [currentUser]);
+    setCurrentUser(prev => prev ? { ...prev, studyGoals: [newGoal, ...(prev as Student).studyGoals] } as Student : null);
+  }, [currentUser, currentRole]);
 
   const toggleStudyGoal = useCallback(async (goal: StudyGoal) => {
-      if (!currentUser) return;
-      const updatedGoal = { ...goal, isCompleted: !goal.isCompleted };
-      await pineconeService.updateStudyGoal(currentUser.id, updatedGoal);
-      setCurrentUser(prev => prev ? { ...prev, studyGoals: prev.studyGoals.map(g => g.id === goal.id ? updatedGoal : g) } : null);
-  }, [currentUser]);
+    if (!currentUser || currentRole !== 'student') return;
+    const updatedGoal = { ...goal, isCompleted: !goal.isCompleted };
+    await pineconeService.updateStudyGoal(currentUser.id, updatedGoal);
+    setCurrentUser(prev => prev ? { ...prev, studyGoals: (prev as Student).studyGoals.map(g => g.id === goal.id ? updatedGoal : g) } as Student : null);
+  }, [currentUser, currentRole]);
 
   const removeStudyGoal = useCallback(async (goal: StudyGoal) => {
-      if (!currentUser) return;
-      await pineconeService.removeStudyGoal(currentUser.id, goal.id);
-      setCurrentUser(prev => prev ? { ...prev, studyGoals: prev.studyGoals.filter(g => g.id !== goal.id) } : null);
-  }, [currentUser]);
+    if (!currentUser || currentRole !== 'student') return;
+    await pineconeService.removeStudyGoal(currentUser.id, goal.id);
+    setCurrentUser(prev => prev ? { ...prev, studyGoals: (prev as Student).studyGoals.filter(g => g.id !== goal.id) } as Student : null);
+  }, [currentUser, currentRole]);
 
   const addAchievement = useCallback((achievementId: string) => {
-    if (!currentUser) return;
+    if (!currentUser || currentRole !== 'student') return;
+    const studentUser = currentUser as Student;
 
-    const achievementExists = currentUser.achievements.some(a => a.id === achievementId);
+    const achievementExists = studentUser.achievements.some(a => a.id === achievementId);
     if (achievementExists) return;
 
     const achievementToAdd = ALL_ACHIEVEMENTS.find(a => a.id === achievementId);
     if (!achievementToAdd) return;
 
-    const newAchievement: Achievement = {
-      ...achievementToAdd,
-      timestamp: new Date().toISOString()
-    };
-
-    const updatedUser = {
-      ...currentUser,
-      achievements: [...currentUser.achievements, newAchievement]
-    };
+    const newAchievement: Achievement = { ...achievementToAdd, timestamp: new Date().toISOString() };
+    const updatedUser = { ...studentUser, achievements: [...studentUser.achievements, newAchievement] };
     
     setCurrentUser(updatedUser);
+    authService.saveSession({ user: updatedUser, role: 'student' });
     pineconeService.addAchievement(currentUser.id, newAchievement);
-    
-  }, [currentUser]);
+  }, [currentUser, currentRole]);
+
+  const value = {
+    currentUser,
+    currentRole,
+    isAuthenticated: !!currentUser,
+    isLoading,
+    users,
+    login,
+    logout,
+    signup,
+    updateUser,
+    addStudyGoal,
+    toggleStudyGoal,
+    removeStudyGoal,
+    addAchievement,
+  };
+  
+  // Render a loading screen while auth state is being determined
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen w-screen bg-bg-primary">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
-    <AuthContext.Provider value={{ currentUser, users: allUsers, login, logout, signup, updateUser, addStudyGoal, toggleStudyGoal, removeStudyGoal, addAchievement }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
