@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Student, QuizQuestion, StudentQuestion, AIAnalysis, PerformanceRecord, AIFeedback, Chapter } from '../types';
 import { ChevronRightIcon, DocumentTextIcon, SparklesIcon, ClipboardDocumentListIcon, ArchiveBoxIcon, UserGroupIcon, ChatBubbleBottomCenterTextIcon, PencilSquareIcon, ChartBarIcon } from '@heroicons/react/24/solid';
 import { HandThumbUpIcon, HandThumbDownIcon } from '@heroicons/react/24/outline';
@@ -10,6 +10,7 @@ import { getReport, saveReport, getStudentQuestions, getPerformanceRecords, save
 import Quiz from '../components/Quiz';
 import { useLanguage } from '../contexts/Language-context';
 import { CURRICULUM } from '../data/curriculum';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, Label } from 'recharts';
 
 type ActiveTab = 'performance' | 'studyPatterns' | 'questions' | 'reports';
 
@@ -20,7 +21,7 @@ const PerformanceTab: React.FC<{ performanceRecords: PerformanceRecord[] }> = ({
     
     const getScoreColor = (score: number) => {
         if (score > 85) return 'bg-status-success text-status-success';
-        if (score > 70) return 'bg-status-warning text-status-warning';
+        if (score > 70) return 'bg-yellow-900/50 text-yellow-300';
         return 'bg-status-danger text-status-danger';
     }
 
@@ -48,50 +49,78 @@ const PerformanceTab: React.FC<{ performanceRecords: PerformanceRecord[] }> = ({
     );
 };
 
-const WeeklyActivityChart: React.FC<{ activityData: { [key: string]: number }, maxActivity: number }> = ({ activityData, maxActivity }) => {
-    const { t } = useLanguage();
-    const today = new Date();
-    const days = [];
-    for (let i = 34; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - i);
-        days.push(date);
+const CustomTooltip: React.FC<any> = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-bg-primary p-2 border border-border rounded-md shadow-lg text-xs">
+                <p className="font-bold text-text-primary">{label}</p>
+                {payload.map((pld: any) => (
+                    <div key={pld.dataKey} style={{ color: pld.fill }}>
+                        {pld.name}: {pld.value}
+                    </div>
+                ))}
+            </div>
+        );
     }
-    const firstDayOfWeek = days[0].getDay();
-    
-    const getColor = (count: number) => {
-        if (count === 0) return 'rgba(var(--c-accent), 0.1)';
-        const intensity = Math.min(1, count / (maxActivity || 1));
-        const accentColor = '251, 191, 36'; // --c-accent
-        if (intensity < 0.25) return `rgba(${accentColor}, 0.25)`;
-        if (intensity < 0.5) return `rgba(${accentColor}, 0.5)`;
-        if (intensity < 0.75) return `rgba(${accentColor}, 0.75)`;
-        return `rgba(${accentColor}, 1)`;
+    return null;
+};
+
+const WeeklyActivityChart: React.FC<{ activityData: { [key: string]: number } }> = ({ activityData }) => {
+    const { t } = useLanguage();
+
+    // FIX: Add explicit type for chart data to resolve type inference issue.
+    type DailyActivity = {
+        name: string;
+        Sun: number;
+        Mon: number;
+        Tue: number;
+        Wed: number;
+        Thu: number;
+        Fri: number;
+        Sat: number;
     };
 
-    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weeklyData = useMemo(() => {
+        const today = new Date();
+        const data: DailyActivity[] = Array.from({ length: 5 }, (_, i) => {
+            const weekName = i === 0 ? 'This Week' : i === 1 ? 'Last Week' : `${i} weeks ago`;
+            return { name: weekName, Sun: 0, Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0 };
+        }).reverse();
+
+        for (let i = 0; i < 35; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - i);
+            const weekIndex = 4 - Math.floor(i / 7);
+            const dayIndex = date.getDay();
+            // FIX: Use a more specific type for dayName to exclude 'name' property.
+            const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayIndex] as keyof Omit<DailyActivity, 'name'>;
+            const count = activityData[date.toDateString()] || 0;
+            if (data[weekIndex]) {
+                data[weekIndex][dayName] += count;
+            }
+        }
+        return data;
+    }, [activityData]);
+
+    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayColors = [
+        '#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE', '#00C49F', '#FFBB28'
+    ];
 
     return (
-        <div className="bg-bg-primary p-4 rounded-lg">
-             <div className="grid grid-cols-7 gap-1.5" style={{ gridTemplateRows: 'auto' }}>
-                {weekDays.map(day => <div key={day} className="text-xs font-bold text-center text-text-secondary">{day}</div>)}
-             </div>
-            <div className="grid grid-cols-7 gap-1.5 mt-2">
-                {Array.from({ length: firstDayOfWeek }).map((_, index) => <div key={`empty-${index}`} />)}
-                {days.map(date => {
-                    const dateStr = date.toDateString();
-                    const count = activityData[dateStr] || 0;
-                    return <div key={dateStr} className="w-full aspect-square rounded-sm" style={{ backgroundColor: getColor(count) }} title={`${date.toLocaleDateString()}: ${count} activities`} />;
-                })}
-            </div>
-            <div className="flex justify-end items-center text-xs mt-2 text-text-secondary gap-2">
-                {t('lessActivity')}
-                <div className="w-3 h-3 rounded-sm" style={{backgroundColor: getColor(0)}}></div>
-                <div className="w-3 h-3 rounded-sm" style={{backgroundColor: getColor(Math.ceil(maxActivity * 0.4))}}></div>
-                <div className="w-3 h-3 rounded-sm" style={{backgroundColor: getColor(Math.ceil(maxActivity * 0.7))}}></div>
-                <div className="w-3 h-3 rounded-sm" style={{backgroundColor: getColor(maxActivity || 1)}}></div>
-                {t('moreActivity')}
-            </div>
+        <div className="chart-container-notebook" style={{ height: 250 }}>
+            <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(var(--c-border-color), 0.3)" />
+                    <XAxis dataKey="name" tick={{ fill: 'rgb(var(--c-text-secondary))', fontSize: 12 }} />
+                    <YAxis tick={{ fill: 'rgb(var(--c-text-secondary))', fontSize: 12 }} />
+                    <Tooltip content={<CustomTooltip />} wrapperStyle={{ outline: 'none' }} />
+                    <Legend iconSize={10} wrapperStyle={{ fontSize: '12px', color: 'rgb(var(--c-text-secondary))' }}/>
+                    {daysOfWeek.map((day, index) => (
+                        <Bar key={day} dataKey={day} fill={dayColors[index]} />
+                    ))}
+                </BarChart>
+            </ResponsiveContainer>
         </div>
     );
 };
@@ -105,7 +134,6 @@ const StudyPatternsTab: React.FC<{ performanceRecords: PerformanceRecord[] }> = 
             const dateStr = new Date(rec.completedDate).toDateString();
             activityByDate[dateStr] = (activityByDate[dateStr] || 0) + 1;
         });
-        const maxActivity = Math.max(...Object.values(activityByDate), 0);
 
         const subjectData: { [key: string]: { totalScore: number, count: number } } = {};
         performanceRecords.forEach(rec => {
@@ -126,26 +154,29 @@ const StudyPatternsTab: React.FC<{ performanceRecords: PerformanceRecord[] }> = 
         }, { quizzes: 0, exercises: 0 });
         
         const BENCHMARKS: { [key: string]: { indian: number, global: number } } = {
-            'Mathematics': { indian: 78, global: 85 },
-            'Physics': { indian: 75, global: 82 },
-            'Chemistry': { indian: 76, global: 84 },
-            'Biology': { indian: 80, global: 88 },
-            'History': { indian: 72, global: 75 },
-            'Geography': { indian: 74, global: 78 },
-            'Political Science': { indian: 75, global: 79 },
-            'Economics': { indian: 77, global: 81 },
+            'Mathematics': { indian: 78, global: 85 }, 'Physics': { indian: 75, global: 82 },
+            'Chemistry': { indian: 76, global: 84 }, 'Biology': { indian: 80, global: 88 },
+            'History': { indian: 72, global: 75 }, 'Geography': { indian: 74, global: 78 },
+            'Political Science': { indian: 75, global: 79 }, 'Economics': { indian: 77, global: 81 },
         };
         
         const benchmarkData = subjectPerformance.map(perf => ({
-            subject: perf.subject,
-            yourScore: perf.averageScore,
-            indianAvg: BENCHMARKS[perf.subject]?.indian || 70,
-            globalAvg: BENCHMARKS[perf.subject]?.global || 75,
+            subject: tCurriculum(perf.subject),
+            'Your Score': perf.averageScore,
+            'Indian Avg.': BENCHMARKS[perf.subject]?.indian || 70,
+            'Global Avg.': BENCHMARKS[perf.subject]?.global || 75,
         }));
 
 
-        return { activityByDate, maxActivity, subjectPerformance, learningStyle, benchmarkData };
-    }, [performanceRecords]);
+        return { activityByDate, subjectPerformance, learningStyle, benchmarkData };
+    }, [performanceRecords, tCurriculum]);
+
+    const learningStyleData = [
+        { name: t('quizzesTaken'), value: chartData.learningStyle.quizzes },
+        { name: t('practiceSessions'), value: chartData.learningStyle.exercises },
+    ].filter(d => d.value > 0);
+    
+    const COLORS = ['rgb(var(--c-primary))', 'rgb(var(--c-accent))'];
 
     if (!performanceRecords.length) return <p className="text-text-secondary text-center py-8">{t('noPerformanceData')}</p>;
 
@@ -153,82 +184,69 @@ const StudyPatternsTab: React.FC<{ performanceRecords: PerformanceRecord[] }> = 
         <div className="space-y-8 max-h-[600px] overflow-y-auto pr-2">
             <div>
                 <h3 className="text-lg font-bold text-text-primary mb-3">{t('weeklyActivity')}</h3>
-                <WeeklyActivityChart activityData={chartData.activityByDate} maxActivity={chartData.maxActivity} />
+                <WeeklyActivityChart activityData={chartData.activityByDate} />
             </div>
             
-            {chartData.subjectPerformance.length > 0 && <div>
-                <h3 className="text-lg font-bold text-text-primary mb-3">{t('performanceBySubject')}</h3>
-                <div className="space-y-3">
-                    {chartData.subjectPerformance.map(({ subject, averageScore }) => (
-                        <div key={subject}>
-                            <div className="flex justify-between mb-1">
-                                <span className="text-sm font-semibold text-text-secondary">{tCurriculum(subject)}</span>
-                                <span className="text-sm font-bold text-text-primary">{averageScore}%</span>
+            {learningStyleData.length > 0 && <div>
+                <h3 className="text-lg font-bold text-text-primary mb-3">{t('learningStyle')}</h3>
+                <div className="bg-bg-primary p-4 rounded-lg chart-container-notebook flex flex-col sm:flex-row items-center gap-6" style={{ height: 180 }}>
+                    <ResponsiveContainer width={150} height="100%">
+                        <PieChart>
+                            <Pie
+                                data={learningStyleData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={40}
+                                outerRadius={60}
+                                fill="#8884d8"
+                                paddingAngle={5}
+                                dataKey="value"
+                            >
+                                {learningStyleData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                                <Label 
+                                    value={`${chartData.learningStyle.quizzes + chartData.learningStyle.exercises}`} 
+                                    position="center" 
+                                    className="text-2xl font-bold"
+                                    style={{ fill: 'rgb(var(--c-text-primary))', fontFamily: 'Poppins' }}
+                                />
+                            </Pie>
+                            <Tooltip content={<CustomTooltip />} />
+                        </PieChart>
+                    </ResponsiveContainer>
+
+                    <div className="space-y-3">
+                         {learningStyleData.map((entry, index) => (
+                             <div key={entry.name} className="flex items-center gap-3">
+                                <div className="w-4 h-4 rounded" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                                <div>
+                                    <p className="font-bold text-text-primary">{entry.value}</p>
+                                    <p className="text-xs text-text-secondary">{entry.name}</p>
+                                </div>
                             </div>
-                            <div className="w-full bg-surface rounded-full h-3.5">
-                                <div className="h-3.5 rounded-full" style={{ width: `${averageScore}%`, backgroundColor: 'rgb(var(--c-accent))' }}></div>
-                            </div>
-                        </div>
-                    ))}
+                         ))}
+                    </div>
                 </div>
             </div>}
 
-            {(chartData.learningStyle.quizzes > 0 || chartData.learningStyle.exercises > 0) && <div>
-                <h3 className="text-lg font-bold text-text-primary mb-3">{t('learningStyle')}</h3>
-                <div className="grid grid-cols-2 gap-4 text-center">
-                    <div className="bg-bg-primary p-4 rounded-lg border border-border">
-                        <p className="text-3xl font-bold text-text-primary">{chartData.learningStyle.quizzes}</p>
-                        <p className="text-sm font-semibold text-text-secondary">{t('quizzesTaken')}</p>
-                    </div>
-                    <div className="bg-bg-primary p-4 rounded-lg border border-border">
-                        <p className="text-3xl font-bold text-text-primary">{chartData.learningStyle.exercises}</p>
-                        <p className="text-sm font-semibold text-text-secondary">{t('practiceSessions')}</p>
-                    </div>
-                </div>
-            </div>}
-            
             {chartData.benchmarkData.length > 0 && (
                 <div>
                     <h3 className="text-lg font-bold text-text-primary mb-3">{t('performanceBenchmarking')}</h3>
-                    <div className="bg-bg-primary p-4 rounded-lg space-y-6">
-                        <p className="text-sm text-text-secondary">{t('performanceBenchmarkingDesc')}</p>
-                        {chartData.benchmarkData.map(({ subject, yourScore, indianAvg, globalAvg }) => (
-                            <div key={subject}>
-                                <h4 className="font-bold text-text-primary mb-3">{tCurriculum(subject)}</h4>
-                                <div className="space-y-3">
-                                    {/* Your Score */}
-                                    <div>
-                                        <div className="flex justify-between text-xs font-semibold mb-1">
-                                            <span className="text-text-secondary">{t('yourAverage')}</span>
-                                            <span className="text-text-primary">{yourScore}%</span>
-                                        </div>
-                                        <div className="w-full bg-surface rounded-full h-2">
-                                            <div className="h-2 rounded-full" style={{ width: `${yourScore}%`, backgroundColor: `rgb(var(--c-accent))` }}></div>
-                                        </div>
-                                    </div>
-                                    {/* Indian Avg */}
-                                    <div>
-                                        <div className="flex justify-between text-xs font-semibold mb-1">
-                                            <span className="text-text-secondary">{t('indianAverage')}</span>
-                                            <span className="text-text-primary">{indianAvg}%</span>
-                                        </div>
-                                        <div className="w-full bg-surface rounded-full h-2">
-                                            <div className="h-2 rounded-full" style={{ width: `${indianAvg}%`, backgroundColor: `rgb(var(--c-primary))` }}></div>
-                                        </div>
-                                    </div>
-                                    {/* Global Avg */}
-                                     <div>
-                                        <div className="flex justify-between text-xs font-semibold mb-1">
-                                            <span className="text-text-secondary">{t('globalAverage')}</span>
-                                            <span className="text-text-primary">{globalAvg}%</span>
-                                        </div>
-                                        <div className="w-full bg-surface rounded-full h-2">
-                                            <div className="h-2 rounded-full bg-border" style={{ width: `${globalAvg}%` }}></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                    <div className="bg-bg-primary p-4 rounded-lg chart-container-notebook" style={{ height: 300 }}>
+                        <p className="text-sm text-text-secondary mb-6">{t('performanceBenchmarkingDesc')}</p>
+                         <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={chartData.benchmarkData} margin={{ top: 5, right: 20, left: -10, bottom: 20 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(var(--c-border-color), 0.3)" />
+                                <XAxis dataKey="subject" tick={{ fill: 'rgb(var(--c-text-secondary))', fontSize: 10 }} angle={-25} textAnchor="end" />
+                                <YAxis domain={[0, 100]} tick={{ fill: 'rgb(var(--c-text-secondary))', fontSize: 12 }} />
+                                <Tooltip content={<CustomTooltip />} wrapperStyle={{ outline: 'none' }} />
+                                <Legend iconSize={10} wrapperStyle={{ fontSize: '12px', color: 'rgb(var(--c-text-secondary))', paddingTop: '20px' }}/>
+                                <Bar dataKey="Your Score" fill="rgb(var(--c-accent))" />
+                                <Bar dataKey="Indian Avg." fill="rgb(var(--c-primary))" />
+                                <Bar dataKey="Global Avg." fill="rgb(var(--c-border-color))" />
+                            </BarChart>
+                        </ResponsiveContainer>
                     </div>
                 </div>
             )}
@@ -383,7 +401,7 @@ const ReportsTab: React.FC<{ student: Student; userRole: 'teacher' | 'parent'; p
                         <h4 className="font-bold text-text-primary text-lg flex items-center"><SparklesIcon className="h-5 w-5 mr-2 text-text-secondary"/>{t('aiGeneratedReport')}</h4>
                         {isReportFromDB && <div className="flex items-center bg-surface text-text-secondary text-xs font-medium px-2 py-0.5 rounded-full"><ArchiveBoxIcon className="h-3 w-3 mr-1" />{t('loadedFromDB')}</div>}
                     </div>
-                    <div className="prose prose-sm max-w-none dark:prose-invert">{formatReportText(report)}</div>
+                    <div className="prose prose-sm max-w-none prose-invert">{formatReportText(report)}</div>
                 </div>
             )}
             {report && !isGeneratingReport && (

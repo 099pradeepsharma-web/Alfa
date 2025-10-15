@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { QuizQuestion } from '../types';
-import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon, LightBulbIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon, CheckCircleIcon, XCircleIcon, LightBulbIcon, ArrowRightIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from '../contexts/Language-context';
 
 interface QuizProps {
@@ -244,25 +244,28 @@ const Quiz: React.FC<QuizProps> = React.memo(({ questions, onBack, chapterTitle,
                 <button
                     onClick={handlePrev}
                     disabled={currentQuestionIndex === 0}
-                    className="px-6 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm border border-border-color hover:bg-bg-primary transition disabled:opacity-50"
+                    className="px-6 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm border border-border-color hover:bg-bg-primary transition disabled:opacity-50 flex items-center"
                 >
+                    <ArrowLeftIcon className="h-5 w-5 mr-2" />
                     {t('previous')}
                 </button>
                 {currentQuestionIndex === questions.length - 1 ? (
                     <button
                         onClick={handleFinish}
                         disabled={!isCurrentQuestionAnswered}
-                        className="px-6 py-2 btn-accent disabled:opacity-50"
+                        className="px-6 py-2 btn-accent disabled:opacity-50 flex items-center"
                     >
+                        <CheckCircleIcon className="h-5 w-5 mr-2" />
                         {t('finishQuiz')}
                     </button>
                 ) : (
                     <button
                         onClick={handleNext}
                         disabled={!isCurrentQuestionAnswered}
-                        className="px-6 py-2 btn-accent disabled:opacity-50"
+                        className="px-6 py-2 btn-accent disabled:opacity-50 flex items-center"
                     >
                         {t('next')}
+                        <ArrowRightIcon className="h-5 w-5 ml-2" />
                     </button>
                 )}
             </div>

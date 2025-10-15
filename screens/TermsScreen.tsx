@@ -27,7 +27,7 @@ const TermsScreen: React.FC<TermsScreenProps> = ({ onBack }) => {
             <h1 className="text-3xl md:text-4xl font-bold text-text-primary mt-3">{t('termsTitle')}</h1>
         </header>
         
-        <div className="prose prose-lg max-w-none dark:prose-invert">
+        <div className="prose prose-lg max-w-none prose-invert">
             <p className="lead text-xl">{t('termsIntro')}</p>
             {sections.map(section => (
                 <div key={section.title} className="mt-8">

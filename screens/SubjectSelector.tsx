@@ -1,5 +1,8 @@
+
+
 import React, { useState } from 'react';
-import { Grade, Subject, Chapter, NextStepRecommendation } from '../types';
+// FIX: Added Student to imports to resolve type errors
+import { Grade, Subject, Chapter, NextStepRecommendation, Student } from '../types';
 import { ArrowLeftIcon, ChevronDownIcon, DocumentChartBarIcon, RocketLaunchIcon, BookOpenIcon } from '@heroicons/react/24/solid';
 import DiagnosticTest from '../components/DiagnosticTest';
 import { useLanguage } from '../contexts/Language-context';

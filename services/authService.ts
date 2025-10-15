@@ -1,3 +1,5 @@
+
+
 import { Student, Teacher, Parent } from '../types';
 import * as db from './databaseService';
 import { MOCK_STUDENTS, MOCK_TEACHERS, MOCK_PARENTS } from '../data/mockData';
@@ -50,15 +52,14 @@ export const login = async (role: Role, email: string, password: string): Promis
     let user: any;
     
     if (role === 'student') {
-        const results = await db.queryCollectionByIndex<Student & { password?: string }>('users', 'email', email);
-        user = results[0];
+        const allStudents = await db.getAllDocs<Student & { password?: string }>('users');
+        user = allStudents.find(u => u.email === email);
     } else if (role === 'teacher') {
-        // Teachers/Parents don't have an email index, so we get all and filter.
-        const teachers = await db.queryCollectionByIndex<Teacher & { password?: string }>('teachers', 'email', email);
-        user = teachers[0];
+        const allTeachers = await db.getAllDocs<Teacher & { password?: string }>('teachers');
+        user = allTeachers.find(u => u.email === email);
     } else if (role === 'parent') {
-        const parents = await db.queryCollectionByIndex<Parent & { password?: string }>('parents', 'email', email);
-        user = parents[0];
+        const allParents = await db.getAllDocs<Parent & { password?: string }>('parents');
+        user = allParents.find(u => u.email === email);
     }
 
     if (user && user.password === password) {
@@ -157,7 +158,6 @@ export const updateStudent = async (studentData: Student): Promise<Student> => {
 /**
  * Fetches all student users from the database.
  */
-// FIX: Replaced implementation to fix "used before declaration" error and use encapsulated db service.
 export const getAllStudents = async (): Promise<Student[]> => {
     // This is inefficient but acceptable for a demo with few users.
     // In a real app, this would be a paginated API call.

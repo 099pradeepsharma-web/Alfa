@@ -63,7 +63,7 @@ const AchievementToast: React.FC<AchievementToastProps> = ({ achievement, onClos
     return (
         <div className="achievement-toast">
             <Confetti />
-            <div className="relative max-w-sm w-full bg-white dark:bg-slate-800 shadow-2xl rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden border border-slate-200 dark:border-slate-700">
+            <div className="relative max-w-sm w-full bg-slate-800 shadow-2xl rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden border border-slate-700">
                 <div className="p-4">
                     <div className="flex items-start">
                         <div className="flex-shrink-0 pt-0.5">
@@ -72,10 +72,10 @@ const AchievementToast: React.FC<AchievementToastProps> = ({ achievement, onClos
                             </div>
                         </div>
                         <div className="ml-3 w-0 flex-1">
-                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{t('achievementUnlocked')}</p>
-                            <p className="mt-1 text-lg font-bold text-primary dark:text-primary-light" style={{color: 'rgb(var(--c-primary))'}}>{t(achievement.name)}</p>
-                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t(achievement.description)}</p>
-                            <button onClick={handleShare} className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 text-xs font-semibold bg-slate-100 dark:bg-slate-700 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600">
+                            <p className="text-sm font-bold text-slate-100">{t('achievementUnlocked')}</p>
+                            <p className="mt-1 text-lg font-bold text-primary" style={{color: 'rgb(var(--c-primary))'}}>{t(achievement.name)}</p>
+                            <p className="mt-1 text-sm text-slate-400">{t(achievement.description)}</p>
+                            <button onClick={handleShare} className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 text-xs font-semibold bg-slate-700 rounded-md hover:bg-slate-600">
                                 <ShareIcon className="h-3 w-3" />
                                 Share
                             </button>

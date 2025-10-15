@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../contexts/Language-context';
 import { ArrowLeftIcon, GlobeAltIcon, BookOpenIcon, CheckIcon, LanguageIcon, LightbulbIcon, ChatBubbleBottomCenterTextIcon, TrophyIcon, StarIcon, ChevronRightIcon, CheckCircleIcon, XCircleIcon, DocumentTextIcon, ForwardIcon, RocketLaunchIcon, SparklesIcon, UsersIcon } from '@heroicons/react/24/solid';
+import { PlayCircle } from 'lucide-react';
 import { QuizQuestion, SATAnswerEvaluation } from '../types';
 import * as geminiService from '../services/geminiService';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -239,9 +240,9 @@ const GlobalPrepScreen: React.FC<GlobalPrepScreenProps> = ({ onBack }) => {
                                 <button
                                     onClick={() => handleStartPractice(exam.id)}
                                     disabled={!isActive}
-                                    className={`w-full mt-4 py-2 px-4 font-bold rounded-lg transition ${isActive ? 'btn-accent' : 'bg-border text-text-secondary cursor-not-allowed'}`}
+                                    className={`w-full mt-4 py-2 px-4 font-bold rounded-lg transition flex items-center justify-center gap-2 ${isActive ? 'btn-accent' : 'bg-border text-text-secondary cursor-not-allowed'}`}
                                 >
-                                    {isActive ? t('startPractice') : t('comingSoon')}
+                                    {isActive ? <><PlayCircle className="h-5 w-5"/>{t('startPractice')}</> : t('comingSoon')}
                                 </button>
                             </div>
                         );

@@ -29,6 +29,24 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
 
     const [recommendation, setRecommendation] = useState<NextStepRecommendation | null>(null);
     const [isLoadingRecommendation, setIsLoadingRecommendation] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState(t('preparingDiagnosticTest'));
+
+    useEffect(() => {
+        let interval: number | undefined;
+        if (isLoading) {
+            const messages = [
+                "Analyzing prerequisites for this chapter...",
+                "Selecting a mix of academic and logic questions...",
+                "Building your readiness check..."
+            ];
+            let msgIdx = 0;
+            interval = window.setInterval(() => {
+                msgIdx = (msgIdx + 1) % messages.length;
+                setLoadingMessage(messages[msgIdx]);
+            }, 2500);
+        }
+        return () => clearInterval(interval);
+    }, [isLoading]);
 
     useEffect(() => {
         const fetchTest = async () => {
@@ -112,7 +130,7 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
     if (isLoading) {
         return <div className="flex flex-col items-center justify-center h-96">
             <LoadingSpinner />
-            <p className="mt-4 text-text-secondary text-lg">{t('preparingDiagnosticTest')}</p>
+            <p className="mt-4 text-text-secondary text-lg font-semibold animate-pulse">{loadingMessage}</p>
         </div>;
     }
 
@@ -129,7 +147,7 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
         return (
              <div className="dashboard-highlight-card p-8 animate-fade-in text-center">
                 <h2 className="text-3xl font-bold text-text-primary">{t('testComplete')}</h2>
-                <p className="text-lg text-text-secondary mt-1">{t('youScored', { score: Math.round(scores.total * (testQuestions?.length || 10) / 100), total: testQuestions?.length })}</p>
+                <p className="text-lg text-text-secondary mt-1">{t('youScored', { score: Math.round(scores.total / 100 * (testQuestions?.length || 10)), total: testQuestions?.length })}</p>
 
                 <div className="my-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
                     <ScoreCard icon={AcademicCapIcon} title="Academic Readiness" score={scores.academic} />

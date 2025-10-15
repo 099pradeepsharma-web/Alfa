@@ -1,0 +1,1 @@
+// This file is not used in the current implementation. Database logic is handled by databaseService.ts using IndexedDB.

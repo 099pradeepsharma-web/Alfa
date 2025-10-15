@@ -42,12 +42,12 @@ const ProgressBadge: React.FC<{ status: ConceptCardProps['progressStatus'] }> = 
     const { t } = useLanguage();
     switch (status) {
         case 'master':
-            return <span className="flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300"><CheckCircleSolid className="h-4 w-4 mr-1"/>{t('mastered')}</span>;
+            return <span className="flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-900/50 text-green-300"><CheckCircleSolid className="h-4 w-4 mr-1"/>{t('mastered')}</span>;
         case 'competent':
-            return <span className="flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300"><ClockIcon className="h-4 w-4 mr-1"/>{t('masteryCompetent')}</span>;
+            return <span className="flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full bg-yellow-900/50 text-yellow-300"><ClockIcon className="h-4 w-4 mr-1"/>{t('masteryCompetent')}</span>;
         case 'novice':
         default:
-            return <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-600 dark:bg-slate-600 dark:text-slate-300">{t('masteryNovice')}</span>;
+            return <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-600 text-slate-300">{t('masteryNovice')}</span>;
     }
 }
 
@@ -94,7 +94,7 @@ const ConceptCard: React.FC<ConceptCardProps> = React.memo(({
 
     try {
         await saveStudentQuestion(newQuestion, language);
-        const response = await getFittoAnswer(newQuestion, language);
+        const response = await getFittoAnswer(newQuestion, student, language);
         
         setConversation(prev => prev.map(turn => 
             turn.id === thinkingTurn.id ? { ...turn, text: response.responseText, state: undefined } : turn
@@ -269,14 +269,14 @@ const ConceptCard: React.FC<ConceptCardProps> = React.memo(({
         </h3>
       </div>
       
-      <div className="prose prose-lg max-w-none dark:prose-invert mb-4"><StructuredText text={concept.explanation} /></div>
+      <div className="prose prose-lg max-w-none prose-invert mb-4"><StructuredText text={concept.explanation} /></div>
       
       <div className="bg-primary-light border-l-4 border-primary/50 p-4 rounded-r-lg mb-4">
         <h4 className="font-semibold text-primary-dark flex items-center mb-2">
             <BeakerIcon className="h-5 w-5 mr-2" />
             {t('stemConnection')}
         </h4>
-        <div className="prose prose-lg max-w-none dark:prose-invert"><StructuredText text={concept.realWorldExample} /></div>
+        <div className="prose prose-lg max-w-none prose-invert"><StructuredText text={concept.realWorldExample} /></div>
       </div>
       
       <div className="mt-6 integrated-practice-block">

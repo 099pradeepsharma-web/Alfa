@@ -17,15 +17,6 @@ interface PersonalizedPathScreenProps {
 type PathState = 'FETCHING_ACTION' | 'GENERATING_CONTENT' | 'PRESENTING_TASK' | 'ERROR';
 type MissionTask = QuizQuestion | IQExercise | EQExercise;
 
-// Helper function to shuffle an array
-const shuffleArray = (array: any[]) => {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-};
-
 // Helper function to find a weak area or provide a default
 const findWeakestAcademicArea = (performance: PerformanceRecord[], studentGrade: string): { subject: string, chapter: string } => {
     const academicRecords = performance.filter(p => p.type === 'quiz' || p.type === 'exercise');
@@ -49,6 +40,25 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ student
     const [adaptiveAction, setAdaptiveAction] = useState<AdaptiveAction | null>(null);
     const [taskContent, setTaskContent] = useState<MissionTask[] | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [loadingMessage, setLoadingMessage] = useState(t('craftingYourPath'));
+
+    useEffect(() => {
+        let interval: number | undefined;
+        if (pathState === 'GENERATING_CONTENT' || pathState === 'FETCHING_ACTION') {
+            const messages = [
+                "Analyzing your learning patterns...",
+                "Selecting concepts for mastery...",
+                "Designing cognitive challenges...",
+                "Building your personalized mission..."
+            ];
+            let msgIdx = 0;
+            interval = window.setInterval(() => {
+                msgIdx = (msgIdx + 1) % messages.length;
+                setLoadingMessage(messages[msgIdx]);
+            }, 2500);
+        }
+        return () => clearInterval(interval);
+    }, [pathState]);
 
     useEffect(() => {
         const fetchAdaptiveAction = async () => {
@@ -73,62 +83,62 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ student
             if (!adaptiveAction || !student) return;
 
             try {
-                const missionTasks: MissionTask[] = [];
+                let academicQuestions: QuizQuestion[] = [];
+                let iqQuestions: IQExercise[] = [];
+                let eqQuestions: EQExercise[] = [];
+
                 const { type, details } = adaptiveAction;
 
                 if (type.startsWith('ACADEMIC')) {
-                    if (!details.subject || !details.chapter) {
-                        throw new Error("Missing subject or chapter details for academic task.");
-                    }
-                    // Mission: 6 Academic, 2 IQ, 2 EQ
+                    if (!details.subject || !details.chapter) throw new Error("Missing subject or chapter details for academic task.");
+                    
                     const gradeData = CURRICULUM.find(g => g.level === student.grade);
                     const subjectData = gradeData?.subjects.find(s => s.name === details.subject);
                     const chapterObject = subjectData?.chapters.find(c => c.title === details.chapter);
-                    if (!chapterObject) {
-                        throw new Error(`Chapter "${details.chapter}" not found in curriculum.`);
-                    }
+                    if (!chapterObject) throw new Error(`Chapter "${details.chapter}" not found in curriculum.`);
+
                     const {content: module} = await getChapterContent(student.grade, details.subject, chapterObject, student, language);
-                    const academicQuestions = await generateQuiz(module.coreConceptTraining.map(c => c.title), language, 6);
-                    const iqQuestions = await generateIQExercises(student.grade, language, 2);
-                    const eqQuestions = await generateEQExercises(student.grade, language, 2);
-                    missionTasks.push(...academicQuestions, ...iqQuestions, ...eqQuestions);
+                    academicQuestions = await generateQuiz(module.coreConceptTraining.map(c => c.title), language, 6);
+                    iqQuestions = await generateIQExercises(student.grade, language, 2);
+                    eqQuestions = await generateEQExercises(student.grade, language, 2);
 
                 } else if (type === 'IQ_EXERCISE') {
-                    // Mission: 5 IQ, 3 EQ, 2 Academic
-                    const iqQuestions = await generateIQExercises(student.grade, language, 5);
-                    const eqQuestions = await generateEQExercises(student.grade, language, 3);
-                    missionTasks.push(...iqQuestions, ...eqQuestions);
+                    iqQuestions = await generateIQExercises(student.grade, language, 5);
+                    eqQuestions = await generateEQExercises(student.grade, language, 3);
                     
                     const weakArea = findWeakestAcademicArea(student.performance, student.grade);
                     const gradeData = CURRICULUM.find(g => g.level === student.grade);
                     const subjectData = gradeData?.subjects.find(s => s.name === weakArea.subject);
                     const chapterObject = subjectData?.chapters.find(c => c.title === weakArea.chapter);
-                    if (!chapterObject) {
-                        throw new Error(`Chapter "${weakArea.chapter}" not found in curriculum.`);
-                    }
+                    if (!chapterObject) throw new Error(`Chapter "${weakArea.chapter}" not found in curriculum.`);
+                    
                     const {content: module} = await getChapterContent(student.grade, weakArea.subject, chapterObject, student, language);
-                    const academicQuestions = await generateQuiz(module.coreConceptTraining.map(c => c.title), language, 2);
-                    missionTasks.push(...academicQuestions);
+                    academicQuestions = await generateQuiz(module.coreConceptTraining.map(c => c.title), language, 2);
 
                 } else if (type === 'EQ_EXERCISE') {
-                    // Mission: 5 EQ, 3 IQ, 2 Academic
-                    const eqQuestions = await generateEQExercises(student.grade, language, 5);
-                    const iqQuestions = await generateIQExercises(student.grade, language, 3);
-                    missionTasks.push(...eqQuestions, ...iqQuestions);
+                    eqQuestions = await generateEQExercises(student.grade, language, 5);
+                    iqQuestions = await generateIQExercises(student.grade, language, 3);
                      
                     const weakArea = findWeakestAcademicArea(student.performance, student.grade);
                     const gradeData = CURRICULUM.find(g => g.level === student.grade);
                     const subjectData = gradeData?.subjects.find(s => s.name === weakArea.subject);
                     const chapterObject = subjectData?.chapters.find(c => c.title === weakArea.chapter);
-                    if (!chapterObject) {
-                        throw new Error(`Chapter "${weakArea.chapter}" not found in curriculum.`);
-                    }
+                    if (!chapterObject) throw new Error(`Chapter "${weakArea.chapter}" not found in curriculum.`);
+                    
                     const {content: module} = await getChapterContent(student.grade, weakArea.subject, chapterObject, student, language);
-                    const academicQuestions = await generateQuiz(module.coreConceptTraining.map(c => c.title), language, 2);
-                    missionTasks.push(...academicQuestions);
+                    academicQuestions = await generateQuiz(module.coreConceptTraining.map(c => c.title), language, 2);
                 }
 
-                setTaskContent(shuffleArray(missionTasks).slice(0, 10));
+                let orderedTasks: MissionTask[] = [];
+                if (type.startsWith('ACADEMIC')) {
+                    orderedTasks = [...academicQuestions, ...iqQuestions, ...eqQuestions];
+                } else if (type === 'IQ_EXERCISE') {
+                    orderedTasks = [...iqQuestions, ...eqQuestions, ...academicQuestions];
+                } else if (type === 'EQ_EXERCISE') {
+                    orderedTasks = [...eqQuestions, ...iqQuestions, ...academicQuestions];
+                }
+
+                setTaskContent(orderedTasks.slice(0, 10));
                 setPathState('PRESENTING_TASK');
 
             } catch (err: any) {
@@ -165,7 +175,7 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ student
         return (
             <div className="flex flex-col items-center justify-center h-96">
                 <LoadingSpinner />
-                <p className="mt-4 text-text-secondary text-lg">{t('craftingYourPath')}</p>
+                <p className="mt-4 text-text-secondary text-lg font-semibold animate-pulse">{loadingMessage}</p>
                  {adaptiveAction && (
                     <div className="mt-4 text-center p-4 bg-surface rounded-lg max-w-md">
                         <p className="font-semibold text-primary">{t('aiReasoning')}</p>

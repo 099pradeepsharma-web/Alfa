@@ -75,10 +75,14 @@ const openDb = (): Promise<IDBDatabase> => {
                             userStore.createIndex('email', 'email', { unique: true });
                             break;
                         case 'teachers':
-                             tempDb.createObjectStore('teachers', { keyPath: 'id' });
+                             // FIX: Added email index for consistency and to prevent duplicate entries.
+                             const teacherStore = tempDb.createObjectStore('teachers', { keyPath: 'id' });
+                             teacherStore.createIndex('email', 'email', { unique: true });
                              break;
                         case 'parents':
-                             tempDb.createObjectStore('parents', { keyPath: 'id' });
+                             // FIX: Added email index for consistency and to prevent duplicate entries.
+                             const parentStore = tempDb.createObjectStore('parents', { keyPath: 'id' });
+                             parentStore.createIndex('email', 'email', { unique: true });
                              break;
                         default:
                             // For simple key-value stores

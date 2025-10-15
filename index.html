@@ -18,8 +18,8 @@
        * micro-interactions, and sound design.
        ******************************************************************/
 
-      /* 1. DESIGN TOKENS (CSS VARIABLES) */
-      :root, .dark { /* Defaulting to the new dark theme */
+      /* 1. DESIGN TOKENS (CSS VARIABLES) - DARK THEME ONLY */
+      :root {
         /* 1.1. Core Palette */
         --c-bg-primary: 17 24 39;        /* #111827 (Deep Charcoal/Blue - Tailwind slate-900) */
         --c-surface: 31 41 55;           /* #1F2937 (Lighter Dark Gray - Tailwind slate-800) */
@@ -51,17 +51,6 @@
         --border-width: 1px;
         --shadow-subtle: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
         --shadow-medium: 0 0 20px 0 rgba(var(--c-primary), 0.15), 0 4px 12px -1px rgba(0, 0, 0, 0.1);
-      }
-      
-      .light { /* A clean, professional light theme variant for the toggle */
-        --c-bg-primary: 243 244 246;      /* Tailwind gray-100 */
-        --c-surface: 255 255 255;          /* White */
-        --c-border-color: 229 231 235;     /* Tailwind gray-200 */
-        --c-text-primary: 17 24 39;        /* Tailwind slate-900 */
-        --c-text-secondary: 75 85 99;      /* Tailwind slate-600 */
-        --c-button-accent-text: 17 24 39;
-        --c-primary-dark: 13 148 136; /* Teal 700 */
-        --c-primary-light: 204 251 241; /* Teal 100 */
       }
 
       /* 2. BASE STYLES */
@@ -110,40 +99,47 @@
       }
 
       .prose u {
-        text-decoration-color: rgba(var(--c-primary), 0.8);
-        text-decoration-thickness: 2px;
-        text-underline-offset: 4px;
+        text-decoration-color: rgba(var(--c-accent), 0.8);
+        text-decoration-thickness: 3px;
+        text-underline-offset: 3px;
         font-weight: 600;
         color: rgb(var(--c-text-primary));
-      }
-      .dark .prose u {
-         text-decoration-color: rgba(var(--c-primary), 0.9);
-      }
-      .light .prose u {
-        text-decoration-color: rgba(var(--c-primary-dark), 0.9);
       }
 
       /* === NEW TEXTBOOK STYLES === */
       .prose h2 {
-        font-size: 1.75rem; /* ~text-2xl */
+        font-size: 1.75rem;
         font-family: 'Poppins', sans-serif;
         font-weight: 700;
         margin-top: 2.5rem;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid rgb(var(--c-border-color));
+        margin-bottom: 1.5rem;
+        padding: 0.5rem 1rem;
+        border-left: 4px solid rgb(var(--c-primary));
+        background: linear-gradient(to right, rgba(var(--c-primary), 0.1), transparent 80%);
+        border-radius: 0 var(--radius-button) var(--radius-button) 0;
       }
 
       .prose h3 {
-        font-size: 1.25rem; /* ~text-xl */
+        font-size: 1.25rem;
         font-family: 'Poppins', sans-serif;
         font-weight: 600;
         margin-top: 2rem;
-        margin-bottom: 0.75rem;
-        color: rgb(var(--c-primary));
+        margin-bottom: 1rem;
+        color: rgb(var(--c-text-primary));
+        position: relative;
+        padding-left: 1.5rem;
       }
-      .light .prose h3 {
-        color: rgb(var(--c-primary-dark));
+      .prose h3::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0.75rem;
+        height: 0.75rem;
+        background-color: rgb(var(--c-accent));
+        border-radius: 2px;
+        transform: translateY(-50%) rotate(45deg);
       }
       
       .callout-box {
@@ -328,37 +324,89 @@
 
       /* Status colors for quizzes and reports */
       .bg-status-success { background-color: rgba(var(--c-success), 0.1); }
-      .text-status-success { color: #16a34a; } .dark .text-status-success { color: #4ade80; }
+      .text-status-success { color: #4ade80; }
       .border-status-success { border-color: rgba(var(--c-success), 0.5); }
       
       .bg-status-danger { background-color: rgba(var(--c-error), 0.1); }
-      .text-status-danger { color: #dc2626; } .dark .text-status-danger { color: #f87171; }
+      .text-status-danger { color: #f87171; }
       .border-status-danger { border-color: rgba(var(--c-error), 0.5); }
       
-      /* === NEW GAMIFIED FRAMEWORK STYLES === */
-      .mission-card {
-          background-color: rgb(var(--c-surface));
-          border: 1px solid rgb(var(--c-border-color));
-          border-radius: var(--radius-button);
-          overflow: hidden;
-          transition: all 0.2s ease-out;
+      /* === NEW HIERARCHICAL CHAPTER VIEW STYLES === */
+      .chapter-accordion-item {
+        background-color: rgb(var(--c-surface));
+        border: 1px solid rgb(var(--c-border-color));
+        border-radius: var(--radius-button);
+        overflow: hidden;
+        transition: all 0.3s ease-out;
       }
-      .mission-card:hover {
-          transform: scale(1.02);
-          box-shadow: var(--shadow-medium);
-          border-color: rgba(var(--c-primary), 0.5);
+      .chapter-accordion-item[open] {
+        border-color: rgba(var(--c-primary), 0.5);
+        box-shadow: var(--shadow-medium);
       }
-      .mission-card-header {
+      .chapter-accordion-item summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         padding: 1rem 1.25rem;
-        background-color: rgb(var(--c-bg-primary));
-        border-bottom: 1px solid rgb(var(--c-border-color));
+        cursor: pointer;
+        outline: none;
       }
-      .chapter-tag {
-        font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.6rem;
-        border-radius: 9999px; background-color: rgba(var(--c-accent), 0.2);
+      .chapter-accordion-item summary::-webkit-details-marker {
+        display: none;
+      }
+      .chapter-accordion-item summary .chapter-title {
+        font-weight: 700;
+        font-size: 1.125rem;
+        color: rgb(var(--c-text-primary));
+        transition: color 0.2s;
+      }
+      .chapter-accordion-item[open] summary .chapter-title {
+        color: rgb(var(--c-primary));
+      }
+      .chapter-accordion-item summary .chapter-chevron {
+        transition: transform 0.3s ease;
+      }
+      .chapter-accordion-item[open] summary .chapter-chevron {
+        transform: rotate(90deg);
+      }
+      .chapter-accordion-content {
+        padding: 0 1.25rem 1.25rem;
+        border-top: 1px solid rgb(var(--c-border-color));
+      }
+      .topic-list {
+        list-style: none;
+        padding-left: 0.5rem;
+        margin-top: 1rem;
+      }
+      .topic-list li {
+        padding-left: 1.5rem;
+        position: relative;
+        margin-bottom: 0.75rem;
+      }
+      .topic-list li::before {
+        content: '▪';
+        position: absolute;
+        left: 0;
+        top: 0.1rem;
+        font-size: 1.2rem;
+        color: rgb(var(--c-primary));
+      }
+      .objective-item {
+        padding-left: 1.5rem;
+        position: relative;
+        margin-top: 0.25rem;
+        font-size: 0.9rem;
+        color: rgb(var(--c-text-secondary));
+      }
+      .objective-item::before {
+        content: '→';
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-weight: bold;
         color: rgb(var(--c-accent));
       }
-      
+
       /* === VIRTUAL CLASSROOM / MISSION VIEW STYLES === */
       .section-title {
           font-size: 1.875rem; /* text-3xl */
@@ -726,6 +774,9 @@
           display: flex;
           align-items: center;
       }
+      .hero-section h1, .hero-section > .container > p {
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+      }
       .btn-primary { background-color: #F97316; color: white; font-weight: bold; padding: 0.75rem 1.5rem; border-radius: 0.5rem; transition: all 0.2s; }
       .btn-primary:hover { background-color: #EA580C; transform: translateY(-2px); }
       .btn-secondary { background-color: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; font-weight: bold; padding: 0.75rem 1.5rem; border-radius: 0.5rem; transition: all 0.2s; }
@@ -779,6 +830,244 @@
       .is-visible.stagger-children > *:nth-child(5) { transition-delay: 0.5s; }
       .is-visible.stagger-children > *:nth-child(6) { transition-delay: 0.6s; }
       
+      /* === NEW NOTEBOOK LM VISUALIZATION STYLES === */
+      .chart-container-notebook {
+        background-color: rgb(var(--c-surface));
+        padding: 1rem;
+        border-radius: var(--radius-card);
+        border: 1px solid rgb(var(--c-border-color));
+        background-image:
+            linear-gradient(rgba(var(--c-border-color), 0.3) 1px, transparent 1px),
+            linear-gradient(to right, rgba(var(--c-border-color), 0.3) 1px, transparent 1px);
+        background-size: 20px 20px;
+      }
+      
+      /* === NEW EXAM PREP STYLES === */
+      .exam-timer {
+        background-color: rgb(var(--c-surface));
+        border: 1px solid rgb(var(--c-border-color));
+        border-radius: var(--radius-button);
+        padding: 0.5rem 1rem;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 700;
+        font-size: 1.125rem;
+        color: rgb(var(--c-text-primary));
+        min-width: 120px;
+        text-align: center;
+      }
+      .exam-mcq-option {
+        display: flex; align-items: flex-start;
+        padding: 1rem; border-radius: var(--radius-button);
+        border: 2px solid rgb(var(--c-border-color));
+        background-color: rgb(var(--c-surface));
+        transition: all 0.2s; cursor: pointer;
+      }
+      .exam-mcq-option:hover { border-color: rgb(var(--c-primary)); }
+      .exam-mcq-option.selected { border-color: rgb(var(--c-primary)); background-color: rgba(var(--c-primary), 0.1); }
+      
+      .exam-review-card {
+        padding: 1rem;
+        border: 1px solid rgb(var(--c-border-color));
+        border-radius: var(--radius-button);
+        background-color: rgba(var(--c-surface), 0.5);
+      }
+      .exam-review-card + .exam-review-card { margin-top: 1rem; }
+      .exam-review-your-answer {
+        padding: 0.75rem;
+        border-radius: var(--radius-button);
+        background-color: rgb(var(--c-bg-primary));
+        border: 1px solid rgb(var(--c-border-color));
+      }
+      .exam-review-solution {
+        padding: 0.75rem;
+        border-radius: var(--radius-button);
+        background-color: rgba(var(--c-success), 0.05);
+        border: 1px solid rgba(var(--c-success), 0.3);
+      }
+
+      /* === NEW AI STUDY NOTEBOOK STYLES === */
+      .ai-notebook-action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: var(--radius-button);
+        background-color: rgb(var(--c-surface));
+        border: 1px solid rgb(var(--c-border-color));
+        color: rgb(var(--c-text-secondary));
+        transition: all 0.2s ease;
+        text-align: center;
+      }
+      .ai-notebook-action-btn:hover {
+        background-color: rgb(var(--c-bg-primary));
+        color: rgb(var(--c-primary));
+        border-color: rgba(var(--c-primary), 0.5);
+      }
+      .ai-notebook-output {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background-color: rgb(var(--c-bg-primary));
+        border-radius: var(--radius-button);
+        border: 1px solid rgb(var(--c-border-color));
+        max-height: 400px;
+        overflow-y: auto;
+        animation: fade-in 0.5s;
+      }
+
+      /* === NEW CALENDAR STYLES === */
+      .calendar-container {
+        background-color: rgb(var(--c-bg-primary));
+        border-radius: var(--radius-card);
+        padding: 1.25rem;
+      }
+      .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+      .calendar-title {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 700;
+        font-size: 1.25rem;
+        color: rgb(var(--c-text-primary));
+      }
+      .calendar-nav-btn {
+        padding: 0.5rem;
+        border-radius: var(--radius-button);
+        background-color: rgb(var(--c-surface));
+        color: rgb(var(--c-text-secondary));
+        transition: all 0.2s ease;
+      }
+      .calendar-nav-btn:hover {
+        background-color: rgb(var(--c-border-color));
+        color: rgb(var(--c-text-primary));
+      }
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0.25rem;
+      }
+      .calendar-day-header {
+        text-align: center;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: rgb(var(--c-text-secondary));
+        padding-bottom: 0.5rem;
+      }
+      .calendar-cell {
+        position: relative;
+        width: 100%;
+        padding-bottom: 100%; /* For square cells */
+      }
+      .calendar-day-btn {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+        background-color: transparent;
+        color: rgb(var(--c-text-secondary));
+      }
+      .calendar-day-btn:not(.outside-month) {
+        color: rgb(var(--c-text-primary));
+      }
+      .calendar-day-btn:not(.outside-month):hover {
+        background-color: rgb(var(--c-surface));
+      }
+      .calendar-day-btn.today {
+        border-color: rgb(var(--c-accent));
+      }
+      .calendar-day-btn.selected {
+        background-color: rgb(var(--c-primary));
+        color: rgb(var(--c-bg-primary));
+        border-color: rgb(var(--c-primary));
+      }
+      .calendar-task-dot {
+        position: absolute;
+        bottom: 15%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: rgb(var(--c-accent));
+      }
+      .selected .calendar-task-dot {
+        background-color: rgb(var(--c-bg-primary));
+      }
+      
+      /* === NEW COGNITIVE TWIN STYLES === */
+      .cognitive-twin-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      @media (min-width: 1024px) {
+        .cognitive-twin-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      .cognitive-gauge {
+        width: 100%;
+        max-width: 200px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.5rem;
+        color: rgb(var(--c-text-primary));
+      }
+      .cognitive-gauge-body {
+        width: 100%;
+        height: 0;
+        padding-bottom: 50%;
+        background: rgb(var(--c-bg-primary));
+        position: relative;
+        border-top-left-radius: 100% 200%;
+        border-top-right-radius: 100% 200%;
+        overflow: hidden;
+      }
+      .cognitive-gauge-fill {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: inherit;
+        height: 100%;
+        background: rgb(var(--c-primary));
+        transform-origin: center top;
+        transform: rotate(var(--rotation));
+        transition: transform 1s ease-out;
+      }
+      .cognitive-gauge-cover {
+        width: 75%;
+        height: 150%;
+        background: rgb(var(--c-surface));
+        border-radius: 50%;
+        position: absolute;
+        top: 25%;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-bottom: 25%;
+        box-sizing: border-box;
+      }
+      .cognitive-gauge-label {
+        position: absolute;
+        bottom: -5px;
+        width: 100%;
+        text-align: center;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: rgb(var(--c-text-secondary));
+      }
     </style>
   <script type="importmap">
 {
@@ -791,7 +1080,9 @@
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.417.0",
     "@dicebear/core": "https://aistudiocdn.com/@dicebear/core@^9.2.4",
     "@dicebear/collection": "https://aistudiocdn.com/@dicebear/collection@^9.2.4",
-    "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.45.0"
+    "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.45.0",
+    "recharts": "https://aistudiocdn.com/recharts@^2.12.7",
+    "recharts/": "https://aistudiocdn.com/recharts@^2.12.7/"
   }
 }
 </script>

@@ -16,7 +16,8 @@
     "lucide-react": "^0.417.0",
     "@dicebear/core": "^9.2.4",
     "@dicebear/collection": "^9.2.4",
-    "@supabase/supabase-js": "^2.45.0"
+    "@supabase/supabase-js": "^2.45.0",
+    "recharts": "^2.12.7"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

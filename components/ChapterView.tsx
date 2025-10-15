@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Grade, Subject, Chapter, LearningModule, Student, Trigger, CoreConceptLesson, PracticeArena, PracticalApplicationLab, QuizQuestion, XpReward, VideoReward, PracticeProblem, WrittenAnswerEvaluation } from '../types';
+import { Grade, Subject, Chapter, LearningModule, Student, Trigger, CoreConceptLesson, PracticeArena, PracticalApplicationLab, QuizQuestion, XpReward, VideoReward, PracticeProblem, WrittenAnswerEvaluation, InteractiveVideoSimulation, VirtualLab, AdaptiveStory, InteractiveExplainer } from '../types';
 import * as contentService from '../services/contentService';
 import * as pineconeService from '../services/pineconeService';
 import * as geminiService from '../services/geminiService';
@@ -8,14 +8,15 @@ import * as analyticsService from '../services/analyticsService';
 import LoadingSpinner from './LoadingSpinner';
 import Quiz from './Quiz';
 import { useLanguage } from '../contexts/Language-context';
-import { ArrowPathIcon, BookOpenIcon, BeakerIcon, LightBulbIcon, CpuChipIcon, AcademicCapIcon, PuzzlePieceIcon, SparklesIcon, ChevronRightIcon, PlayCircleIcon, DevicePhoneMobileIcon, CheckIcon, StarIcon, ClipboardDocumentCheckIcon, DocumentTextIcon, PencilSquareIcon, ChevronLeftIcon } from '@heroicons/react/24/solid';
+import { ArrowPathIcon, BookOpenIcon, BeakerIcon, LightBulbIcon, CpuChipIcon, AcademicCapIcon, PuzzlePieceIcon, SparklesIcon, ChevronRightIcon, PlayCircleIcon, DevicePhoneMobileIcon, CheckIcon, StarIcon, ClipboardDocumentCheckIcon, DocumentTextIcon, PencilSquareIcon, ChevronLeftIcon, PaperAirplaneIcon } from '@heroicons/react/24/solid';
 import StructuredText from './StructuredText';
 import Confetti from './Confetti';
 import ConceptVideoPlayer from './ConceptVideoPlayer';
 import VideoSimulationPlayer from './VideoSimulationPlayer';
 import VirtualLabPlayer from './VirtualLabPlayer';
 import AdaptiveStoryPlayer from './AdaptiveStoryPlayer';
-import InteractiveExplainerPlayer from './components/InteractiveExplainerPlayer';
+// FIX: Corrected import path for InteractiveExplainerPlayer from a nested 'components' folder to the current directory.
+import InteractiveExplainerPlayer from './InteractiveExplainerPlayer';
 
 
 interface ChapterViewProps {
@@ -228,7 +229,7 @@ const ApplicationLabSection: React.FC<{
             return (
                 <LabWrapper>
                     <VideoSimulationPlayer 
-                        simulationData={content as any} 
+                        simulationData={content} 
                         dbKey={`sim-video-${grade.level}-${subject.name}-${chapter.title}`}
                         grade={grade}
                         subject={subject}
@@ -240,7 +241,7 @@ const ApplicationLabSection: React.FC<{
             return (
                 <LabWrapper>
                     <VirtualLabPlayer 
-                        labData={content as any}
+                        labData={content}
                         grade={grade}
                         subject={subject}
                         chapter={chapter}
@@ -250,14 +251,14 @@ const ApplicationLabSection: React.FC<{
         case 'adaptiveStory':
             return (
                 <LabWrapper>
-                    <AdaptiveStoryPlayer storyData={content as any} />
+                    <AdaptiveStoryPlayer storyData={content} />
                 </LabWrapper>
             );
         case 'interactiveExplainer':
             return (
                 <LabWrapper>
                      <InteractiveExplainerPlayer
-                        explainerData={content as any}
+                        explainerData={content}
                         grade={grade}
                         subject={subject}
                         chapter={chapter}
@@ -279,11 +280,11 @@ const ApplicationLabSection: React.FC<{
                     )}
                 </LabWrapper>
             );
+        // FIX: Replaced the default case which caused a type error on `content` (which is `never` here because all cases are handled). A safe fallback is provided instead.
         default:
             return (
                 <LabWrapper>
-                    <h4 className="font-bold text-lg text-primary">{content.title}</h4>
-                    <p className="text-text-secondary mt-1">{content.description}</p>
+                    <p>Unsupported lab content type.</p>
                 </LabWrapper>
             );
     }

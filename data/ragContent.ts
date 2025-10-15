@@ -1,3 +1,5 @@
+
+
 import { LearningModule } from '../types';
 
 // This file simulates a Retrieval-Augmented Generation (RAG) system.
@@ -264,7 +266,6 @@ Nature of the image:
             explanation: "According to Snell's Law, n1 * sin(i) = n2 * sin(r). Rearranging this gives sin(i)/sin(r) = n2/n1.",
             conceptTitle: "Refraction of Light and Refractive Index"
         },
-        // ... (add 8 more questions to make a total of 10)
          {
             question: "Where should an object be placed in front of a concave mirror to produce a real, inverted image of the same size?",
             options: ["At the pole", "At the focus", "At the center of curvature", "Between focus and center of curvature"],

@@ -1,10 +1,9 @@
 
 
 
-
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 // FIX: Corrected import path for types to resolve circular dependency issues.
-import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, Chapter, Trigger, CoreConceptLesson, PracticeArena, PracticalApplicationLab, AptitudeQuestion, CareerGuidance, XpReward, VideoReward, StudyGoal, PracticeProblem, WrittenAnswerEvaluation, SATAnswerEvaluation, PerformanceRecord, AdaptiveStory } from '../types';
+import { LearningModule, QuizQuestion, Student, NextStepRecommendation, Concept, StudentQuestion, AIAnalysis, FittoResponse, AdaptiveAction, IQExercise, EQExercise, CurriculumOutlineChapter, Chapter, Trigger, CoreConceptLesson, PracticeArena, PracticalApplicationLab, AptitudeQuestion, CareerGuidance, XpReward, VideoReward, StudyGoal, PracticeProblem, WrittenAnswerEvaluation, SATAnswerEvaluation, PerformanceRecord, AdaptiveStory, BoardPaper, BoardPaperSection, BoardPaperQuestion, CognitiveProfile } from '../types';
 import { CURRICULUM } from '../data/curriculum';
 import { getLearningStreak } from './pineconeService';
 
@@ -42,6 +41,53 @@ const handleGeminiError = (error: any, context: string): Error => {
     }
     
     return new Error(message);
+};
+
+/**
+ * Creates a concise summary of a student's performance for AI personalization.
+ * This is an internal helper function.
+ */
+const summarizeStudentPerformance = (student: Student): string => {
+    if (student.performance.length === 0) {
+        return "The student is new and has no performance history yet. Be extra encouraging.";
+    }
+
+    const strengths: string[] = [];
+    const weaknesses: string[] = [];
+    const recentPerformance = student.performance.slice(0, 10); // Look at last 10 activities
+
+    const performanceByChapter: { [key: string]: { scores: number[], count: number } } = {};
+
+    recentPerformance.forEach(p => {
+        const key = `${p.subject} - ${p.chapter}`;
+        if (!performanceByChapter[key]) {
+            performanceByChapter[key] = { scores: [], count: 0 };
+        }
+        performanceByChapter[key].scores.push(p.score);
+        performanceByChapter[key].count++;
+    });
+
+    for (const key in performanceByChapter) {
+        const avgScore = performanceByChapter[key].scores.reduce((a, b) => a + b, 0) / performanceByChapter[key].count;
+        if (avgScore >= 90) {
+            strengths.push(key);
+        } else if (avgScore < 70) {
+            weaknesses.push(key);
+        }
+    }
+
+    let summary = "### Student's Recent Learning Patterns:\n";
+    if (weaknesses.length > 0) {
+        summary += `- **Areas for improvement (simplify explanations here):** ${weaknesses.join(', ')}\n`;
+    } else {
+        summary += "- No significant weak areas recently. The student is performing well.\n";
+    }
+
+    if (strengths.length > 0) {
+        summary += `- **Strengths (can handle more challenging concepts here):** ${strengths.join(', ')}\n`;
+    }
+
+    return summary;
 };
 
 
@@ -146,11 +192,10 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
         4.  **Competitive Focus:** Include elements relevant to NTSE, Olympiads, and JEE/NEET foundation.
 
         **AESTHETIC & FORMATTING RULES (NON-NEGOTIABLE):**
-        Your goal is to make the content look like a beautifully designed, modern digital textbook. Use the following enhanced markdown for rich formatting.
+        Your goal is to make the content look like a beautifully designed, modern digital textbook. The clarity of presentation is PARAMOUNT.
 
         1.  **Headings:** Use markdown headings for structure. '##' for main sub-headings and '###' for deeper concepts.
             - Example: \`## The Laws of Reflection\`
-            - Example: \`### Specular vs. Diffuse Reflection\`
 
         2.  **Emphasis:** For important keywords, formulas, and concepts, you MUST underline them by wrapping them ONLY in <u>...</u> tags. Example: <u>Snell's Law</u>. Do NOT use markdown asterisks for bolding.
 
@@ -162,23 +207,23 @@ export const getChapterContent = async (gradeLevel: string, subject: string, cha
             - For examples: \`> [!EXAMPLE] A straw in a glass of water appears bent due to refraction.\`
 
         5.  **Tables:** When comparing concepts (e.g., Concave vs. Convex mirrors), you MUST use markdown tables for clarity.
-            - Example:
-              | Feature      | Concave Mirror  | Convex Mirror   |
-              |--------------|-----------------|-----------------|
-              | Shape        | Curves inward   | Curves outward  |
-              | Nature       | Converging      | Diverging       |
 
-        6.  **Diagrams:** For concepts that are highly visual (like ray diagrams, the human eye, etc.), you MUST include a diagram placeholder. This is critical for graphical presentation.
-            - Format: \`[DIAGRAM: A detailed, clear prompt for a simple 2D educational diagram explaining the concept. The diagram should be clean, labeled, and easy to understand.]\`
+        6.  **Diagrams are CRITICAL:** For any concept that can be explained visually (e.g., ray diagrams, biological systems, geometric shapes, scientific processes), you MUST insert a diagram placeholder IMMEDIATELY after its introductory explanation. Do not group diagrams at the end. They must be integrated with the text. The diagram prompt must be detailed enough for an artist to create a clear, simple, and labeled educational graphic.
+            - Format: \`[DIAGRAM: A detailed, clear prompt for a simple 2D educational diagram explaining the concept.]\`
             - Example: \`[DIAGRAM: A simple ray diagram showing the formation of a real, inverted image by a concave mirror when the object is placed beyond C.]\`
 
-        7.  **Vertical Formatting:** ALL formula derivations and solved numerical examples MUST be presented vertically. Each step MUST be on a new line. You can use '=>' at the start of a line to show progression.
+        7.  **Step-by-Step Vertical Explanations:** This is non-negotiable for clarity.
+            - **Formula Derivations:** Each step of a derivation MUST be on a new line.
+            - **Solved Numerical Examples:** Present the solution vertically. Start with 'Given:', then 'Formula:', then 'Calculation:', with each calculation step on a new line.
+            - **Practice Arena Solutions:** The 'solution' for every problem in the 'practiceArena' MUST also follow this clear, step-by-step vertical format.
+        
+        8.  **Clarity and Structure:** Every explanation must be broken down. Use short paragraphs. Use bullet points for lists of properties or features. The goal is maximum readability for a student. Avoid long walls of text.
 
         **REQUIRED OUTPUT STRUCTURE:**
         -   **chapterTitle**: Must be exactly "${chapter.title}".
         -   **missionBriefing (The Trigger):** An array of 2-3 varied 'Trigger' objects.
-        -   **coreConceptTraining (Action):** Break the chapter into 3-5 micro-lessons. For each, provide a comprehensive explanation using all the rich formatting rules above. Include formula derivations, solved examples, and analytical insights.
-        -   **practiceArena (Variable Reward):** A robust set of 8 practice problems (3 NCERT, 3 Reference, 2 Competitive). Each MUST have a complete, step-by-step solution.
+        -   **coreConceptTraining (Action):** Break the chapter into 3-5 micro-lessons. For each, provide a comprehensive explanation that STRICTLY follows all aesthetic and formatting rules. Explanations MUST be clear, use short paragraphs, bullet points, and be visually integrated with diagram placeholders where appropriate. ALL solved examples must be formatted vertically step-by-step.
+        -   **practiceArena (Variable Reward):** A robust set of 8 practice problems (3 NCERT, 3 Reference, 2 Competitive). The 'solution' for EACH problem MUST be a complete, step-by-step, vertically formatted explanation.
         -   **practicalApplicationLab (Investment):** A mandatory activity. The \`labInstructions\` field MUST be a multi-line string formatted as a markdown list.
         -   **bossFight (Final Challenge):** A 10-question chapter-end test mixing MCQs, numericals, etc.
     `;
@@ -459,17 +504,26 @@ export const generateComprehensiveDiagnosticRecommendation = async (
 };
 
 
-export const createTutorChat = (grade: string, subject: string, chapter: string, language: string, keyConcepts: Concept[]): Chat => {
+export const createTutorChat = (grade: string, subject: string, chapter: string, language: string, keyConcepts: Concept[], student: Student): Chat => {
     const conceptsContext = keyConcepts.map(c => `- '${c.conceptTitle}': ${c.explanation.substring(0, 150)}...`).join('\n');
+    const performanceSummary = summarizeStudentPerformance(student);
     
     const systemInstruction = `You are Fitto, an expert, friendly, and encouraging AI Tutor for a ${grade} student studying ${subject} in the ${language} language. Your current topic is "${chapter}". 
     
+    **STUDENT PROFILE:**
+    This section contains insights into the student's recent performance. Use this to dynamically adapt your teaching style.
+    ${performanceSummary}
+
     **Your Core Directives:**
-    1.  **Stay Focused:** Your primary goal is to help the student deeply understand the concepts of this chapter. You MUST strictly adhere to the provided key concepts. Do not discuss unrelated topics.
-    2.  **Guide, Don't Give:** Do not just give answers. Guide the student to discover the answers themselves using the Socratic method. Ask leading questions.
-    3.  **Simplify:** Break down complex answers into smaller, numbered steps or bullet points. Use simple language and analogies appropriate for a ${grade} student.
-    4.  **Be Proactive:** If a student seems confused, proactively offer to explain a related key concept from the list below or provide a simple analogy.
-    5.  **Format for Clarity:** Enclose key terms in single quotes for emphasis (e.g., 'photosynthesis'). Use markdown-style lists ('- ' or '1. ') for clarity.
+    1.  **ADAPTIVE TEACHING (CRITICAL):**
+        - If the student asks about a concept from their "areas for improvement," YOU MUST simplify your explanation. Use more analogies and break it down into smaller steps.
+        - If the student seems stuck on a weak concept, proactively offer a simple practice problem to test their understanding.
+        - If the student is discussing a "strength" area, feel free to introduce a slightly more advanced or related fun fact to keep them engaged and challenged.
+    2.  **Stay Focused:** Your primary goal is to help the student deeply understand the concepts of this chapter. You MUST strictly adhere to the provided key concepts. Do not discuss unrelated topics.
+    3.  **Guide, Don't Give:** Do not just give answers. Guide the student to discover the answers themselves using the Socratic method. Ask leading questions.
+    4.  **Simplify:** Break down complex answers into smaller, numbered steps or bullet points. Use simple language and analogies appropriate for a ${grade} student.
+    5.  **Be Proactive:** If a student seems confused, proactively offer to explain a related key concept from the list below or provide a simple analogy.
+    6.  **Format for Clarity:** Enclose key terms in single quotes for emphasis (e.g., 'photosynthesis'). Use markdown-style lists ('- ' or '1. ') for clarity.
     
     **Key Concepts for this Chapter:**
     ${conceptsContext}
@@ -490,16 +544,26 @@ export const createTutorChat = (grade: string, subject: string, chapter: string,
 };
 
 export const createGeneralChatbot = (student: Student, language: string): Chat => {
+    const performanceSummary = summarizeStudentPerformance(student);
+
     const systemInstruction = `You are Fitto, an expert, friendly, and encouraging AI Tutor available 24/7 for a ${student.grade} student named ${student.name}. Your entire communication must be in the ${language} language.
 
+    **STUDENT PROFILE:**
+    This section contains insights into the student's recent performance. Use this to dynamically adapt your teaching style across all subjects.
+    ${performanceSummary}
+
     **Your Core Directives:**
-    1.  **Be a Conceptual Expert:** Your primary goal is to answer conceptual questions across any subject in the student's curriculum (Maths, Science, History, etc.).
-    2.  **Provide Step-by-Step Explanations:** When a concept is complex, break it down into simple, logical, numbered steps or bullet points.
-    3.  **Use Examples and Analogies:** Make learning easier by providing clear examples and relatable analogies suitable for a ${student.grade} student.
-    4.  **Guide, Don't Just Answer:** If a student asks for a direct answer to a homework problem, gently guide them through the steps to solve it themselves instead of giving the answer away.
-    5.  **Stay On Topic:** Politely decline to answer questions that are not related to academic subjects. Gently guide the student back to learning.
-    6.  **Personalize:** Acknowledge the student's grade level in your explanations, keeping the complexity appropriate.
-    7.  **Format for Clarity:** Enclose key terms in single quotes (e.g., 'photosynthesis'). Use markdown-style lists ('- ' or '1. ') for clarity.`;
+    1.  **ADAPTIVE TEACHING (CRITICAL):**
+        - If the student asks about a concept from their "areas for improvement," YOU MUST simplify your explanation. Use more analogies and break it down into smaller steps.
+        - If the student seems stuck on a weak concept, proactively offer a simple practice problem to test their understanding.
+        - If the student is discussing a "strength" area, feel free to introduce a slightly more advanced or related fun fact to keep them engaged and challenged.
+    2.  **Be a Conceptual Expert:** Your primary goal is to answer conceptual questions across any subject in the student's curriculum (Maths, Science, History, etc.).
+    3.  **Provide Step-by-Step Explanations:** When a concept is complex, break it down into simple, logical, numbered steps or bullet points.
+    4.  **Use Examples and Analogies:** Make learning easier by providing clear examples and relatable analogies suitable for a ${student.grade} student.
+    5.  **Guide, Don't Just Answer:** If a student asks for a direct answer to a homework problem, gently guide them through the steps to solve it themselves instead of giving the answer away.
+    6.  **Stay On Topic:** Politely decline to answer questions that are not related to academic subjects. Gently guide the student back to learning.
+    7.  **Personalize:** Acknowledge the student's grade level in your explanations, keeping the complexity appropriate.
+    8.  **Format for Clarity:** Enclose key terms in single quotes (e.g., 'photosynthesis'). Use markdown-style lists ('- ' or '1. ') for clarity.`;
 
     const chat: Chat = ai.chats.create({
         model: 'gemini-2.5-flash',
@@ -703,8 +767,20 @@ export const generateComprehensiveDiagnosticTest = async (grade: string, subject
 };
 
 const fittoResponseSchema = { type: Type.OBJECT, properties: { isRelevant: { type: Type.BOOLEAN }, responseText: { type: Type.STRING } }, required: ['isRelevant', 'responseText'] };
-export const getFittoAnswer = async (question: StudentQuestion, language: string): Promise<FittoResponse> => {
-    const prompt = `As Fitto, an AI Tutor, answer this student's question about "${question.concept}". Question: "${question.questionText}". Is the question relevant? Then, provide a simple, Socratic explanation in ${language}.`;
+export const getFittoAnswer = async (question: StudentQuestion, student: Student, language: string): Promise<FittoResponse> => {
+    const performanceSummary = summarizeStudentPerformance(student);
+    const prompt = `As Fitto, an AI Tutor, answer this student's question about "${question.concept}".
+    Question: "${question.questionText}".
+    
+    **STUDENT PROFILE (for personalization):**
+    ${performanceSummary}
+
+    **YOUR TASK:**
+    1.  First, determine if the question is relevant to the concept.
+    2.  Then, craft a simple, Socratic explanation in ${language}.
+    3.  **ADAPTIVE RULE:** If the question is about an "area for improvement" from the student's profile, YOU MUST make your explanation extra simple and use a clear analogy.
+
+    Provide your response in the specified JSON format.`;
     try {
         const response = await ai.models.generateContent({ model: "gemini-2.5-flash", contents: prompt, config: { responseMimeType: "application/json", responseSchema: fittoResponseSchema } });
         return JSON.parse(response.text.trim()) as FittoResponse;
@@ -938,30 +1014,34 @@ export const generateStudyGoalSuggestions = async (student: Student, language: s
     }
 };
 
-// --- START: NEW MASTERY ZONE FUNCTIONS ---
+// --- START: NEW PRACTICE AND EVALUATION FUNCTIONS ---
 
 const morePracticeProblemsSchema = {
     type: Type.ARRAY,
     items: practiceProblemSchema,
-    minItems: 3,
-    maxItems: 5
+    maxItems: 3,
 };
 
-export const generateMorePracticeProblems = async (grade: string, subject: string, chapter: string, existingProblems: PracticeProblem[], language: string): Promise<PracticeProblem[]> => {
+export const generateMorePracticeProblems = async (
+    grade: string,
+    subject: string,
+    chapter: string,
+    existingProblems: PracticeProblem[],
+    language: string
+): Promise<PracticeProblem[]> => {
     const existingProblemStatements = existingProblems.map(p => p.problemStatement).join('\n - ');
     const prompt = `
-        You are an expert question setter for competitive exams in India (like Olympiads, NTSE, JEE/NEET foundation).
-        Generate 3-5 new, challenging practice problems for a ${grade} student on the chapter "${chapter}" in ${subject}.
-        The entire response must be in the ${language} language.
+        You are an expert question setter for Indian competitive exams (JEE/NEET/Olympiads).
+        For a ${grade} student studying "${chapter}" in ${subject}, generate 3 new, unique, and challenging practice problems.
+        The problems should be different from the ones provided below. The entire response must be in ${language}.
 
-        **CRITICAL INSTRUCTIONS:**
-        1.  **DO NOT REPEAT:** The generated questions must be completely different from the following existing problems:
-            - ${existingProblemStatements}
-        2.  **FOCUS:** Generate a mix of 'Level 2: Reference Application' and 'Level 3: Competitive Challenge' questions.
-        3.  **AUTHENTICITY:** The questions should be relevant and of a high standard, suitable for preparing for competitive exams.
-        4.  **SOLUTIONS:** Provide clear, step-by-step solutions for each problem.
+        **Existing Problems (do NOT repeat these):**
+        - ${existingProblemStatements}
 
-        Your response must be a JSON array of PracticeProblem objects.
+        **Instructions:**
+        1.  Create 3 problems with a mix of 'Level 2: Reference Application' and 'Level 3: Competitive Challenge'.
+        2.  Each problem must have a detailed, step-by-step solution.
+        3.  The questions should test deep conceptual understanding and application skills.
     `;
     try {
         const response = await ai.models.generateContent({
@@ -969,7 +1049,8 @@ export const generateMorePracticeProblems = async (grade: string, subject: strin
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
-                responseSchema: morePracticeProblemsSchema
+                responseSchema: morePracticeProblemsSchema,
+                temperature: 0.9,
             },
         });
         const jsonText = response.text.trim();
@@ -979,51 +1060,41 @@ export const generateMorePracticeProblems = async (grade: string, subject: strin
     }
 };
 
-
-export const getWritingChallengeQuestion = async (grade: string, subject: string, chapter: string, language: string): Promise<string> => {
-    const prompt = `
-        Create one high-quality, thought-provoking 'Short Answer' or 'Long Answer' type question for a ${grade} student on the chapter "${chapter}" in ${subject}.
-        The question should be in the style of a CBSE board exam and require analytical thinking, not just recall.
-        The entire response must be in the ${language} language.
-        Respond with only the question text as a single string.
-    `;
-    try {
-        const response = await ai.models.generateContent({ model: "gemini-2.5-flash", contents: prompt });
-        return response.text;
-    } catch (error) {
-        throw handleGeminiError(error, 'get writing challenge question');
-    }
-};
-
 const writtenAnswerEvaluationSchema = {
     type: Type.OBJECT,
     properties: {
-        modelAnswer: { type: Type.STRING, description: "An ideal, well-structured answer as per CBSE guidelines. Use numbered markdown lists for steps/points." },
-        markingScheme: { type: Type.STRING, description: "A point-wise breakdown of how marks are awarded. Use bulleted markdown lists." },
-        personalizedFeedback: { type: Type.STRING, description: "Constructive, encouraging, and actionable feedback on the student's specific answer." },
-        proTips: { type: Type.STRING, description: "Highly specific, exam-oriented tips and tricks for improving answers for this type of question." }
+        modelAnswer: { type: Type.STRING },
+        markingScheme: { type: Type.STRING, description: "Detailed, point-wise marking scheme for the model answer." },
+        personalizedFeedback: { type: Type.STRING, description: "Constructive feedback on the student's answer, highlighting strengths and areas for improvement." },
+        proTips: { type: Type.STRING, description: "Actionable tips for improving answer writing for board exams, like using keywords or diagrams." }
     },
     required: ['modelAnswer', 'markingScheme', 'personalizedFeedback', 'proTips']
 };
 
-export const evaluateWrittenAnswer = async (question: string, studentAnswer: string, grade: string, subject: string, language: string): Promise<WrittenAnswerEvaluation> => {
+export const evaluateWrittenAnswer = async (
+    question: string,
+    studentAnswer: string,
+    grade: string,
+    subject: string,
+    language: string
+): Promise<WrittenAnswerEvaluation> => {
     const prompt = `
-        **SYSTEM ROLE:**
-        You are a strict but fair and helpful virtual examiner for the Indian CBSE board.
-        Your task is to evaluate a ${grade} student's written answer for a question in ${subject}.
-        The entire response must be in the ${language} language and adhere to the specified JSON schema.
+        You are an expert CBSE board examiner for ${subject}, grade ${grade}.
+        Your task is to evaluate a student's written answer. The entire response must be in ${language}.
 
-        **CONTEXT:**
-        - **Question:** "${question}"
-        - **Student's Answer:** "${studentAnswer}"
+        **Question:**
+        ${question}
 
-        **EVALUATION INSTRUCTIONS (MANDATORY FORMATTING):**
-        1.  **modelAnswer:** Create an ideal, comprehensive model answer. If the answer involves steps or points, you MUST format it as a numbered markdown list (e.g., "1. First point...\\n2. Second point...").
-        2.  **markingScheme:** Create a detailed, point-wise marking scheme. You MUST format this as a bulleted markdown list (e.g., "- 1 mark for correct formula...\\n- 2 marks for correct substitution and calculation...").
-        3.  **personalizedFeedback:** Provide constructive, encouraging, and actionable feedback. Compare the student's answer to the model answer. Start with a positive point if possible. Be specific about what was missed or could be improved.
-        4.  **proTips:** Give 2-3 highly specific, actionable tips for improving exam performance on this type of question. For example, "Pro Tip: Always underline the final answer in numerical problems to make it stand out for the examiner." or "Pro Tip: Start long answers with a brief introduction defining the key term."
+        **Student's Answer:**
+        ${studentAnswer}
 
-        Your response must be a single JSON object with clean, well-formatted markdown text in the fields.
+        **Instructions:**
+        1.  **Model Answer:** First, provide a perfect, ideal model answer for the question, as expected in a board exam.
+        2.  **Marking Scheme:** Create a detailed, point-wise marking scheme based on the model answer. (e.g., "1 mark for correct definition, 1 mark for diagram...").
+        3.  **Personalized Feedback:** Analyze the student's answer against the model answer. Provide constructive, encouraging feedback. Mention what they did well and what they missed. Be specific.
+        4.  **Pro Tips:** Give 2-3 actionable tips for improving their answer-writing skills for this type of question in board exams (e.g., "Underline keywords," "Always draw a labeled diagram," "Structure your answer in points.").
+
+        Provide your response in the specified JSON format.
     `;
     try {
         const response = await ai.models.generateContent({
@@ -1031,7 +1102,8 @@ export const evaluateWrittenAnswer = async (question: string, studentAnswer: str
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
-                responseSchema: writtenAnswerEvaluationSchema
+                responseSchema: writtenAnswerEvaluationSchema,
+                temperature: 0.6,
             },
         });
         const jsonText = response.text.trim();
@@ -1040,57 +1112,29 @@ export const evaluateWrittenAnswer = async (question: string, studentAnswer: str
         throw handleGeminiError(error, 'evaluate written answer');
     }
 };
-// --- END: NEW MASTERY ZONE FUNCTIONS ---
-
-// --- START: NEW GLOBAL PREP ZONE FUNCTIONS ---
 
 export const generateSATPracticeTest = async (language: string): Promise<QuizQuestion[]> => {
     const prompt = `
-        Act as an expert SAT test creator specializing in the Digital SAT Math section.
-        Generate 10 new and unique multiple-choice SAT Math practice questions.
-        The entire response must be in the ${language} language.
+        You are an expert SAT test creator. Generate 5 high-quality, SAT-style multiple-choice questions.
+        The questions should cover a mix of Reading Comprehension, Writing and Language, and Math (No Calculator & Calculator) sections.
+        The entire response must be in ${language}.
 
         **CRITICAL INSTRUCTIONS:**
-        1.  **Authenticity & Diversity:** The questions MUST mirror the style and difficulty of the real Digital SAT. You MUST generate a diverse set of questions covering all four major domains:
-            - Algebra (e.g., linear equations, systems of equations)
-            - Advanced Math (e.g., quadratic equations, manipulation of polynomials, complex numbers, advanced functions like exponential equations, and function notation)
-            - Problem-Solving and Data Analysis (e.g., ratios, percentages, probability, interpreting graphs)
-            - Geometry and Trigonometry (e.g., area, volume, circles, triangles, trig functions)
-        2.  **Uniqueness:** The questions must be original and not simple variations of common textbook problems.
-        3.  **Format:** All questions must be multiple-choice with exactly four options.
-        4.  **Explanations:** Provide a detailed, step-by-step explanation for each question, explaining the correct logic.
-        5.  **Metadata:** For each question, set 'type' to 'ACADEMIC' and 'conceptTitle' to the relevant SAT math domain (e.g., 'Algebra', 'Advanced Math', 'Data Analysis', 'Geometry').
-
-        Your response must be a JSON array of 10 QuizQuestion objects.
+        1.  **Authentic Style:** Questions should mimic the style, complexity, and wording of the actual SAT exam.
+        2.  **Reading:** Include at least one question based on a short passage (provide the passage in the 'question' field, followed by the question itself).
+        3.  **Math:** Include a mix of problem-solving and data analysis questions.
+        4.  **Plausible Distractors:** Incorrect options must be plausible and based on common errors.
+        5.  **Detailed Explanations:** Provide a clear, step-by-step explanation for each question, detailing why the correct answer is right.
+        6.  **Concept Title:** For the 'conceptTitle' field, use one of: 'Reading Comprehension', 'Writing and Language', 'Math (No Calculator)', 'Math (Calculator)'.
     `;
-
-    const satQuizSchema = {
-        type: Type.ARRAY,
-        items: {
-            type: Type.OBJECT,
-            properties: {
-                question: { type: Type.STRING },
-                options: { type: Type.ARRAY, items: { type: Type.STRING }, minItems: 4, maxItems: 4 },
-                correctAnswer: { type: Type.STRING },
-                explanation: { type: Type.STRING },
-                conceptTitle: { type: Type.STRING },
-                type: { type: Type.STRING, enum: ['ACADEMIC', 'IQ', 'EQ'], nullable: true },
-                skill: { type: Type.STRING, nullable: true },
-                difficulty: { type: Type.STRING, enum: ['Easy', 'Medium', 'Hard'], nullable: true },
-            },
-            required: ['question', 'options', 'correctAnswer', 'explanation', 'conceptTitle']
-        },
-        minItems: 10,
-        maxItems: 10
-    };
-
     try {
+        // Using a more powerful model for complex SAT questions
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            model: "gemini-2.5-pro",
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
-                responseSchema: satQuizSchema,
+                responseSchema: quizSchema,
                 temperature: 0.7,
             },
         });
@@ -1104,39 +1148,45 @@ export const generateSATPracticeTest = async (language: string): Promise<QuizQue
 const satAnswerEvaluationSchema = {
     type: Type.OBJECT,
     properties: {
-        modelApproach: { type: Type.STRING, description: "An ideal, step-by-step method to solve the problem." },
-        personalizedFeedback: { type: Type.STRING, description: "Actionable, encouraging feedback on the student's specific approach, highlighting correct steps and errors." },
-        keyConcept: { type: Type.STRING, description: "The primary mathematical concept or skill being tested by the question." },
-        proTips: { type: Type.STRING, description: "Specific, actionable tips for tackling similar problems on the SAT." }
+        modelApproach: { type: Type.STRING, description: "The most efficient, expert-level approach to solving the problem." },
+        personalizedFeedback: { type: Type.STRING, description: "Constructive feedback on the student's described approach. Is it correct? Is it efficient? What are the potential pitfalls?" },
+        keyConcept: { type: Type.STRING, description: "The core mathematical or logical concept being tested by this question." },
+        proTips: { type: Type.STRING, description: "Actionable tips for tackling similar SAT questions, focusing on strategy (e.g., 'back-solving', 'plugging in numbers')." }
     },
     required: ['modelApproach', 'personalizedFeedback', 'keyConcept', 'proTips']
 };
 
-export const evaluateSATAnswerApproach = async (question: string, studentApproach: string, language: string): Promise<SATAnswerEvaluation> => {
+export const evaluateSATAnswerApproach = async (
+    question: string,
+    studentApproach: string,
+    language: string
+): Promise<SATAnswerEvaluation> => {
     const prompt = `
-        **SYSTEM ROLE:**
-        You are an expert SAT Math tutor. Your goal is to provide encouraging and insightful feedback on a student's problem-solving approach.
-        The entire response must be in the ${language} language and adhere to the specified JSON schema.
+        You are an expert SAT tutor. A student has described their approach to solving a practice question. Your task is to evaluate their thinking process. The entire response must be in ${language}.
 
-        **CONTEXT:**
-        - **SAT Question:** "${question}"
-        - **Student's Written Approach:** "${studentApproach}"
+        **SAT Question:**
+        ${question}
 
-        **EVALUATION INSTRUCTIONS:**
-        1.  **modelApproach:** Provide an ideal, clear, step-by-step model solution to the problem.
-        2.  **personalizedFeedback:** Analyze the student's approach. Be constructive and encouraging. Point out what they did correctly. If there are errors, gently explain the mistake and how to correct it. If their approach is valid but inefficient, suggest a more direct method.
-        3.  **keyConcept:** Identify and name the single most important mathematical concept being tested (e.g., "Solving Systems of Linear Equations", "Quadratic Formula", "Interpreting Scatterplots").
-        4.  **proTips:** Give 1-2 highly specific, actionable tips for this type of SAT question. For example, "Pro Tip: For geometry questions, always draw and label a diagram if one isn't provided. It helps visualize the problem." or "Pro Tip: When you see a quadratic, check if it can be factored easily before jumping to the quadratic formula."
+        **Student's Described Approach:**
+        ${studentApproach}
 
-        Your response must be a single JSON object.
+        **Instructions:**
+        1.  **Model Approach:** Briefly describe the most efficient, expert way to solve this problem.
+        2.  **Personalized Feedback:** Analyze the student's approach. Is their logic sound? Is there a faster way? Point out any potential misconceptions or errors in their thinking. Be encouraging.
+        3.  **Key Concept:** Identify the primary concept or skill this question is testing (e.g., "Linear equations," "Quadratic functions," "Interpreting data").
+        4.  **Pro Tips:** Provide a strategic tip for similar SAT questions (e.g., "For questions like this, try plugging in the answer choices to see which one works," or "Look for shortcuts instead of doing full calculations.").
+
+        Provide your response in the specified JSON format.
     `;
     try {
+        // Use pro for better reasoning
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            model: "gemini-2.5-pro",
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
-                responseSchema: satAnswerEvaluationSchema
+                responseSchema: satAnswerEvaluationSchema,
+                temperature: 0.5,
             },
         });
         const jsonText = response.text.trim();
@@ -1146,4 +1196,219 @@ export const evaluateSATAnswerApproach = async (question: string, studentApproac
     }
 };
 
-// --- END: NEW GLOBAL PREP ZONE FUNCTIONS ---
+// --- END: NEW PRACTICE AND EVALUATION FUNCTIONS ---
+
+
+// --- START: NEW AI STUDY NOTEBOOK FUNCTION ---
+// FIX: Completed the truncated `generateChapterInsights` function.
+export const generateChapterInsights = async (
+    chapterContent: string,
+    task: 'summarize' | 'glossary' | 'questions' | 'custom',
+    customPrompt: string | null,
+    language: string
+): Promise<string> => {
+    let instruction = '';
+    switch(task) {
+        case 'summarize':
+            instruction = 'Summarize the following chapter content into key bullet points. Focus on the main ideas and concepts.';
+            break;
+        case 'glossary':
+            instruction = 'Create a glossary of key terms from the following chapter content. For each term, provide a simple, clear definition.';
+            break;
+        case 'questions':
+            instruction = 'Generate 5 multiple-choice practice questions based on the following chapter content. Include the correct answer and a brief explanation for each.';
+            break;
+        case 'custom':
+            instruction = customPrompt || 'Analyze the following chapter content based on the user query.';
+            break;
+    }
+
+    const prompt = `
+        You are an AI study assistant named Fitto. Your task is to help a student understand their chapter content better by performing a specific task.
+        The entire response must be in the ${language} language and use clear, simple markdown for formatting (e.g., headings, lists).
+
+        **Your Task:** ${instruction}
+
+        **Chapter Content Provided:**
+        ---
+        ${chapterContent}
+        ---
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                temperature: 0.7,
+            },
+        });
+        return response.text;
+    } catch (error) {
+        throw handleGeminiError(error, 'generate chapter insights');
+    }
+};
+// --- END: NEW AI STUDY NOTEBOOK FUNCTION ---
+
+// --- START: NEW COGNITIVE TWIN FUNCTION ---
+const cognitiveProfileSchema = {
+    type: Type.OBJECT,
+    properties: {
+        cognitiveTraits: {
+            type: Type.OBJECT,
+            properties: {
+                attentionSpan: { type: Type.OBJECT, properties: { value: { type: Type.NUMBER }, analysis: { type: Type.STRING } }, required: ['value', 'analysis'] },
+                confidence: { type: Type.OBJECT, properties: { value: { type: Type.NUMBER }, analysis: { type: Type.STRING } }, required: ['value', 'analysis'] },
+                resilience: { type: Type.OBJECT, properties: { value: { type: Type.NUMBER }, analysis: { type: Type.STRING } }, required: ['value', 'analysis'] },
+            },
+            required: ['attentionSpan', 'confidence', 'resilience']
+        },
+        learningStyle: {
+            type: Type.OBJECT,
+            properties: {
+                style: { type: Type.STRING, enum: ['Visual', 'Textual', 'Practical', 'Theoretical', 'Balanced'] },
+                analysis: { type: Type.STRING },
+            },
+            required: ['style', 'analysis']
+        },
+        memoryMatrix: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    concept: { type: Type.STRING },
+                    subject: { type: Type.STRING },
+                    retentionStrength: { type: Type.NUMBER },
+                    lastRevised: { type: Type.STRING },
+                },
+                required: ['concept', 'subject', 'retentionStrength', 'lastRevised']
+            },
+            maxItems: 5,
+        }
+    },
+    required: ['cognitiveTraits', 'learningStyle', 'memoryMatrix']
+};
+
+export const analyzeCognitiveProfile = async (student: Student, language: string): Promise<CognitiveProfile> => {
+     const performanceSummary = student.performance.length > 0 
+        ? JSON.stringify(student.performance.slice(0, 15).map(p => ({ chapter: p.chapter, subject: p.subject, score: p.score, date: p.completedDate })), null, 2)
+        : "No performance data available. Please provide a general analysis for a new student.";
+
+    const prompt = `
+        You are an expert educational psychologist creating a "Cognitive Twin" profile for a student. Analyze the provided performance data to generate a detailed cognitive profile in JSON format. The entire response must be in the ${language} language.
+
+        **STUDENT DATA:**
+        - Grade: ${student.grade}
+        - Recent Performance Records: ${performanceSummary}
+        
+        **ANALYSIS INSTRUCTIONS (Provide estimations):**
+        1.  **Cognitive Traits (Value from 0 to 100):**
+            -   **attentionSpan:** High variance in scores (e.g., 95 then 60) suggests lower attention. Consistent scores suggest higher attention. Estimate a value.
+            -   **confidence:** High scores, especially in traditionally difficult subjects like Math/Physics, suggest higher confidence. Persistently low scores suggest lower confidence. Estimate a value.
+            -   **resilience:** Look for score improvements after a low score in the same subject. If a student scores 50 and then 80 in the next chapter of the same subject, resilience is high. If scores stay low, it's lower. Estimate a value.
+            -   For each trait, provide a numeric \`value\` and a short, encouraging \`analysis\` string explaining your reasoning.
+
+        2.  **Learning Style:**
+            -   Based on the limited data, infer a likely learning style. If the student does well in application-based topics (e.g., Physics numericals), suggest 'Practical'. If they do well in theoretical topics (History), suggest 'Textual'. If performance is balanced, suggest 'Balanced'.
+            -   Choose one style: 'Visual', 'Textual', 'Practical', 'Theoretical', 'Balanced'.
+            -   Provide a short \`analysis\` string explaining your choice.
+
+        3.  **Memory Matrix (3 to 5 concepts):**
+            -   Identify 3-5 concepts from the performance records that need reinforcement. Prioritize topics with the lowest scores. If all scores are high, pick the ones with the oldest 'lastRevised' dates.
+            -   For each, estimate a \`retentionStrength\` (0-100). A score of 60% might equate to a retention of 60.
+            -   Provide the \`concept\` (use chapter name), \`subject\`, and \`lastRevised\` date from the records.
+    `;
+    
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: cognitiveProfileSchema,
+                temperature: 0.5,
+            },
+        });
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText) as CognitiveProfile;
+    } catch (error) {
+        throw handleGeminiError(error, 'analyze cognitive profile');
+    }
+};
+// --- END: NEW COGNITIVE TWIN FUNCTION ---
+
+
+// --- START: NEW BOARD EXAM PREP FUNCTIONS ---
+const boardPaperQuestionSchema = {
+    type: Type.OBJECT,
+    properties: {
+        q_no: { type: Type.STRING },
+        text: { type: Type.STRING },
+        marks: { type: Type.NUMBER },
+        type: { type: Type.STRING, enum: ['MCQ', 'ASSERTION_REASON', 'VSA', 'SA', 'LA', 'CASE_BASED'] },
+        options: { type: Type.ARRAY, items: { type: Type.STRING }, nullable: true },
+        solution: { type: Type.STRING, description: "A comprehensive, step-by-step model solution. For MCQs, start with 'The correct option is (x) ...'"}
+    },
+    required: ['q_no', 'text', 'marks', 'type', 'solution']
+};
+
+const boardPaperSectionSchema = {
+    type: Type.OBJECT,
+    properties: {
+        name: { type: Type.STRING },
+        description: { type: Type.STRING },
+        questions: { type: Type.ARRAY, items: boardPaperQuestionSchema }
+    },
+    required: ['name', 'description', 'questions']
+};
+
+const boardPaperSchema = {
+    type: Type.OBJECT,
+    properties: {
+        year: { type: Type.NUMBER },
+        grade: { type: Type.STRING },
+        subject: { type: Type.STRING },
+        paperTitle: { type: Type.STRING },
+        totalMarks: { type: Type.NUMBER },
+        timeAllowed: { type: Type.NUMBER },
+        sections: { type: Type.ARRAY, items: boardPaperSectionSchema },
+    },
+    required: ['year', 'grade', 'subject', 'paperTitle', 'totalMarks', 'timeAllowed', 'sections']
+};
+
+export const generateBoardPaper = async (year: number, grade: string, subject: string, language: string): Promise<BoardPaper> => {
+    const prompt = `
+        **SYSTEM ROLE:** You are an expert CBSE examiner and question paper creator. Your task is to generate a full, authentic-looking CBSE board exam paper.
+
+        **REQUEST:**
+        - **Year:** ${year}
+        - **Grade:** ${grade}
+        - **Subject:** ${subject}
+        - **Language:** ${language}
+
+        **CRITICAL INSTRUCTIONS:**
+        1.  **Authenticity:** The paper's structure (number of sections, question types per section, marks per question, and total marks) MUST precisely match the official CBSE pattern for the specified **${year}**. Research and adhere to this pattern. For example, the 2023 Grade 10 Science paper had 5 sections (A-E) with a specific mix of MCQs, Assertion-Reason, VSA, SA, LA, and Case-Based questions.
+        2.  **Syllabus-Correctness:** All questions must be strictly based on the CBSE syllabus that was applicable for the **${year}** academic session.
+        3.  **Realistic Questions:** Questions should be of a standard and style found in actual board papers for that year, covering a wide range of topics from the syllabus.
+        4.  **Complete Solutions:** Every single question MUST have a detailed, accurate, and well-explained model solution. For MCQs, the solution must start with "The correct option is (x)..." followed by the explanation.
+        5.  **Output Format:** Your entire response must be a single JSON object that perfectly matches the provided schema.
+
+        Generate the complete paper now.
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: boardPaperSchema,
+                temperature: 0.6,
+            },
+        });
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText) as BoardPaper;
+    } catch (error) {
+        throw handleGeminiError(error, `generate board paper for ${year}`);
+    }
+}

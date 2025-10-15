@@ -4,7 +4,7 @@ import { useLanguage } from '../contexts/Language-context';
 import { Grade } from '../types';
 import { CURRICULUM } from '../data/curriculum';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { ArrowLeft, User, GraduationCap, Heart } from 'lucide-react';
+import { ArrowLeft, User, GraduationCap, Heart, LogIn, UserPlus } from 'lucide-react';
 
 interface AuthScreenProps {
   onBack: () => void;
@@ -125,7 +125,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onBack }) => {
                             </div>
                             {error && <p className="text-sm text-status-danger text-center">{error}</p>}
                             <button type="submit" disabled={isLoading} className="w-full btn-accent flex items-center justify-center h-12">
-                                {isLoading ? <LoadingSpinner /> : t('loginButton')}
+                                {isLoading ? <LoadingSpinner /> : <><LogIn className="h-5 w-5 mr-2" /> {t('loginButton')}</>}
                             </button>
                         </form>
                         {activeRole === 'student' && (
@@ -161,7 +161,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onBack }) => {
                             </div>
                              {error && <p className="text-sm text-status-danger text-center">{error}</p>}
                             <button type="submit" disabled={isLoading} className="w-full btn-accent flex items-center justify-center h-12">
-                                {isLoading ? <LoadingSpinner /> : t('createAccountButton')}
+                                {isLoading ? <LoadingSpinner /> : <><UserPlus className="h-5 w-5 mr-2" /> {t('createAccountButton')}</>}
                             </button>
                         </form>
                          <p className="text-center text-sm text-text-secondary mt-6">

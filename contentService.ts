@@ -1,8 +1,9 @@
 
-import { LearningModule, Student, Chapter, Topic } from '../types';
+
+import { LearningModule, Student, Chapter, Topic } from './types';
 import * as geminiService from './geminiService';
 import * as pineconeService from './pineconeService';
-import { retrieveFromRag } from '../data/ragContent';
+import { retrieveFromRag } from './data/ragContent';
 
 // This is a placeholder for a real pre-generated content store (e.g., JSON files in a CDN)
 // It also serves as a simple in-memory cache for the current session to reduce localStorage reads.

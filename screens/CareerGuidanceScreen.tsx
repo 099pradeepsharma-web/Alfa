@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLanguage } from '../contexts/Language-context';
-import { ArrowLeftIcon, SparklesIcon, DocumentTextIcon, LightBulbIcon, ChatBubbleLeftRightIcon, AcademicCapIcon, BriefcaseIcon, CheckCircleIcon, TrophyIcon, PaperAirplaneIcon, MicrophoneIcon, StopCircleIcon, PlayCircleIcon, PauseCircleIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon, SparklesIcon, DocumentTextIcon, LightBulbIcon, ChatBubbleLeftRightIcon, AcademicCapIcon, BriefcaseIcon, CheckCircleIcon, TrophyIcon, PaperAirplaneIcon, MicrophoneIcon, StopCircleIcon, PlayCircleIcon, PauseCircleIcon, RocketLaunchIcon } from '@heroicons/react/24/solid';
 import { AptitudeQuestion, AptitudeTrait, CareerGuidance, Student, ChatMessage } from '../types';
 import * as geminiService from '../services/geminiService';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -224,7 +224,7 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ student, on
              <h3 className="text-2xl font-bold text-text-primary mb-4">{t('counselorChatTitle')}</h3>
             <div ref={chatHistoryRef} className="flex-grow p-4 space-y-4 overflow-y-auto bg-bg-primary rounded-t-lg border border-b-0 border-border">
                 {chatMessages.map(msg => {
-                    const isCurrentAudio = currentlyPlayingId === msg.id;
+                    const isCurrentAudio = currentlyPlayingId === msg.id.toString();
                     const avatarState: FittoState = isThinking ? 'thinking' : (isSpeaking && isCurrentAudio ? 'speaking' : 'idle');
                     return msg.role === 'user' ? (
                         <div key={msg.id} className="flex justify-end"><div className="chat-bubble user-bubble">{msg.text}</div></div>
@@ -235,7 +235,8 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ student, on
                             {!msg.state && msg.text && (
                                 <div className="flex-shrink-0">
                                     {(!isSpeaking || !isCurrentAudio) ? (
-                                        <button onClick={() => play(msg.text, msg.id)} className="p-2 rounded-full bg-surface hover:bg-bg-primary text-text-secondary transition" aria-label="Play audio response"><PlayCircleIcon className="h-5 w-5"/></button>
+                                        // FIX: Convert msg.id to a string to match the expected type for the `play` function.
+                                        <button onClick={() => play(msg.text, msg.id.toString())} className="p-2 rounded-full bg-surface hover:bg-bg-primary text-text-secondary transition" aria-label="Play audio response"><PlayCircleIcon className="h-5 w-5"/></button>
                                     ) : (
                                         <div className="flex items-center gap-1">
                                             <button onClick={isPaused ? resume : pause} className="p-2 rounded-full bg-surface hover:bg-bg-primary text-text-secondary transition" aria-label={isPaused ? "Resume audio" : "Pause audio"}>{isPaused ? <PlayCircleIcon className="h-5 w-5"/> : <PauseCircleIcon className="h-5 w-5"/>}</button>
@@ -296,7 +297,10 @@ const FeatureCard: React.FC<{ title: string, description: string, icon: React.El
         </div>
         <h3 className="text-xl font-bold text-text-primary">{title}</h3>
         <p className="text-text-secondary mt-1 text-sm flex-grow">{description}</p>
-        <button onClick={onClick} className="mt-4 w-full py-2 px-4 btn-accent">{buttonText}</button>
+        <button onClick={onClick} className="mt-4 w-full py-2 px-4 btn-accent flex items-center justify-center gap-2">
+            {buttonText === 'Start Aptitude Test' && <RocketLaunchIcon className="h-5 w-5" />}
+            {buttonText}
+        </button>
     </div>
 );
 

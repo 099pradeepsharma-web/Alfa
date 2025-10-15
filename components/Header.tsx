@@ -3,7 +3,6 @@ import { HomeIcon, LanguageIcon, MagnifyingGlassIcon, ArrowLeftOnRectangleIcon }
 import { useLanguage } from '../contexts/Language-context';
 import Logo from './Logo';
 import { Grade, Subject, Chapter, Student, Teacher, Parent } from '../types';
-import ThemeToggle from './ThemeToggle';
 import ProfileModal from './ProfileModal';
 
 interface HeaderProps {
@@ -164,7 +163,6 @@ const Header: React.FC<HeaderProps> = ({
                   <option value="hi">हिन्दी</option>
                 </select>
               </div>
-              <ThemeToggle />
               {showHomeButton && (
                   <button onClick={onGoHome} aria-label={t('home')} className="hidden sm:flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors duration-200">
                       <HomeIcon className="h-5 w-5"/>

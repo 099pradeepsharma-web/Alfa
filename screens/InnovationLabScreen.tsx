@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import { useLanguage } from '../contexts/Language-context';
 import { ArrowLeftIcon, CubeIcon, SparklesIcon } from '@heroicons/react/24/solid';
@@ -28,7 +30,6 @@ const InnovationLabScreen: React.FC<InnovationLabScreenProps> = ({ onBack }) => 
         setError(null);
         setStory(null);
         try {
-            // FIX: Cast currentUser to Student to access the 'grade' property. This is safe because this screen is only for students.
             const generatedStory = await geminiService.generateAdaptiveStory(topic, (currentUser as Student).grade, language);
             setStory(generatedStory);
         } catch (err: any) {

@@ -31,7 +31,7 @@ const PrivacyPolicyScreen: React.FC<PrivacyPolicyScreenProps> = ({ onBack }) => 
             <h1 className="text-3xl md:text-4xl font-bold text-text-primary mt-3">{t('privacyPolicyTitle')}</h1>
         </header>
         
-        <div className="prose prose-lg max-w-none prose-slate dark:prose-invert">
+        <div className="prose prose-lg max-w-none prose-invert">
             <p className="lead text-xl">{t('privacyIntro')}</p>
             {sections.map(section => (
                 <div key={section.title} className="mt-8">

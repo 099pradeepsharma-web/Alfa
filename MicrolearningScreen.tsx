@@ -1,0 +1,1 @@
+// This component is not used. The functionality has been integrated into the new gamified ChapterView.

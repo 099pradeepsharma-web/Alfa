@@ -146,7 +146,7 @@ export const TutorSessionScreen: React.FC<TutorSessionScreenProps> = ({ student,
                             </div>
                         );
                     } else { // Fitto's turn
-                        const isCurrentAudio = currentlyPlayingId === msg.id;
+                        const isCurrentAudio = currentlyPlayingId === msg.id.toString();
                         const avatarState: FittoState = msg.state === 'thinking' 
                             ? 'thinking' 
                             : msg.state === 'error' 
@@ -175,7 +175,8 @@ export const TutorSessionScreen: React.FC<TutorSessionScreenProps> = ({ student,
                                     {!msg.state && msg.text && (
                                         <div className="flex-shrink-0">
                                             {(!isFittoSpeaking || !isCurrentAudio) ? (
-                                                <button onClick={() => playFittoResponse(msg.text, msg.id)} className="p-2 rounded-full bg-slate-600 hover:bg-slate-500 text-slate-200 transition" aria-label="Play audio response"><PlayCircleIcon className="h-5 w-5"/></button>
+                                                // FIX: Convert msg.id to a string to match the expected type for the `play` function.
+                                                <button onClick={() => playFittoResponse(msg.text, msg.id.toString())} className="p-2 rounded-full bg-slate-600 hover:bg-slate-500 text-slate-200 transition" aria-label="Play audio response"><PlayCircleIcon className="h-5 w-5"/></button>
                                             ) : (
                                                 <div className="flex items-center gap-1">
                                                     <button onClick={isPaused ? resume : pause} className="p-2 rounded-full bg-slate-600 hover:bg-slate-500 text-slate-200 transition" aria-label={isPaused ? "Resume audio" : "Pause audio"}>{isPaused ? <PlayCircleIcon className="h-5 w-5"/> : <PauseCircleIcon className="h-5 w-5"/>}</button>

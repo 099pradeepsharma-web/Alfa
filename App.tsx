@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { Grade, Subject, Chapter, Student, NextStepRecommendation, Concept, StudyGoal, AdaptiveAction, Teacher, Parent, Achievement } from './types';
 import { getCurriculum } from './services/curriculumService';
@@ -16,8 +15,8 @@ const Header = lazy(() => import('./components/Header'));
 const Footer = lazy(() => import('./components/Footer'));
 const GradeSelector = lazy(() => import('./components/GradeSelector'));
 const SubjectSelector = lazy(() => import('./components/SubjectSelector'));
-// FIX: Correctly handle named export for React.lazy
-const ChapterView = lazy(() => import('./screens/ChapterView').then(module => ({ default: module.ChapterView })));
+// FIX: The component 'ChapterView' is a named export, so it must be destructured and returned as a default export for React.lazy to work correctly.
+const ChapterView = lazy(() => import('./components/ChapterView').then(module => ({ default: module.ChapterView })));
 const AuthScreen = lazy(() => import('./screens/AuthScreen'));
 const StudentDashboard = lazy(() => import('./screens/StudentDashboard'));
 const PersonalizedPathScreen = lazy(() => import('./screens/PersonalizedPathScreen'));
@@ -39,15 +38,15 @@ const TermsScreen = lazy(() => import('./screens/TermsScreen'));
 const LandingPage = lazy(() => import('./screens/LandingPage'));
 const ContactScreen = lazy(() => import('./screens/ContactScreen'));
 const TeacherDashboard = lazy(() => import('./screens/TeacherDashboard'));
-// FIX: Correctly handle named export for React.lazy
 const ParentDashboard = lazy(() => import('./screens/ParentDashboard').then(module => ({ default: module.ParentDashboard })));
 const StudentPerformanceView = lazy(() => import('./screens/StudentPerformanceView'));
 const AchievementToast = lazy(() => import('./components/AchievementToast'));
 const PointsToast = lazy(() => import('./components/PointsToast'));
 const ExamPrepScreen = lazy(() => import('./screens/ExamPrepScreen'));
+const CognitiveTwinScreen = lazy(() => import('./screens/CognitiveTwinScreen'));
 
 
-type StudentView = 'dashboard' | 'path' | 'browse' | 'wellbeing' | 'tutor' | 'tutorial' | 'competitions' | 'career_guidance' | 'innovation_lab' | 'critical_thinking' | 'global_prep' | 'leadership_circle' | 'ai_chatbot' | 'project_hub' | 'peer_pedia' | 'exam_prep';
+type StudentView = 'dashboard' | 'path' | 'browse' | 'wellbeing' | 'tutor' | 'tutorial' | 'competitions' | 'career_guidance' | 'innovation_lab' | 'critical_thinking' | 'global_prep' | 'leadership_circle' | 'ai_chatbot' | 'project_hub' | 'peer_pedia' | 'exam_prep' | 'cognitive_twin';
 type AppView = 'student_flow' | 'privacy_policy' | 'faq' | 'about' | 'terms' | 'contact';
 
 const App: React.FC = () => {
@@ -181,11 +180,11 @@ const App: React.FC = () => {
   }, [selectedSubject]);
 
   const handleStartTutorSession = useCallback((concepts: Concept[]) => {
-    if (!selectedGrade || !selectedSubject || !selectedChapter || currentRole !== 'student') return;
-    const chatSession = createTutorChat(selectedGrade.level, selectedSubject.name, selectedChapter.title, language, concepts);
+    if (!selectedGrade || !selectedSubject || !selectedChapter || currentRole !== 'student' || !currentUser) return;
+    const chatSession = createTutorChat(selectedGrade.level, selectedSubject.name, selectedChapter.title, language, concepts, currentUser as Student);
     setTutorChat(chatSession);
     setStudentView('tutor');
-  }, [selectedGrade, selectedSubject, selectedChapter, language, currentRole]);
+  }, [selectedGrade, selectedSubject, selectedChapter, language, currentRole, currentUser]);
 
   const handleEndTutorSession = useCallback(() => { setTutorChat(null); setStudentView('browse'); }, []);
   const handleFinishTutorial = useCallback(() => { try { localStorage.setItem('alfanumrik-tutorial-seen', 'true'); } catch (e) { console.error("Failed to save tutorial status:", e); } setStudentView('dashboard'); }, []);
@@ -286,6 +285,7 @@ const App: React.FC = () => {
         onStartCareerGuidance: () => handleStartStudentView('career_guidance'), onStartDoubtSolver: () => handleStartStudentView('ai_chatbot'),
         onStartCompetitions: () => handleStartStudentView('competitions'), onStartProjectHub: () => handleStartStudentView('project_hub'),
         onStartPeerPedia: () => handleStartStudentView('peer_pedia'), onStartExamPrep: () => handleStartStudentView('exam_prep'),
+        onStartCognitiveTwin: () => handleStartStudentView('cognitive_twin'),
         onAddGoal: addStudyGoal, onToggleGoal: toggleStudyGoal, onRemoveGoal: removeStudyGoal,
     };
 
@@ -305,6 +305,7 @@ const App: React.FC = () => {
         case 'peer_pedia': return <PeerPediaScreen student={student} onBack={handleBackToDashboard} />;
         case 'career_guidance': return <CareerGuidanceScreen student={student} onBack={handleBackToDashboard} />;
         case 'exam_prep': return <ExamPrepScreen student={student} onBack={handleBackToDashboard} />;
+        case 'cognitive_twin': return <CognitiveTwinScreen student={student} onBack={handleBackToDashboard} onStartCalibration={() => handleStartStudentView('critical_thinking')} />;
         case 'wellbeing': {
             const wellbeingChapter: Chapter = { title: 'The Great Transformation: Navigating Your Journey from Teen to Adult', topics: [], tags: [] };
             const wellbeingSubject: Subject = { name: 'Personal Growth & Well-being', icon: 'SparklesIcon', chapters: [wellbeingChapter] };

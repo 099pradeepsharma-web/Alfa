@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Student } from '../types';
 import { ArrowLeftIcon, ChevronRightIcon, CheckCircleIcon, CheckBadgeIcon } from '@heroicons/react/24/solid';
+import { PlusCircle } from 'lucide-react';
 import { useLanguage } from '../contexts/Language-context';
 import { getWellbeingModuleStatus, setWellbeingModuleStatus, getLeadershipCircleStatus, setLeadershipCircleStatus } from '../services/pineconeService';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -118,8 +119,9 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = React.memo(({ chi
                             <button
                                 onClick={handleAssignModule}
                                 disabled={!agreedWellbeing}
-                                className="px-4 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm hover:bg-bg-primary transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm hover:bg-bg-primary transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                             >
+                                <PlusCircle className="h-5 w-5" />
                                 Assign to {child.name}
                             </button>
                         </div>
@@ -157,8 +159,9 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = React.memo(({ chi
                             <button
                                 onClick={handleEnableLeadership}
                                 disabled={!agreedLeadership}
-                                className="px-4 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm hover:bg-bg-primary transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm hover:bg-bg-primary transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                             >
+                                <PlusCircle className="h-5 w-5" />
                                 Enable Access for {child.name}
                             </button>
                         </div>

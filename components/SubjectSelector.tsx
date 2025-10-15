@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 // FIX: Added Student to imports to resolve type errors
 import { Grade, Subject, Chapter, NextStepRecommendation, Student } from '../types';
@@ -51,7 +53,6 @@ const SubjectSelector: React.FC<SubjectSelectorProps> = ({ grade, selectedSubjec
             recommendation={remediationInfo.recommendation}
             onProceed={handleProceedFromRemediation}
             onBack={() => setRemediationInfo(null)}
-// FIX: Cast currentUser to Student as this component is only used in the student flow.
             student={currentUser as Student}
             language={language}
         />
@@ -111,33 +112,43 @@ const SubjectSelector: React.FC<SubjectSelectorProps> = ({ grade, selectedSubjec
             </ul>
           </div>
 
-          {/* Chapters "Missions" Column */}
+          {/* Chapters Accordion Column */}
           <div className="lg:col-span-2">
             {selectedSubject && onChapterSelect ? (
               <div className="bg-bg-primary p-6 rounded-xl shadow-inner animate-fade-in">
                 <div className="border-b border-border pb-3 mb-4">
                   <h3 className="text-xl font-bold text-text-primary">{t('chaptersIn')} {tCurriculum(selectedSubject.name)}</h3>
-                  <p className="text-text-secondary text-sm">Select a mission to begin your learning journey.</p>
+                  <p className="text-text-secondary text-sm">Select a chapter to see its topics and start your mission.</p>
                 </div>
-                <ul className="space-y-4 mt-4">
-                  {selectedSubject.chapters.map((chapter) => (
-                    <li key={chapter.title} className="mission-card">
-{/* FIX: Removed chapter.imageUrl as it no longer exists on the Chapter type. */}
-                        <div className="mission-card-header">
-                            <h4 className="font-bold text-lg text-text-primary">Mission: {tCurriculum(chapter.title)}</h4>
-                            {chapter.tags && chapter.tags.length > 0 && (
-                              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                                {chapter.tags.map(tag => (
-                                  <span key={tag} className={`chapter-tag`}>
-                                    {tag}
-                                  </span>
+                <div className="space-y-4 mt-4">
+                  {selectedSubject.chapters.map((chapter, index) => (
+                    <details key={chapter.title} className="chapter-accordion-item">
+                        <summary>
+                            <span className="chapter-title">Chapter {index + 1}: {tCurriculum(chapter.title)}</span>
+                            <div className="flex items-center gap-2">
+                                {chapter.tags && chapter.tags.map(tag => (
+                                  <span key={tag} className="chapter-tag hidden sm:inline-block">{tag}</span>
                                 ))}
-                              </div>
-                            )}
-                        </div>
-                        <div className="p-4">
-                            <p className="text-sm text-text-secondary mb-4">Ready to master this topic? Choose your path.</p>
-                            <div className="flex items-center gap-4">
+                                <ChevronDownIcon className="h-6 w-6 text-text-secondary chapter-chevron" />
+                            </div>
+                        </summary>
+                        <div className="chapter-accordion-content">
+                            <ul className="topic-list">
+                                {chapter.topics.map((topic, topicIndex) => (
+                                    <li key={topic.title}>
+                                        <p className="font-semibold text-text-primary">
+                                            Topic {index + 1}.{topicIndex + 1}: {tCurriculum(topic.title)}
+                                        </p>
+                                        {topic.objective && (
+                                            <p className="objective-item">
+                                                <strong>Objective:</strong> {tCurriculum(topic.objective)}
+                                            </p>
+                                        )}
+                                        {/* You can add another nested loop here for subTopics if needed */}
+                                    </li>
+                                ))}
+                            </ul>
+                             <div className="mt-6 pt-4 border-t border-border flex items-center gap-4">
                                 <button
                                     onClick={() => setTestingChapter(chapter)}
                                     className="w-full flex items-center justify-center py-2 px-4 btn-accent"
@@ -154,9 +165,9 @@ const SubjectSelector: React.FC<SubjectSelectorProps> = ({ grade, selectedSubjec
                                 </button>
                             </div>
                         </div>
-                    </li>
+                    </details>
                   ))}
-                </ul>
+                </div>
               </div>
             ) : (
               <div className="flex items-center justify-center h-full bg-surface rounded-xl p-8">

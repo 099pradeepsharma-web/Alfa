@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useLanguage } from '../contexts/Language-context';
 import { ArrowLeftIcon, PuzzlePieceIcon, LightBulbIcon, ArrowPathIcon, CheckCircleIcon, XCircleIcon, ArrowRightIcon, BookOpenIcon, CheckBadgeIcon } from '@heroicons/react/24/solid';
+import { Play } from 'lucide-react';
 
 interface CriticalThinkingScreenProps {
   onBack: () => void;
@@ -197,12 +198,14 @@ const CriticalThinkingScreen: React.FC<CriticalThinkingScreenProps> = ({ onBack 
             {challenges.map(challenge => {
                 const Icon = challenge.icon;
                 return (
-                    <button key={challenge.id} onClick={() => handleStartChallenge(challenge)} className="dashboard-highlight-card p-6 text-center flex flex-col">
+                    <div key={challenge.id} className="dashboard-highlight-card p-6 text-center flex flex-col">
                         <Icon className="h-10 w-10 mx-auto text-primary" style={{color: 'rgb(var(--c-primary))'}}/>
                         <h3 className="text-xl font-bold text-text-primary mt-4">{challenge.title}</h3>
                         <p className="text-sm text-text-secondary mt-2 flex-grow">{challenge.description}</p>
-                        <span className="mt-4 inline-block font-semibold text-primary" style={{color: 'rgb(var(--c-primary))'}}>{t('ctGymStartChallenge')}</span>
-                    </button>
+                        <button onClick={() => handleStartChallenge(challenge)} className="mt-4 btn-accent flex items-center justify-center gap-2">
+                           <Play className="h-5 w-5"/> {t('ctGymStartChallenge')}
+                        </button>
+                    </div>
                 );
             })}
         </div>

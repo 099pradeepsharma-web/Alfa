@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { IQExercise, EQExercise, Student, PerformanceRecord } from '../types';
 import { savePerformanceRecord } from '../services/pineconeService';
@@ -56,24 +57,24 @@ const CognitiveExercise: React.FC<CognitiveExerciseProps> = ({ exercises, exerci
   
   const getOptionStyle = (option: string) => {
     if (!selectedOption) {
-        return 'bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 hover:border-primary';
+        return 'bg-slate-700 border-slate-600 hover:bg-slate-600 hover:border-primary';
     }
 
     if (option === correctAnswer) {
-        return 'bg-green-100 dark:bg-green-900/50 border-green-500 ring-2 ring-green-300';
+        return 'bg-green-900/50 border-green-500 ring-2 ring-green-300';
     }
     if (option === selectedOption && option !== correctAnswer) {
-        return 'bg-red-100 dark:bg-red-900/50 border-red-500 ring-2 ring-red-300';
+        return 'bg-red-900/50 border-red-500 ring-2 ring-red-300';
     }
-    return 'bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-500 opacity-70 cursor-not-allowed';
+    return 'bg-slate-700 border-slate-500 opacity-70 cursor-not-allowed';
   };
   
   if (isFinished) {
     const finalScore = score;
     return (
       <div className="text-center animate-fade-in">
-          <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">{t('missionComplete')}</h2>
-          <p className="text-lg text-slate-500 dark:text-slate-400 mt-2">{t('greatWork')}</p>
+          <h2 className="text-3xl font-bold text-slate-100">{t('missionComplete')}</h2>
+          <p className="text-lg text-slate-400 mt-2">{t('greatWork')}</p>
           <div className="text-5xl font-bold text-primary my-4" style={{color: 'rgb(var(--c-primary))'}}>
             {finalScore} / {exercises.length}
           </div>
@@ -86,30 +87,30 @@ const CognitiveExercise: React.FC<CognitiveExerciseProps> = ({ exercises, exerci
 
   return (
     <div className="animate-fade-in">
-        <div className="flex justify-between items-center border-b dark:border-slate-600 pb-4 mb-6">
+        <div className="flex justify-between items-center border-b border-slate-600 pb-4 mb-6">
             <div>
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                <h2 className="text-2xl font-bold text-slate-100">
                     {exerciseType === 'iq' ? t('iqChallenge') : t('eqChallenge')}
                 </h2>
                 <p className="text-primary font-medium" style={{color: 'rgb(var(--c-primary))'}}>{t('skill')}: {currentExercise.skill}</p>
             </div>
-            <div className="text-lg font-semibold text-slate-600 dark:text-slate-300">
-                {currentIndex + 1} <span className="text-slate-400 dark:text-slate-500">/ {exercises.length}</span>
+            <div className="text-lg font-semibold text-slate-300">
+                {currentIndex + 1} <span className="text-slate-500">/ {exercises.length}</span>
             </div>
         </div>
 
         <div>
-            {!isIQ(currentExercise) && <p className="text-slate-500 dark:text-slate-400 italic mb-4">"{currentExercise.scenario}"</p>}
-            <p className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-6">{currentExercise.question}</p>
+            {!isIQ(currentExercise) && <p className="text-slate-400 italic mb-4">"{currentExercise.scenario}"</p>}
+            <p className="text-xl font-semibold text-slate-200 mb-6">{currentExercise.question}</p>
             <div className="space-y-4">
                 {currentExercise.options.map((option, index) => (
                      <button
                         key={index}
                         onClick={() => handleAnswerSelect(option)}
                         disabled={!!selectedOption}
-                        className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 flex items-center text-slate-800 dark:text-slate-200 ${getOptionStyle(option)}`}
+                        className={`w-full text-left p-4 rounded-lg border-2 transition-all duration-200 flex items-center text-slate-200 ${getOptionStyle(option)}`}
                     >
-                        <span className={`h-6 w-6 rounded-full border-2 ${selectedOption === option ? 'border-primary bg-primary' : 'border-slate-400 dark:border-slate-500'} mr-4 flex-shrink-0`} style={{borderColor: selectedOption === option ? 'rgb(var(--c-primary))' : '', backgroundColor: selectedOption === option ? 'rgb(var(--c-primary))' : ''}}></span>
+                        <span className={`h-6 w-6 rounded-full border-2 ${selectedOption === option ? 'border-primary bg-primary' : 'border-slate-500'} mr-4 flex-shrink-0`} style={{borderColor: selectedOption === option ? 'rgb(var(--c-primary))' : '', backgroundColor: selectedOption === option ? 'rgb(var(--c-primary))' : ''}}></span>
                         {option}
                     </button>
                 ))}
@@ -119,18 +120,18 @@ const CognitiveExercise: React.FC<CognitiveExerciseProps> = ({ exercises, exerci
         {selectedOption && (
              <div className="mt-6 animate-fade-in">
                 {selectedOption === correctAnswer ? (
-                     <div className="flex items-center text-green-600 dark:text-green-400 font-bold text-lg">
+                     <div className="flex items-center text-green-400 font-bold text-lg">
                         <CheckCircleIcon className="h-6 w-6 mr-2" /> {t('correct')}
                      </div>
                 ) : (
                     <div className="flex flex-col gap-2">
-                        <div className="flex items-center text-red-600 dark:text-red-400 font-bold text-lg">
+                        <div className="flex items-center text-red-400 font-bold text-lg">
                             <XCircleIcon className="h-6 w-6 mr-2" /> {t('incorrect')}
                         </div>
-                        <p className="text-slate-600 dark:text-slate-300">{t(isIQ(currentExercise) ? 'correctAnswerLabel' : 'bestResponse')}: {correctAnswer}</p>
+                        <p className="text-slate-300">{t(isIQ(currentExercise) ? 'correctAnswerLabel' : 'bestResponse')}: {correctAnswer}</p>
                     </div>
                 )}
-                 <div className="mt-3 p-3 bg-primary-light dark:bg-slate-700/50 rounded-md text-primary-dark/80 dark:text-slate-300 flex items-start">
+                 <div className="mt-3 p-3 bg-slate-700/50 rounded-md text-slate-300 flex items-start">
                     <LightBulbIcon className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5 text-primary" style={{color: 'rgb(var(--c-primary))'}} />
                     <span><span className="font-semibold">{t('explanation')}:</span> {currentExercise.explanation}</span>
                 </div>

@@ -18,7 +18,7 @@ interface AuthContextType {
   logout: () => void;
   signup: (userData: { name: string, grade: string, email: string, password: string }) => Promise<void>;
   updateUser: (updatedUser: Student) => Promise<void>;
-  addStudyGoal: (goalText: string) => Promise<void>;
+  addStudyGoal: (goalText: string, dueDate?: string) => Promise<void>;
   toggleStudyGoal: (goal: StudyGoal) => Promise<void>;
   removeStudyGoal: (goal: StudyGoal) => Promise<void>;
   addAchievement: (achievementId: string) => void;
@@ -82,9 +82,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setCurrentUser(updatedUser);
   };
 
-  const addStudyGoal = useCallback(async (goalText: string) => {
+  const addStudyGoal = useCallback(async (goalText: string, dueDate?: string) => {
     if (!currentUser || currentRole !== 'student') return;
-    const newGoal = await pineconeService.addStudyGoal(currentUser.id, goalText);
+    const newGoal = await pineconeService.addStudyGoal(currentUser.id, goalText, dueDate);
     setCurrentUser(prev => prev ? { ...prev, studyGoals: [newGoal, ...(prev as Student).studyGoals] } as Student : null);
   }, [currentUser, currentRole]);
 

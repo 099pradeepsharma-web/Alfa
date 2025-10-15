@@ -331,12 +331,13 @@ export const getStudyGoals = async (userId: string): Promise<StudyGoal[]> => {
     return goals.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
 
-export const addStudyGoal = async (userId: string, goalText: string): Promise<StudyGoal> => {
+export const addStudyGoal = async (userId: string, goalText: string, dueDate?: string): Promise<StudyGoal> => {
     const newGoal: StoredStudyGoal = {
         id: `goal-${Date.now()}`,
         text: goalText,
         isCompleted: false,
         createdAt: new Date().toISOString(),
+        dueDate,
         studentId: userId,
     };
     await db.addDocToCollection('studyGoals', newGoal);

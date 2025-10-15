@@ -1,6 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useLanguage } from '../contexts/Language-context';
-import { ArrowLeftIcon, UsersIcon, BookOpenIcon, SparklesIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+import { 
+    ArrowLeftIcon, UsersIcon, BookOpenIcon, SparklesIcon, ChevronRightIcon,
+    ArrowUpCircleIcon, ArrowDownCircleIcon, FlagIcon
+} from '@heroicons/react/24/solid';
 import { MOCK_PEER_EXPLANATIONS } from '../data/peerPedia';
 import { PeerExplanation, Subject, Chapter, Concept, Student } from '../types';
 import { getCurriculum } from '../services/curriculumService';
@@ -63,12 +66,69 @@ const PeerPediaScreen: React.FC<PeerPediaScreenProps> = ({ student, onBack }) =>
         setSelectedConcept(null);
     };
 
+    const handleVote = (explanationId: string, voteType: 'up' | 'down') => {
+        setExplanations(prevExplanations => 
+            prevExplanations.map(exp => {
+                if (exp.id === explanationId) {
+                    const newUpvotes = [...exp.upvotes];
+                    const newDownvotes = [...exp.downvotes];
+                    const userId = student.id;
+
+                    if (voteType === 'up') {
+                        const downvoteIndex = newDownvotes.indexOf(userId);
+                        if (downvoteIndex > -1) newDownvotes.splice(downvoteIndex, 1);
+
+                        const upvoteIndex = newUpvotes.indexOf(userId);
+                        if (upvoteIndex > -1) {
+                            newUpvotes.splice(upvoteIndex, 1);
+                        } else {
+                            newUpvotes.push(userId);
+                        }
+                    } else { // voteType is 'down'
+                        const upvoteIndex = newUpvotes.indexOf(userId);
+                        if (upvoteIndex > -1) newUpvotes.splice(upvoteIndex, 1);
+
+                        const downvoteIndex = newDownvotes.indexOf(userId);
+                        if (downvoteIndex > -1) {
+                            newDownvotes.splice(downvoteIndex, 1);
+                        } else {
+                            newDownvotes.push(userId);
+                        }
+                    }
+                    return { ...exp, upvotes: newUpvotes, downvotes: newDownvotes };
+                }
+                return exp;
+            })
+        );
+    };
+
+    const handleFlag = (explanationId: string) => {
+        if (window.confirm("Are you sure you want to flag this explanation as incorrect or unclear for review?")) {
+            setExplanations(prevExplanations =>
+                prevExplanations.map(exp => {
+                    if (exp.id === explanationId && !exp.flags.includes(student.id)) {
+                        return { ...exp, flags: [...exp.flags, student.id] };
+                    }
+                    return exp;
+                })
+            );
+        }
+    };
+
     const filteredExplanations = useMemo(() => 
-        explanations.filter(e => 
-            e.subject === selectedSubject?.name && 
-            e.chapter === selectedChapter?.title &&
-            e.concept === selectedConcept?.conceptTitle
-        ), [explanations, selectedSubject, selectedChapter, selectedConcept]);
+        explanations
+            .filter(e => 
+                e.subject === selectedSubject?.name && 
+                e.chapter === selectedChapter?.title &&
+                e.concept === selectedConcept?.conceptTitle
+            )
+            .sort((a, b) => {
+                const scoreA = a.upvotes.length - a.downvotes.length;
+                const scoreB = b.upvotes.length - b.downvotes.length;
+                return scoreB - scoreA;
+            }), 
+        [explanations, selectedSubject, selectedChapter, selectedConcept]
+    );
         
     const handleSubmitExplanation = (e: React.FormEvent) => {
         e.preventDefault();
@@ -83,7 +143,10 @@ const PeerPediaScreen: React.FC<PeerPediaScreenProps> = ({ student, onBack }) =>
             chapter: selectedChapter.title,
             concept: selectedConcept.conceptTitle,
             explanationText: newExplanationText.trim(),
-            submittedDate: new Date().toISOString()
+            submittedDate: new Date().toISOString(),
+            upvotes: [],
+            downvotes: [],
+            flags: []
         };
         setExplanations(prev => [newExplanation, ...prev]);
         setNewExplanationText('');
@@ -162,15 +225,39 @@ const PeerPediaScreen: React.FC<PeerPediaScreenProps> = ({ student, onBack }) =>
                                 </h3>
                                 
                                 <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
-                                    {filteredExplanations.length > 0 ? filteredExplanations.map(exp => (
-                                        <div key={exp.id} className="bg-bg-primary p-3 rounded-lg">
-                                            <div className="flex items-center mb-2">
-                                                <img src={exp.studentAvatarUrl} alt={exp.studentName} className="h-7 w-7 rounded-full mr-2" />
-                                                <p className="font-bold text-text-primary text-sm">{exp.studentName}</p>
+                                    {filteredExplanations.length > 0 ? filteredExplanations.map(exp => {
+                                        const score = exp.upvotes.length - exp.downvotes.length;
+                                        const userUpvoted = exp.upvotes.includes(student.id);
+                                        const userDownvoted = exp.downvotes.includes(student.id);
+                                        const userFlagged = exp.flags.includes(student.id);
+
+                                        return (
+                                            <div key={exp.id} className="bg-bg-primary p-3 rounded-lg">
+                                                <div className="flex items-center mb-2">
+                                                    <img src={exp.studentAvatarUrl} alt={exp.studentName} className="h-7 w-7 rounded-full mr-2" />
+                                                    <p className="font-bold text-text-primary text-sm">{exp.studentName}</p>
+                                                </div>
+                                                <p className="text-text-secondary text-sm whitespace-pre-wrap">{exp.explanationText}</p>
+                                                <div className="mt-3 pt-2 border-t border-border flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <button onClick={() => handleVote(exp.id, 'up')} className={`flex items-center gap-1 text-sm font-semibold transition-colors ${userUpvoted ? 'text-status-success' : 'text-text-secondary hover:text-status-success'}`}>
+                                                            <ArrowUpCircleIcon className="h-5 w-5" />
+                                                            {exp.upvotes.length}
+                                                        </button>
+                                                        <button onClick={() => handleVote(exp.id, 'down')} className={`flex items-center gap-1 text-sm font-semibold transition-colors ${userDownvoted ? 'text-status-danger' : 'text-text-secondary hover:text-status-danger'}`}>
+                                                            <ArrowDownCircleIcon className="h-5 w-5" />
+                                                            {exp.downvotes.length}
+                                                        </button>
+                                                        <span className={`text-lg font-bold ${score > 0 ? 'text-status-success' : score < 0 ? 'text-status-danger' : 'text-text-secondary'}`}>{score}</span>
+                                                    </div>
+                                                    <button onClick={() => handleFlag(exp.id)} disabled={userFlagged} className="flex items-center gap-1 text-xs font-semibold text-text-secondary hover:text-status-danger disabled:opacity-50 disabled:cursor-not-allowed">
+                                                        <FlagIcon className="h-4 w-4" />
+                                                        {userFlagged ? 'Reported' : 'Report'}
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <p className="text-text-secondary text-sm whitespace-pre-wrap">{exp.explanationText}</p>
-                                        </div>
-                                    )) : <p className="text-text-secondary text-center text-sm p-4">{t('noExplanations')}</p>}
+                                        );
+                                    }) : <p className="text-text-secondary text-center text-sm p-4">{t('noExplanations')}</p>}
                                 </div>
                                 
                                 <div className="mt-4 pt-4 border-t border-border">

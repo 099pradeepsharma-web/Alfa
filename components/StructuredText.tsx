@@ -30,16 +30,18 @@ const StructuredText: React.FC<StructuredTextProps> = ({ text }) => {
   while (i < lines.length) {
     const line = lines[i];
 
-    // Headings
-    if (line.startsWith('### ')) {
-      elements.push(<h3 key={i}><FormattedText text={line.substring(4)} /></h3>);
-      i++;
-      continue;
-    }
-    if (line.startsWith('## ')) {
-      elements.push(<h2 key={i}><FormattedText text={line.substring(3)} /></h2>);
-      i++;
-      continue;
+    // Headings (more robust parsing)
+    const headingMatch = line.match(/^(##+)\s*(.*)/);
+    if (headingMatch) {
+        const level = headingMatch[1].length;
+        const content = headingMatch[2];
+        if (level === 2) {
+            elements.push(<h2 key={i}><FormattedText text={content} /></h2>);
+        } else { // Handles ###, ####, etc. as h3
+            elements.push(<h3 key={i}><FormattedText text={content} /></h3>);
+        }
+        i++;
+        continue;
     }
 
     // Callout Boxes
