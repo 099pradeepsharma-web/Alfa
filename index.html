@@ -629,22 +629,23 @@
         box-shadow: 0 0 20px rgba(var(--c-accent), 0.5);
       }
 
-      /* Animated Fitto Avatar */
+      /* Enhanced Animated Fitto Avatar */
       .fitto-avatar {
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         position: relative;
-        overflow: hidden;
+        overflow: visible; /* Allow thinking dots to orbit outside */
         background-color: rgb(var(--c-primary));
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .fitto-avatar.idle { animation: fitto-breathe 4s infinite ease-in-out; }
-      .fitto-avatar.thinking { background-color: rgb(var(--c-accent)); animation: fitto-pulse 1.5s infinite; }
+      .fitto-avatar.thinking { background-color: rgb(var(--c-accent)); }
       .fitto-avatar.speaking { background-color: rgb(var(--c-primary)); }
-      .fitto-avatar.celebrating { background-color: #2ecc71; }
+      .fitto-avatar.celebrating { background-color: #2ecc71; animation: fitto-celebrate-jump 0.6s ease-out; }
       .fitto-avatar.encouraging { background-color: #3498db; }
+      
       .fitto-eye {
         background-color: rgb(var(--c-bg-primary));
         border-radius: 50%;
@@ -652,34 +653,86 @@
         overflow: hidden;
         display: flex;
         align-items: center;
-        justify-content: space-evenly;
+        justify-content: center;
+        animation-duration: 4s;
+        animation-iteration-count: infinite;
+        animation-timing-function: step-end;
+      }
+      .fitto-eye.idle {
+          animation-name: fitto-blink;
       }
 
       @keyframes fitto-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-      @keyframes fitto-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(var(--c-accent), 0.7); } 50% { box-shadow: 0 0 0 10px rgba(var(--c-accent), 0); } }
-
-      /* Speaking Waveform */
-      .waveform-bar {
-        width: 15%; height: 10%; background-color: rgb(var(--c-primary));
-        animation: waveform-speak 1s infinite ease-in-out;
+      
+      @keyframes fitto-blink {
+          0%, 90%, 100% { transform: scaleY(1); }
+          95% { transform: scaleY(0.1); }
       }
-      .waveform-bar:nth-child(2) { animation-delay: 0.2s; }
-      .waveform-bar:nth-child(3) { animation-delay: 0.4s; }
-      @keyframes waveform-speak { 0%, 100% { transform: scaleY(0.5); } 50% { transform: scaleY(1); } }
 
-      /* Confetti for celebration */
-      .fitto-confetti-container { position: absolute; inset: 0; }
+      /* New Thinking animation */
+      .fitto-thinking-container {
+          position: absolute;
+          width: 150%;
+          height: 150%;
+          animation: fitto-orbit 3s linear infinite;
+      }
+      @keyframes fitto-orbit { to { transform: rotate(360deg); } }
+
+      .fitto-thinking-dot {
+          position: absolute;
+          width: 12%;
+          height: 12%;
+          background-color: rgb(var(--c-accent));
+          border-radius: 50%;
+          animation: fitto-dot-pulse 1.5s infinite ease-in-out;
+      }
+      /* Position dots in an equilateral triangle */
+      .fitto-thinking-dot:nth-child(1) { top: 0; left: 50%; transform: translateX(-50%);}
+      .fitto-thinking-dot:nth-child(2) { top: 75%; left: 13.4%; transform: translateX(-50%); animation-delay: -1s; }
+      .fitto-thinking-dot:nth-child(3) { top: 75%; left: 86.6%; transform: translateX(-50%); animation-delay: -0.5s; }
+
+      @keyframes fitto-dot-pulse {
+          0%, 100% { transform: scale(0.8) translateX(-50%); opacity: 0.5; }
+          50% { transform: scale(1.2) translateX(-50%); opacity: 1; }
+      }
+
+      /* New Speaking mouth animation */
+      .fitto-mouth {
+          width: 50%;
+          height: 25%;
+          background-color: rgb(var(--c-primary));
+          border-radius: 0 0 50px 50px;
+          position: absolute;
+          bottom: 15%;
+          left: 25%;
+          transform-origin: bottom;
+          animation: fitto-speak-mouth 0.4s infinite alternate ease-in-out;
+      }
+      @keyframes fitto-speak-mouth {
+          from { transform: scaleY(0.3); }
+          to { transform: scaleY(1); }
+      }
+
+      /* Enhanced Confetti for celebration */
+      .fitto-confetti-container { position: absolute; inset: 0; pointer-events: none; }
       .fitto-confetti-particle {
         position: absolute;
         top: 50%; left: 50%;
-        width: 6px; height: 6px;
-        border-radius: 50%;
         opacity: 0;
-        animation: confetti-burst 0.8s ease-out forwards;
+        animation: confetti-burst 1s ease-out forwards;
       }
+      .fitto-confetti-particle.circle { border-radius: 50%; }
+      .fitto-confetti-particle.square { border-radius: 0; }
+
       @keyframes confetti-burst {
-        0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
-        100% { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1); opacity: 0; }
+        0% { transform: translate(-50%, -50%) scale(0.5) rotate(0deg); opacity: 1; }
+        100% { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1) rotate(var(--r)); opacity: 0; }
+      }
+      
+      /* New Celebration jump animation */
+      @keyframes fitto-celebrate-jump {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-10px) scale(1.1); }
       }
       
       /* === NEW SIMULATION & LAB STYLES === */
@@ -743,6 +796,46 @@
 
       .metadata-tag { font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 9999px; }
       
+      /* === NEW SUBJECT/CHAPTER SELECTOR STYLES === */
+      .realm-card {
+        border-width: 2px;
+        border-color: rgb(var(--c-border-color));
+      }
+      .realm-card:hover {
+        background-color: rgb(var(--c-surface));
+        border-color: rgba(var(--c-primary), 0.7);
+      }
+      .realm-card[aria-current="true"] {
+        background-color: rgba(var(--c-primary), 0.1);
+        border-color: rgb(var(--c-primary));
+      }
+      .mission-card {
+        background-color: rgb(var(--c-surface));
+        border: 1px solid rgb(var(--c-border-color));
+        border-radius: var(--radius-card);
+        overflow: hidden;
+        transition: all 0.2s ease-out;
+      }
+      .mission-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+        border-color: rgba(var(--c-primary), 0.5);
+      }
+      .mission-card-header {
+        padding: 1rem 1.25rem;
+        background-color: rgba(var(--c-bg-primary), 0.5);
+        border-bottom: 1px solid rgb(var(--c-border-color));
+      }
+      .chapter-tag {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.2rem 0.6rem;
+        border-radius: 9999px;
+        background-color: rgba(var(--c-accent), 0.15);
+        color: rgb(var(--c-accent));
+        border: 1px solid rgba(var(--c-accent), 0.3);
+      }
+
       /* === NEW LANDING PAGE STYLES === */
       .landing-page body { background-color: #030712; color: #f9fafb; }
       .landing-page main section { padding: 4rem 0; }

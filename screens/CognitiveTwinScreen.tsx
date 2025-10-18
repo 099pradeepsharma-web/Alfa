@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../contexts/Language-context';
 import { ArrowLeftIcon, SparklesIcon, ArrowPathIcon, BeakerIcon } from '@heroicons/react/24/solid';
 import { Student, CognitiveProfile } from '../types';
@@ -37,22 +37,36 @@ const CognitiveTwinScreen: React.FC<CognitiveTwinScreenProps> = ({ student, onBa
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchProfile = async () => {
+    const fetchProfile = useCallback(async (signal: AbortSignal) => {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await geminiService.analyzeCognitiveProfile(student, language);
+            // FIX: Added signal to the function call to match the updated signature in geminiService.
+            const result = await geminiService.analyzeCognitiveProfile(student, language, signal);
             setProfile(result);
         } catch (e: any) {
-            setError(e.message);
+            if (e.name !== 'AbortError') {
+                setError(e.message);
+            }
         } finally {
-            setIsLoading(false);
+            if (!signal.aborted) {
+                setIsLoading(false);
+            }
         }
-    };
+    }, [student, language]);
 
     useEffect(() => {
-        fetchProfile();
-    }, [student, language]);
+        const controller = new AbortController();
+        fetchProfile(controller.signal);
+        return () => controller.abort();
+    }, [fetchProfile]);
+
+    const handleRefresh = () => {
+        const controller = new AbortController();
+        fetchProfile(controller.signal);
+        // This component doesn't unmount, so we don't need to store the controller for cleanup
+    };
+
 
     const learningStyleData = [
         { subject: t('visual'), value: profile?.learningStyle.style === 'Visual' ? 90 : 40, fullMark: 100 },
@@ -158,7 +172,7 @@ const CognitiveTwinScreen: React.FC<CognitiveTwinScreenProps> = ({ student, onBa
                             <button onClick={onStartCalibration} className="w-full btn-accent flex items-center justify-center gap-2">
                                 <BeakerIcon className="h-5 w-5" /> {t('runCalibration')}
                             </button>
-                             <button onClick={fetchProfile} className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm border border-border hover:bg-bg-primary transition">
+                             <button onClick={handleRefresh} className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm border border-border hover:bg-bg-primary transition">
                                 <ArrowPathIcon className="h-5 w-5" /> {t('refreshAnalysis')}
                             </button>
                         </div>

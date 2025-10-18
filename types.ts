@@ -2,10 +2,25 @@
 
 // --- Core Curriculum Types ---
 
+export interface MiniQuiz {
+  question: string;
+  answer: string;
+}
+
 export interface Topic {
   title: string;
   objective?: string;
   subTopics?: Topic[];
+  // New detailed content format
+  hook?: string;
+  explanation?: string;
+  keyIdea?: string;
+  visualHint?: string;
+  mentorVoice?: string;
+  quickTip?: string;
+  miniQuiz?: MiniQuiz[];
+  challenge?: string;
+  closingLine?: string;
 }
 
 export interface Chapter {

@@ -49,6 +49,7 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
     }, [isLoading]);
 
     useEffect(() => {
+        const abortController = new AbortController();
         const fetchTest = async () => {
             try {
                 setIsLoading(true);
@@ -58,16 +59,21 @@ const DiagnosticTest: React.FC<DiagnosticTestProps> = ({ grade, subject, chapter
                 if (!effectiveChapter) {
                     throw new Error("No chapters available for this subject.");
                 }
-                // FIX: Called the correct 'generateComprehensiveDiagnosticTest' function.
-                const questions = await generateComprehensiveDiagnosticTest(grade.level, subject.name, effectiveChapter.title, language);
+                // FIX: Called the correct 'generateComprehensiveDiagnosticTest' function with AbortSignal.
+                const questions = await generateComprehensiveDiagnosticTest(grade.level, subject.name, effectiveChapter.title, language, abortController.signal);
                 setTestQuestions(questions);
             } catch (err: any) {
-                setError(err.message || t('testGenerationError'));
+                if (err.name !== 'AbortError') {
+                    setError(err.message || t('testGenerationError'));
+                }
             } finally {
-                setIsLoading(false);
+                if (!abortController.signal.aborted) {
+                    setIsLoading(false);
+                }
             }
         };
         fetchTest();
+        return () => abortController.abort();
     }, [grade.level, subject.name, chapter, subject.chapters, language, t]);
     
     // FIX: Replaced old handler with a new comprehensive one that calculates detailed scores and calls the correct recommendation function.

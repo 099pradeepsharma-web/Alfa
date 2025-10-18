@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Grade, Subject, Chapter, LearningModule, Student, Trigger, CoreConceptLesson, PracticeArena, PracticalApplicationLab, QuizQuestion, XpReward, VideoReward, PracticeProblem, WrittenAnswerEvaluation, InteractiveVideoSimulation, VirtualLab, AdaptiveStory, InteractiveExplainer } from '../types';
 import * as contentService from '../services/contentService';
@@ -9,14 +10,15 @@ import LoadingSpinner from './LoadingSpinner';
 import Quiz from './Quiz';
 import { useLanguage } from '../contexts/Language-context';
 import { ArrowPathIcon, BookOpenIcon, BeakerIcon, LightBulbIcon, CpuChipIcon, AcademicCapIcon, PuzzlePieceIcon, SparklesIcon, ChevronRightIcon, PlayCircleIcon, DevicePhoneMobileIcon, CheckIcon, StarIcon, ClipboardDocumentCheckIcon, DocumentTextIcon, PencilSquareIcon, ChevronLeftIcon, PaperAirplaneIcon } from '@heroicons/react/24/solid';
+import { BookText, ListChecks, BrainCircuit } from 'lucide-react';
 import StructuredText from './StructuredText';
 import Confetti from './Confetti';
 import ConceptVideoPlayer from './ConceptVideoPlayer';
 import VideoSimulationPlayer from './VideoSimulationPlayer';
 import VirtualLabPlayer from './VirtualLabPlayer';
 import AdaptiveStoryPlayer from './AdaptiveStoryPlayer';
-// FIX: Corrected import path for InteractiveExplainerPlayer from a nested 'components' folder to the current directory.
 import InteractiveExplainerPlayer from './InteractiveExplainerPlayer';
+import MigaStudyNotebookModal from './MigaStudyNotebookModal';
 
 
 interface ChapterViewProps {
@@ -76,7 +78,14 @@ const MissionBriefingSection: React.FC<{ content: Trigger[] }> = ({ content }) =
     );
 };
 
-const CoreConceptTrainingSection: React.FC<{ content: CoreConceptLesson[], grade: Grade, subject: Subject, onLogEvent: (eventName: string, attributes: any) => void }> = ({ content, grade, subject, onLogEvent }) => {
+const CoreConceptTrainingSection: React.FC<{ 
+    content: CoreConceptLesson[], 
+    grade: Grade, 
+    subject: Subject, 
+    onLogEvent: (eventName: string, attributes: any) => void,
+    onUpdatePoints: (points: number) => void,
+    onAddAchievement: (achievementId: string) => void
+}> = ({ content, grade, subject, onLogEvent, onUpdatePoints, onAddAchievement }) => {
     const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
     return (
         <div className="space-y-3">
@@ -109,6 +118,12 @@ const CoreConceptTrainingSection: React.FC<{ content: CoreConceptLesson[], grade
                                     onBack={() => {}} 
                                     chapterTitle={lesson.title} 
                                     onLogEvent={onLogEvent}
+                                    onFinish={(result) => {
+                                        if (result.score >= 80) { // Concept mastered
+                                            onUpdatePoints(20);
+                                            onAddAchievement('concept-conqueror');
+                                        }
+                                    }}
                                 />
                             </div>
                         </div>
@@ -178,7 +193,7 @@ const PracticeArenaSection: React.FC<{
                             </label>
                         </div>
                     </div>
-                    <div className="practice-problem-body prose max-w-none dark:prose-invert">
+                    <div className="practice-problem-body prose max-w-none prose-invert">
                         <p className="text-text-secondary mb-2"><strong>Problem:</strong> {p.problemStatement}</p>
                         <details>
                             <summary className="cursor-pointer font-semibold text-primary">View Solution</summary>
@@ -229,7 +244,7 @@ const ApplicationLabSection: React.FC<{
             return (
                 <LabWrapper>
                     <VideoSimulationPlayer 
-                        simulationData={content} 
+                        simulationData={content as InteractiveVideoSimulation} 
                         dbKey={`sim-video-${grade.level}-${subject.name}-${chapter.title}`}
                         grade={grade}
                         subject={subject}
@@ -241,7 +256,7 @@ const ApplicationLabSection: React.FC<{
             return (
                 <LabWrapper>
                     <VirtualLabPlayer 
-                        labData={content}
+                        labData={content as VirtualLab}
                         grade={grade}
                         subject={subject}
                         chapter={chapter}
@@ -251,14 +266,14 @@ const ApplicationLabSection: React.FC<{
         case 'adaptiveStory':
             return (
                 <LabWrapper>
-                    <AdaptiveStoryPlayer storyData={content} />
+                    <AdaptiveStoryPlayer storyData={content as AdaptiveStory} />
                 </LabWrapper>
             );
         case 'interactiveExplainer':
             return (
                 <LabWrapper>
                      <InteractiveExplainerPlayer
-                        explainerData={content}
+                        explainerData={content as InteractiveExplainer}
                         grade={grade}
                         subject={subject}
                         chapter={chapter}
@@ -273,14 +288,13 @@ const ApplicationLabSection: React.FC<{
                     {content.labInstructions && (
                          <div className="mt-4 p-4 bg-surface rounded-lg">
                             <h5 className="font-bold text-text-primary">Instructions</h5>
-                            <div className="prose prose-lg max-w-none dark:prose-invert">
+                            <div className="prose prose-lg max-w-none prose-invert">
                                <StructuredText text={content.labInstructions} />
                             </div>
                          </div>
                     )}
                 </LabWrapper>
             );
-        // FIX: Replaced the default case which caused a type error on `content` (which is `never` here because all cases are handled). A safe fallback is provided instead.
         default:
             return (
                 <LabWrapper>
@@ -333,7 +347,7 @@ const EvaluationCard: React.FC<{ title: string; icon: React.ElementType; childre
             <Icon className="h-6 w-6" />
             {title}
         </h5>
-        <div className="prose max-w-none dark:prose-invert text-sm">{children}</div>
+        <div className="prose max-w-none prose-invert text-sm">{children}</div>
     </div>
 );
 
@@ -372,7 +386,7 @@ const MasteryZoneSection: React.FC<{ grade: string, subject: string, chapter: st
                                 <h4 className="font-bold text-text-primary">Challenge Problem {i + 1}</h4>
                                 <span className={`problem-level-badge level-${p.level.charAt(6)}`}>{p.level}</span>
                             </div>
-                            <div className="practice-problem-body prose max-w-none dark:prose-invert">
+                            <div className="practice-problem-body prose max-w-none prose-invert">
                                 <p className="text-text-secondary mb-2"><strong>Problem:</strong> {p.problemStatement}</p>
                                 <details>
                                     <summary className="cursor-pointer font-semibold text-primary">View Solution</summary>
@@ -518,6 +532,92 @@ const WritingPracticeZone: React.FC<{
     );
 };
 
+const AIStudyNotebook: React.FC<{
+    learningModule: LearningModule;
+    language: string;
+}> = ({ learningModule, language }) => {
+    const { t } = useLanguage();
+    const [notebookQuery, setNotebookQuery] = useState('');
+    const [notebookOutput, setNotebookOutput] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const chapterText = useMemo(() => {
+        // Concatenate all explanations from core concepts into a single text block
+        return learningModule.coreConceptTraining.map(lesson => `## ${lesson.title}\n${lesson.explanation}`).join('\n\n');
+    }, [learningModule]);
+
+    const handleAction = async (task: 'summarize' | 'glossary' | 'questions' | 'custom', customPrompt: string | null = null) => {
+        setIsLoading(true);
+        setError(null);
+        setNotebookOutput('');
+        try {
+            const result = await geminiService.generateChapterInsights(chapterText, task, customPrompt, language);
+            setNotebookOutput(result);
+        } catch (e: any) {
+            setError(e.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!notebookQuery.trim()) return;
+        handleAction('custom', notebookQuery);
+        setNotebookQuery('');
+    };
+
+    return (
+        <div className="dashboard-highlight-card p-4 space-y-3">
+            <h3 className="font-bold text-lg text-text-primary flex items-center gap-2">
+                <SparklesIcon className="h-5 w-5 text-primary" />
+                {t('aiStudyNotebook')}
+            </h3>
+            
+            <p className="text-xs text-text-secondary">{t('aiStudyNotebookDesc')}</p>
+
+            <div className="grid grid-cols-3 gap-2">
+                <button onClick={() => handleAction('summarize')} className="ai-notebook-action-btn"><BookText size={14} className="mr-1.5"/>{t('generateSummary')}</button>
+                <button onClick={() => handleAction('glossary')} className="ai-notebook-action-btn"><ListChecks size={14} className="mr-1.5"/>{t('keyTermsGlossary')}</button>
+                <button onClick={() => handleAction('questions')} className="ai-notebook-action-btn"><BrainCircuit size={14} className="mr-1.5"/>{t('generatePracticeQuestions')}</button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="flex gap-2">
+                <input 
+                    type="text"
+                    value={notebookQuery}
+                    onChange={(e) => setNotebookQuery(e.target.value)}
+                    placeholder={t('askAboutChapter')}
+                    className="flex-grow !text-sm"
+                    disabled={isLoading}
+                />
+                <button type="submit" className="btn-accent p-2.5 flex-shrink-0" disabled={isLoading || !notebookQuery.trim()}>
+                    {isLoading ? <LoadingSpinner /> : <PaperAirplaneIcon className="h-4 w-4" />}
+                </button>
+            </form>
+
+            {(isLoading || error || notebookOutput) && (
+                 <div className="mt-2 ai-notebook-output">
+                    {isLoading && (
+                        <div className="flex items-center justify-center gap-2 text-text-secondary">
+                            <LoadingSpinner />
+                            <span>{t('generatingInsight')}...</span>
+                        </div>
+                    )}
+                    {error && <p className="text-status-danger text-sm">{error}</p>}
+                    {notebookOutput && (
+                        <div className="prose prose-sm max-w-none prose-invert">
+                            <StructuredText text={notebookOutput} />
+                        </div>
+                    )}
+                 </div>
+            )}
+        </div>
+    );
+};
+
+
 // --- END: Section-specific rendering components ---
 
 export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
@@ -527,6 +627,7 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
 
     const [variant, setVariant] = useState<Variant>('A');
     const [isCompleted, setIsCompleted] = useState(false);
+    const [isNotebookOpen, setIsNotebookOpen] = useState(false);
 
     const [learningModule, setLearningModule] = useState<LearningModule | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -692,7 +793,14 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
         <>
             <section id="core-concepts" ref={el => { if (el) sectionRefs.current['core-concepts'] = el; }}>
                 <h2 className="section-title"><AcademicCapIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='core-concepts')?.title}</h2>
-                <CoreConceptTrainingSection content={learningModule.coreConceptTraining} grade={grade} subject={subject} onLogEvent={handleLogEvent} />
+                <CoreConceptTrainingSection 
+                    content={learningModule.coreConceptTraining} 
+                    grade={grade} 
+                    subject={subject} 
+                    onLogEvent={handleLogEvent} 
+                    onUpdatePoints={onUpdatePoints}
+                    onAddAchievement={onAddAchievement}
+                />
             </section>
             <section id="practice-arena" ref={el => { if (el) sectionRefs.current['practice-arena'] = el; }}>
                 <h2 className="section-title"><PuzzlePieceIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='practice-arena')?.title}</h2>
@@ -719,7 +827,14 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
             </section>
             <section id="core-concepts" ref={el => { if (el) sectionRefs.current['core-concepts'] = el; }}>
                 <h2 className="section-title"><AcademicCapIcon className="h-7 w-7 text-primary" /> {sections.find(s=>s.id==='core-concepts')?.title}</h2>
-                <CoreConceptTrainingSection content={learningModule.coreConceptTraining} grade={grade} subject={subject} onLogEvent={handleLogEvent} />
+                <CoreConceptTrainingSection 
+                    content={learningModule.coreConceptTraining} 
+                    grade={grade} 
+                    subject={subject} 
+                    onLogEvent={handleLogEvent} 
+                    onUpdatePoints={onUpdatePoints}
+                    onAddAchievement={onAddAchievement}
+                />
             </section>
         </>
     );
@@ -770,7 +885,13 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
                         chapterTitle="Final Challenge" 
                         onLogEvent={handleLogEvent}
                         isPostTest={true}
-                        onFinish={() => setIsCompleted(true)}
+                        onFinish={(result) => {
+                            setIsCompleted(true);
+                            if (result.score >= 80) { // Chapter mastered
+                                onUpdatePoints(100);
+                                onAddAchievement('chapter-champion');
+                            }
+                        }}
                     />
                 </section>
                 
@@ -812,6 +933,9 @@ export const ChapterView: React.FC<ChapterViewProps> = React.memo(({
                             </a>
                         );
                     })}
+                 </div>
+                 <div className="mt-6">
+                    <AIStudyNotebook learningModule={learningModule} language={language} />
                  </div>
             </aside>
         </div>

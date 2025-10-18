@@ -6,13 +6,17 @@ interface StructuredTextProps {
 
 const FormattedText: React.FC<{ text: string }> = ({ text }) => {
     if (!text) return null;
-    const parts = text.split(/<u>(.*?)<\/u>/g);
+    // Split by bold (**) or underline (<u>) tags, keeping the delimiters.
+    const parts = text.split(/(\*\*.*?\*\*|<u>.*?<\/u>)/g);
     
     return (
         <>
             {parts.map((part, index) => {
-                if (index % 2 === 1) {
-                    return <u key={index}>{part}</u>;
+                if (part.startsWith('**') && part.endsWith('**')) {
+                    return <strong key={index}>{part.substring(2, part.length - 2)}</strong>;
+                }
+                if (part.startsWith('<u>') && part.endsWith('</u>')) {
+                    return <u key={index}>{part.substring(3, part.length - 4)}</u>;
                 }
                 return part;
             })}
@@ -29,6 +33,23 @@ const StructuredText: React.FC<StructuredTextProps> = ({ text }) => {
 
   while (i < lines.length) {
     const line = lines[i];
+
+    // Code block handling
+    if (line.trim().startsWith('```')) {
+        const codeLines = [];
+        i++; // move past the opening ```
+        while (i < lines.length && !lines[i].trim().startsWith('```')) {
+            codeLines.push(lines[i]);
+            i++;
+        }
+        i++; // move past the closing ```
+        elements.push(
+            <pre key={`pre-${i}`}>
+                <code>{codeLines.join('\n')}</code>
+            </pre>
+        );
+        continue;
+    }
 
     // Headings (more robust parsing)
     const headingMatch = line.match(/^(##+)\s*(.*)/);

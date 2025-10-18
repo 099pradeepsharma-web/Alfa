@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Student, ChatMessage } from '../types';
-import { Chat } from '@google/genai';
+import type { Chat } from '@google/genai';
 import { useLanguage } from '../contexts/Language-context';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useTTS } from '../hooks/useTTS';
@@ -15,114 +15,92 @@ interface TutorSessionScreenProps {
 }
 
 export const TutorSessionScreen: React.FC<TutorSessionScreenProps> = ({ student, chat, onBack }) => {
-    const { t } = useLanguage();
+    const { t, tCurriculum } = useLanguage();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState('');
-    const [isThinking, setIsThinking] = useState(true); // Start as true for initial greeting
+    const [isThinking, setIsThinking] = useState(false);
     const chatHistoryRef = useRef<HTMLDivElement>(null);
 
     const { isSpeaking: isFittoSpeaking, isPaused, currentlyPlayingId, play: playFittoResponse, pause, resume, stop: stopFittoResponse } = useTTS();
 
-    const handleSendMessage = useCallback(async (text: string) => {
-        const trimmedText = text.trim();
-        if (!trimmedText || isThinking) return;
+    // Send initial message
+    useEffect(() => {
+        const sendInitialMessage = async () => {
+            setIsThinking(true);
+            const modelMessageId = `model-greeting-${Date.now()}`;
+            setMessages([{ id: modelMessageId, role: 'model', text: '', state: 'thinking' }]);
 
-        setIsThinking(true);
-        if (isFittoSpeaking) stopFittoResponse();
+            try {
+                // FIX: Pass an object with the `message` property to `sendMessageStream`.
+                const result = await chat.sendMessageStream({ message: "Hello, please greet me and provide suggestions based on the context." });
 
-        const userMessage: ChatMessage = { id: `user-${Date.now()}`, role: 'user', text: trimmedText };
-        setMessages(prev => [...prev, userMessage]);
-        setInputValue('');
-
-        try {
-            const responseStream = await chat.sendMessageStream({ message: trimmedText });
-            let fullResponse = '';
-            const modelMessageId = `model-${Date.now()}`;
-            
-            setMessages(prev => [...prev, { id: modelMessageId, role: 'model', text: '', state: 'thinking' }]);
-
-            for await (const chunk of responseStream) {
-                const chunkText = chunk.text;
-                if (chunkText) {
-                    fullResponse += chunkText;
+                let fullResponse = '';
+                for await (const chunk of result) {
+                    fullResponse += chunk.text;
                     setMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, text: fullResponse } : m));
                 }
-            }
-            
-            setMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, state: undefined } : m));
-        } catch (err: any) {
-            console.error("Tutor chat failed:", err);
-            const errorMessage = { id: `err-${Date.now()}`, role: 'model' as const, text: "I'm having trouble connecting right now. Please try again in a moment.", state: 'error' as const };
-            setMessages(prev => [...prev.filter(m => m.state !== 'thinking'), errorMessage]);
-        } finally {
-            setIsThinking(false);
-        }
-    }, [chat, isThinking, isFittoSpeaking, stopFittoResponse]);
 
-    const { isListening, transcript, startListening, stopListening, isSupported } = useSpeechRecognition({
-      onEnd: handleSendMessage
-    });
-    
-    // Effect for the initial greeting from the tutor
-    useEffect(() => {
-        const fetchInitialMessage = async () => {
-            setIsThinking(true);
-            try {
-                // Sending a simple message to trigger the initial greeting based on the system prompt.
-                // We won't show this message to the user.
-                const responseStream = await chat.sendMessageStream({ message: "Hello, please greet me." });
-                let fullResponse = '';
-                const modelMessageId = `model-${Date.now()}`;
-                
-                // Set initial thinking state
-                setMessages([{ id: modelMessageId, role: 'model', text: '', state: 'thinking' }]);
-
-                for await (const chunk of responseStream) {
-                    const chunkText = chunk.text;
-                    if (chunkText) {
-                        fullResponse += chunkText;
-                        setMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, text: fullResponse } : m));
-                    }
-                }
-                
                 setMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, state: undefined } : m));
-            } catch (err: any) {
+            } catch (err) {
                 console.error("Tutor chat failed on init:", err);
-                const errorMessage = { id: `err-${Date.now()}`, role: 'model' as const, text: "I'm having trouble connecting right now. Please try again in a moment.", state: 'error' as const };
+                const errorMessage = { id: modelMessageId, role: 'model' as const, text: "I'm having trouble connecting right now. Please try again in a moment.", state: 'error' as const };
                 setMessages([errorMessage]);
             } finally {
                 setIsThinking(false);
             }
         };
 
-        if (chat) {
-            fetchInitialMessage();
-        }
+        sendInitialMessage();
     }, [chat]);
 
-    useEffect(() => {
-      setInputValue(transcript);
-    }, [transcript]);
+    const handleSendMessage = async (text: string) => {
+        const trimmedText = text.trim();
+        if (!trimmedText || isThinking) return;
 
-    useEffect(() => {
-      if (chatHistoryRef.current) {
-        chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
-      }
-    }, [messages]);
+        setIsThinking(true);
+        if (isFittoSpeaking) stopFittoResponse();
+        setInputValue('');
+
+        const userMessage: ChatMessage = { id: `user-${Date.now()}`, role: 'user', text: trimmedText };
+        const modelMessageId = `model-${Date.now()}`;
+        setMessages(prev => [...prev, userMessage, { id: modelMessageId, role: 'model', text: '', state: 'thinking' }]);
+
+        try {
+            // FIX: Pass an object with the `message` property to `sendMessageStream`.
+            const result = await chat.sendMessageStream({ message: trimmedText });
+            
+            let fullResponse = '';
+            for await (const chunk of result) {
+                fullResponse += chunk.text;
+                setMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, text: fullResponse } : m));
+            }
+            
+            setMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, state: undefined } : m));
+        } catch (err: any) {
+            console.error("Tutor chat failed:", err);
+            const errorMessage: ChatMessage = { id: modelMessageId, role: 'model', text: "I'm having trouble connecting right now. Please try again in a moment.", state: 'error' };
+            setMessages(prev => prev.map(m => m.id === modelMessageId ? errorMessage : m));
+        } finally {
+            setIsThinking(false);
+        }
+    };
+
+    const { isListening, transcript, startListening, stopListening, isSupported } = useSpeechRecognition({
+      onEnd: handleSendMessage
+    });
+    
+    useEffect(() => { setInputValue(transcript); }, [transcript]);
+    useEffect(() => { if (chatHistoryRef.current) { chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight; } }, [messages]);
 
     const handleFormSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (isListening) {
-            stopListening();
-        } else {
-            handleSendMessage(inputValue);
-        }
+        if (isListening) { stopListening(); } else { handleSendMessage(inputValue); }
     };
     
     return (
         <div className="animate-fade-in flex flex-col h-[calc(100vh-120px)] max-w-3xl mx-auto">
             <div className="flex-shrink-0 bg-surface p-4 rounded-t-2xl shadow-md border-b border-border">
-                <button onClick={onBack} className="flex items-center text-primary hover:text-primary-dark font-semibold transition mb-2" style={{color: 'rgb(var(--c-primary))'}}>
+                <button onClick={onBack} className="flex items-center text-primary hover:text-primary-dark font-semibold transition mb-2">
                     <ArrowLeftIcon className="h-5 w-5 mr-2" />
                     {t('endSession')}
                 </button>
@@ -130,7 +108,7 @@ export const TutorSessionScreen: React.FC<TutorSessionScreenProps> = ({ student,
                     <FittoAvatar state={isThinking ? 'thinking' : (isFittoSpeaking ? 'speaking' : 'idle')} size={48} />
                     <div>
                         <h1 className="text-xl font-bold text-text-primary">{t('tutorSessionWithFitto')}</h1>
-                        <p className="text-text-secondary text-sm">Powered by Gemini</p>
+                        {/* The context (chapter/subject) is in the chat object's system instruction, so not displayed here */}
                     </div>
                 </div>
             </div>
@@ -175,7 +153,6 @@ export const TutorSessionScreen: React.FC<TutorSessionScreenProps> = ({ student,
                                     {!msg.state && msg.text && (
                                         <div className="flex-shrink-0">
                                             {(!isFittoSpeaking || !isCurrentAudio) ? (
-                                                // FIX: Convert msg.id to a string to match the expected type for the `play` function.
                                                 <button onClick={() => playFittoResponse(msg.text, msg.id.toString())} className="p-2 rounded-full bg-slate-600 hover:bg-slate-500 text-slate-200 transition" aria-label="Play audio response"><PlayCircleIcon className="h-5 w-5"/></button>
                                             ) : (
                                                 <div className="flex items-center gap-1">
@@ -225,7 +202,7 @@ export const TutorSessionScreen: React.FC<TutorSessionScreenProps> = ({ student,
                         disabled={isThinking || (!inputValue.trim() && !isListening)}
                         aria-label={t('submitQuestion')}
                     >
-                        {isThinking && messages.some(m => m.state === 'thinking') ? <LoadingSpinner /> : <PaperAirplaneIcon className="h-6 w-6" />}
+                        {isThinking ? <LoadingSpinner /> : <PaperAirplaneIcon className="h-6 w-6" />}
                     </button>
                 </form>
             </div>

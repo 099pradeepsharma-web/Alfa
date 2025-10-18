@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+
+
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Student, AdaptiveAction, LearningStreak, StudyGoal } from '../types';
 import { getLearningStreak } from '../services/pineconeService';
 import { getAdaptiveNextStep, generateStudyGoalSuggestions } from '../services/geminiService';
 import { useLanguage } from '../contexts/Language-context';
-import { ArrowRightIcon, BookOpenIcon, SparklesIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+import { ArrowRightIcon, BookOpenIcon, SparklesIcon, ChevronLeftIcon, ChevronRightIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 import { 
     Library, HelpCircle, GraduationCap, Briefcase, Trophy, FolderKanban, 
     Users, BrainCircuit, Globe, Lightbulb, UserCog, Heart, Plus, Trash2, Sparkles as SparklesLucide,
@@ -53,27 +55,47 @@ const MissionCard: React.FC<{ onStartMission: () => void, student: Student }> = 
     const { t, language } = useLanguage();
     const [action, setAction] = useState<AdaptiveAction | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // FIX: Add useCallback to the import from react.
+    const fetchAction = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const adaptiveAction = await getAdaptiveNextStep(student, language);
+            setAction(adaptiveAction);
+        } catch (error) {
+            console.error("Failed to fetch adaptive action:", error);
+            setError("We couldn't generate your mission right now. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [student, language]);
 
     useEffect(() => {
-        const fetchAction = async () => {
-            setIsLoading(true);
-            try {
-                const adaptiveAction = await getAdaptiveNextStep(student, language);
-                setAction(adaptiveAction);
-            } catch (error) {
-                console.error("Failed to fetch adaptive action:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
         fetchAction();
-    }, [student, language]);
+    }, [fetchAction]);
 
     if (isLoading) {
         return (
             <div className="p-6 min-h-[220px] flex flex-col items-center justify-center text-center">
                  <LoadingSpinner />
                  <p className="font-semibold text-text-secondary mt-3">{t('craftingYourPath')}</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-6 min-h-[220px] flex flex-col items-center justify-center text-center">
+                <p className="font-semibold text-status-danger">{error}</p>
+                <button
+                    onClick={fetchAction}
+                    className="mt-4 flex items-center justify-center px-4 py-2 bg-surface text-text-primary font-semibold rounded-lg shadow-sm border border-border hover:bg-bg-primary transition"
+                >
+                    <ArrowPathIcon className="h-5 w-5 mr-2" />
+                    Retry
+                </button>
             </div>
         );
     }

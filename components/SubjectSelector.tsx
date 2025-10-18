@@ -98,9 +98,9 @@ const SubjectSelector: React.FC<SubjectSelectorProps> = ({ grade, selectedSubjec
                   <button
                     onClick={() => onSubjectSelect(subject)}
                     aria-current={selectedSubject?.name === subject.name}
-                    className={`w-full text-left p-3 rounded-lg flex items-center space-x-3 transition-colors duration-200 realm-card ${
+                    className={`w-full text-left p-3 rounded-lg flex items-center space-x-3 transition-colors duration-200 ${
                       selectedSubject?.name === subject.name
-                        ? 'bg-surface text-primary font-semibold border-primary'
+                        ? 'bg-primary-light text-primary-dark font-semibold'
                         : 'hover:bg-surface text-text-secondary'
                     }`}
                   >
@@ -112,60 +112,45 @@ const SubjectSelector: React.FC<SubjectSelectorProps> = ({ grade, selectedSubjec
             </ul>
           </div>
 
-          {/* Chapters Accordion Column */}
+          {/* Chapters "Missions" Column */}
           <div className="lg:col-span-2">
             {selectedSubject && onChapterSelect ? (
               <div className="bg-bg-primary p-6 rounded-xl shadow-inner animate-fade-in">
                 <div className="border-b border-border pb-3 mb-4">
                   <h3 className="text-xl font-bold text-text-primary">{t('chaptersIn')} {tCurriculum(selectedSubject.name)}</h3>
-                  <p className="text-text-secondary text-sm">Select a chapter to see its topics and start your mission.</p>
+                  <p className="text-text-secondary text-sm">Select a mission to begin your learning journey.</p>
                 </div>
                 <div className="space-y-4 mt-4">
-                  {selectedSubject.chapters.map((chapter, index) => (
-                    <details key={chapter.title} className="chapter-accordion-item">
-                        <summary>
-                            <span className="chapter-title">Chapter {index + 1}: {tCurriculum(chapter.title)}</span>
-                            <div className="flex items-center gap-2">
-                                {chapter.tags && chapter.tags.map(tag => (
-                                  <span key={tag} className="chapter-tag hidden sm:inline-block">{tag}</span>
-                                ))}
-                                <ChevronDownIcon className="h-6 w-6 text-text-secondary chapter-chevron" />
-                            </div>
-                        </summary>
-                        <div className="chapter-accordion-content">
-                            <ul className="topic-list">
-                                {chapter.topics.map((topic, topicIndex) => (
-                                    <li key={topic.title}>
-                                        <p className="font-semibold text-text-primary">
-                                            Topic {index + 1}.{topicIndex + 1}: {tCurriculum(topic.title)}
-                                        </p>
-                                        {topic.objective && (
-                                            <p className="objective-item">
-                                                <strong>Objective:</strong> {tCurriculum(topic.objective)}
-                                            </p>
-                                        )}
-                                        {/* You can add another nested loop here for subTopics if needed */}
-                                    </li>
-                                ))}
-                            </ul>
-                             <div className="mt-6 pt-4 border-t border-border flex items-center gap-4">
-                                <button
-                                    onClick={() => setTestingChapter(chapter)}
-                                    className="w-full flex items-center justify-center py-2 px-4 btn-accent"
-                                >
-                                    <RocketLaunchIcon className="h-5 w-5 mr-2" />
-                                    Start Mission
-                                </button>
-                                <button
-                                    onClick={() => onChapterSelect(chapter)}
-                                    className="w-full flex items-center justify-center py-2 px-4 bg-surface text-text-primary font-semibold rounded-lg shadow-sm border border-border hover:bg-bg-primary transition"
-                                >
-                                    <BookOpenIcon className="h-5 w-5 mr-2" />
-                                    {t('justStudy')}
-                                </button>
-                            </div>
+                  {selectedSubject.chapters.map((chapter) => (
+                    <div key={chapter.title} className="bg-surface border border-border rounded-xl p-4">
+                        <h4 className="font-bold text-lg text-text-primary">Mission: {tCurriculum(chapter.title)}</h4>
+                        {chapter.tags && chapter.tags.length > 0 && (
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">
+                            {chapter.tags.map(tag => (
+                              <span key={tag} className="metadata-tag bg-bg-primary">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <p className="text-sm text-text-secondary my-4">Ready to master this topic? Choose your path.</p>
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => setTestingChapter(chapter)}
+                                className="w-full flex items-center justify-center py-2 px-4 btn-accent"
+                            >
+                                <RocketLaunchIcon className="h-5 w-5 mr-2" />
+                                Start Mission
+                            </button>
+                            <button
+                                onClick={() => onChapterSelect(chapter)}
+                                className="w-full flex items-center justify-center py-2 px-4 bg-bg-primary text-text-primary font-semibold rounded-lg shadow-sm border border-border hover:bg-surface transition"
+                            >
+                                <BookOpenIcon className="h-5 w-5 mr-2" />
+                                {t('justStudy')}
+                            </button>
                         </div>
-                    </details>
+                    </div>
                   ))}
                 </div>
               </div>

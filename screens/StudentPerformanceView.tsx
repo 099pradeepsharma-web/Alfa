@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Student, QuizQuestion, StudentQuestion, AIAnalysis, PerformanceRecord, AIFeedback, Chapter } from '../types';
 import { ChevronRightIcon, DocumentTextIcon, SparklesIcon, ClipboardDocumentListIcon, ArchiveBoxIcon, UserGroupIcon, ChatBubbleBottomCenterTextIcon, PencilSquareIcon, ChartBarIcon } from '@heroicons/react/24/solid';
@@ -65,20 +66,20 @@ const CustomTooltip: React.FC<any> = ({ active, payload, label }) => {
     return null;
 };
 
+// FIX: Added explicit type definition for chart data to resolve TypeScript error.
+type DailyActivity = {
+    name: string;
+    Sun: number;
+    Mon: number;
+    Tue: number;
+    Wed: number;
+    Thu: number;
+    Fri: number;
+    Sat: number;
+};
+
 const WeeklyActivityChart: React.FC<{ activityData: { [key: string]: number } }> = ({ activityData }) => {
     const { t } = useLanguage();
-
-    // FIX: Add explicit type for chart data to resolve type inference issue.
-    type DailyActivity = {
-        name: string;
-        Sun: number;
-        Mon: number;
-        Tue: number;
-        Wed: number;
-        Thu: number;
-        Fri: number;
-        Sat: number;
-    };
 
     const weeklyData = useMemo(() => {
         const today = new Date();
@@ -92,7 +93,6 @@ const WeeklyActivityChart: React.FC<{ activityData: { [key: string]: number } }>
             date.setDate(today.getDate() - i);
             const weekIndex = 4 - Math.floor(i / 7);
             const dayIndex = date.getDay();
-            // FIX: Use a more specific type for dayName to exclude 'name' property.
             const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayIndex] as keyof Omit<DailyActivity, 'name'>;
             const count = activityData[date.toDateString()] || 0;
             if (data[weekIndex]) {
@@ -364,8 +364,8 @@ const ReportsTab: React.FC<{ student: Student; userRole: 'teacher' | 'parent'; p
             const lowestScoreRecord = [...performanceRecords].sort((a, b) => a.score - b.score)[0];
             
             const gradeData = CURRICULUM.find(g => g.level === student.grade);
-            const subjectData = gradeData?.subjects.find(s => s.name === lowestScoreRecord.subject);
-            const chapterObject = subjectData?.chapters.find(c => c.title === lowestScoreRecord.chapter);
+            const subjectData = gradeData?.subjects?.find(s => s.name === lowestScoreRecord.subject);
+            const chapterObject = subjectData?.chapters?.find(c => c.title === lowestScoreRecord.chapter);
 
             if (!chapterObject) {
                 onSetError(`Could not find chapter data for "${lowestScoreRecord.chapter}".`);

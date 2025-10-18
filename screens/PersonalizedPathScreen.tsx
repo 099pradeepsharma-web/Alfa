@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Student, AdaptiveAction, QuizQuestion, IQExercise, EQExercise, PerformanceRecord, Chapter } from '../types';
-import { getAdaptiveNextStep, generateQuiz, generateIQExercises, generateEQExercises } from '../services/geminiService';
+// FIX: Import geminiService to resolve "Cannot find name 'geminiService'" errors.
+import * as geminiService from '../services/geminiService';
 import { getChapterContent } from '../services/contentService';
 import { CURRICULUM } from '../data/curriculum';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -61,72 +62,65 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ student
     }, [pathState]);
 
     useEffect(() => {
-        const fetchAdaptiveAction = async () => {
+        const controller = new AbortController();
+        const fetchAndGenerate = async () => {
             if (!student) return;
+
             try {
-                const action = await getAdaptiveNextStep(student, language);
+                // State: FETCHING_ACTION
+                setPathState('FETCHING_ACTION');
+                // FIX: Added signal argument to function signature in geminiService to match this call.
+                const action = await geminiService.getAdaptiveNextStep(student, language, controller.signal);
                 setAdaptiveAction(action);
+                
+                // State: GENERATING_CONTENT
                 setPathState('GENERATING_CONTENT');
-            } catch (err: any) {
-                setError(err.message);
-                setPathState('ERROR');
-            }
-        };
+                const { type, details } = action;
 
-        if (pathState === 'FETCHING_ACTION') {
-            fetchAdaptiveAction();
-        }
-    }, [pathState, student, language]);
-
-    useEffect(() => {
-        const generateContent = async () => {
-            if (!adaptiveAction || !student) return;
-
-            try {
                 let academicQuestions: QuizQuestion[] = [];
                 let iqQuestions: IQExercise[] = [];
                 let eqQuestions: EQExercise[] = [];
-
-                const { type, details } = adaptiveAction;
 
                 if (type.startsWith('ACADEMIC')) {
                     if (!details.subject || !details.chapter) throw new Error("Missing subject or chapter details for academic task.");
                     
                     const gradeData = CURRICULUM.find(g => g.level === student.grade);
-                    const subjectData = gradeData?.subjects.find(s => s.name === details.subject);
-                    const chapterObject = subjectData?.chapters.find(c => c.title === details.chapter);
+                    const subjectData = gradeData?.subjects?.find(s => s.name === details.subject);
+                    const chapterObject = subjectData?.chapters?.find(c => c.title === details.chapter);
                     if (!chapterObject) throw new Error(`Chapter "${details.chapter}" not found in curriculum.`);
 
-                    const {content: module} = await getChapterContent(student.grade, details.subject, chapterObject, student, language);
-                    academicQuestions = await generateQuiz(module.coreConceptTraining.map(c => c.title), language, 6);
-                    iqQuestions = await generateIQExercises(student.grade, language, 2);
-                    eqQuestions = await generateEQExercises(student.grade, language, 2);
+                    const {content: module} = await getChapterContent(student.grade, details.subject, chapterObject, student, language, controller.signal);
+                    [academicQuestions, iqQuestions, eqQuestions] = await Promise.all([
+                        // FIX: Added signal argument to function signatures in geminiService to match these calls.
+                        geminiService.generateQuiz(module.coreConceptTraining.map(c => c.title), language, 6, controller.signal),
+                        geminiService.generateIQExercises(student.grade, language, 2, controller.signal),
+                        geminiService.generateEQExercises(student.grade, language, 2, controller.signal)
+                    ]);
 
-                } else if (type === 'IQ_EXERCISE') {
-                    iqQuestions = await generateIQExercises(student.grade, language, 5);
-                    eqQuestions = await generateEQExercises(student.grade, language, 3);
-                    
+                } else if (type === 'IQ_EXERCISE' || type === 'EQ_EXERCISE') {
                     const weakArea = findWeakestAcademicArea(student.performance, student.grade);
                     const gradeData = CURRICULUM.find(g => g.level === student.grade);
-                    const subjectData = gradeData?.subjects.find(s => s.name === weakArea.subject);
-                    const chapterObject = subjectData?.chapters.find(c => c.title === weakArea.chapter);
+                    const subjectData = gradeData?.subjects?.find(s => s.name === weakArea.subject);
+                    const chapterObject = subjectData?.chapters?.find(c => c.title === weakArea.chapter);
                     if (!chapterObject) throw new Error(`Chapter "${weakArea.chapter}" not found in curriculum.`);
                     
-                    const {content: module} = await getChapterContent(student.grade, weakArea.subject, chapterObject, student, language);
-                    academicQuestions = await generateQuiz(module.coreConceptTraining.map(c => c.title), language, 2);
-
-                } else if (type === 'EQ_EXERCISE') {
-                    eqQuestions = await generateEQExercises(student.grade, language, 5);
-                    iqQuestions = await generateIQExercises(student.grade, language, 3);
-                     
-                    const weakArea = findWeakestAcademicArea(student.performance, student.grade);
-                    const gradeData = CURRICULUM.find(g => g.level === student.grade);
-                    const subjectData = gradeData?.subjects.find(s => s.name === weakArea.subject);
-                    const chapterObject = subjectData?.chapters.find(c => c.title === weakArea.chapter);
-                    if (!chapterObject) throw new Error(`Chapter "${weakArea.chapter}" not found in curriculum.`);
+                    const {content: module} = await getChapterContent(student.grade, weakArea.subject, chapterObject, student, language, controller.signal);
                     
-                    const {content: module} = await getChapterContent(student.grade, weakArea.subject, chapterObject, student, language);
-                    academicQuestions = await generateQuiz(module.coreConceptTraining.map(c => c.title), language, 2);
+                    if (type === 'IQ_EXERCISE') {
+                        [iqQuestions, eqQuestions, academicQuestions] = await Promise.all([
+                            // FIX: Added signal argument to function signatures in geminiService to match these calls.
+                            geminiService.generateIQExercises(student.grade, language, 5, controller.signal),
+                            geminiService.generateEQExercises(student.grade, language, 3, controller.signal),
+                            geminiService.generateQuiz(module.coreConceptTraining.map(c => c.title), language, 2, controller.signal)
+                        ]);
+                    } else { // EQ_EXERCISE
+                         [eqQuestions, iqQuestions, academicQuestions] = await Promise.all([
+                            // FIX: Added signal argument to function signatures in geminiService to match these calls.
+                            geminiService.generateEQExercises(student.grade, language, 5, controller.signal),
+                            geminiService.generateIQExercises(student.grade, language, 3, controller.signal),
+                            geminiService.generateQuiz(module.coreConceptTraining.map(c => c.title), language, 2, controller.signal)
+                        ]);
+                    }
                 }
 
                 let orderedTasks: MissionTask[] = [];
@@ -137,21 +131,26 @@ const PersonalizedPathScreen: React.FC<PersonalizedPathScreenProps> = ({ student
                 } else if (type === 'EQ_EXERCISE') {
                     orderedTasks = [...eqQuestions, ...iqQuestions, ...academicQuestions];
                 }
-
-                setTaskContent(orderedTasks.slice(0, 10));
-                setPathState('PRESENTING_TASK');
+                
+                if (!controller.signal.aborted) {
+                    setTaskContent(orderedTasks.slice(0, 10));
+                    setPathState('PRESENTING_TASK');
+                }
 
             } catch (err: any) {
-                setError(err.message);
-                setPathState('ERROR');
+                 if (err.name !== 'AbortError') {
+                    setError(err.message);
+                    setPathState('ERROR');
+                }
             }
         };
 
-        if (pathState === 'GENERATING_CONTENT') {
-            generateContent();
-        }
+        fetchAndGenerate();
+        
+        return () => controller.abort();
 
-    }, [pathState, adaptiveAction, student, language]);
+    }, [student, language]);
+
 
     const handleRetry = () => {
         setError(null);

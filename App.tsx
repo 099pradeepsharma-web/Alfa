@@ -1,52 +1,54 @@
-import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import type { Chat } from '@google/genai';
 import { Grade, Subject, Chapter, Student, NextStepRecommendation, Concept, StudyGoal, AdaptiveAction, Teacher, Parent, Achievement } from './types';
 import { getCurriculum } from './services/curriculumService';
-import { createTutorChat } from './services/geminiService';
-import { Chat } from '@google/genai';
 import { ExclamationTriangleIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 import { useLanguage } from './contexts/Language-context';
 import LoadingSpinner from './components/LoadingSpinner';
 import { useAuth } from './contexts/AuthContext';
 import { ALL_ACHIEVEMENTS } from './data/achievements';
 import { useSound } from './hooks/useSound';
+import { createTutorChat } from './services/geminiService';
+import { createLazyComponent } from './utils/componentLoader';
 
 // --- Lazy Loading Screens and Components for Performance Optimization ---
-const Header = lazy(() => import('./components/Header'));
-const Footer = lazy(() => import('./components/Footer'));
-const GradeSelector = lazy(() => import('./components/GradeSelector'));
-const SubjectSelector = lazy(() => import('./components/SubjectSelector'));
-// FIX: The component 'ChapterView' is a named export, so it must be destructured and returned as a default export for React.lazy to work correctly.
-const ChapterView = lazy(() => import('./components/ChapterView').then(module => ({ default: module.ChapterView })));
-const AuthScreen = lazy(() => import('./screens/AuthScreen'));
-const StudentDashboard = lazy(() => import('./screens/StudentDashboard'));
-const PersonalizedPathScreen = lazy(() => import('./screens/PersonalizedPathScreen'));
-const PrivacyPolicyScreen = lazy(() => import('./screens/PrivacyPolicyScreen'));
-const FAQScreen = lazy(() => import('./screens/FAQScreen'));
-const TutorSessionScreen = lazy(() => import('./screens/TutorSessionScreen').then(module => ({ default: module.TutorSessionScreen })));
-const CompetitionScreen = lazy(() => import('./screens/CompetitionScreen'));
-const CareerGuidanceScreen = lazy(() => import('./screens/CareerGuidanceScreen'));
-const InnovationLabScreen = lazy(() => import('./screens/InnovationLabScreen'));
-const CriticalThinkingScreen = lazy(() => import('./screens/CriticalThinkingScreen'));
-const GlobalPrepScreen = lazy(() => import('./screens/GlobalPrepScreen'));
-const LeadershipCircleScreen = lazy(() => import('./screens/LeadershipCircleScreen'));
-const AIChatbotScreen = lazy(() => import('./screens/AIChatbotScreen'));
-const ProjectHubScreen = lazy(() => import('./screens/ProjectHubScreen'));
-const PeerPediaScreen = lazy(() => import('./screens/PeerPediaScreen'));
-const TutorialScreen = lazy(() => import('./screens/TutorialScreen'));
-const AboutScreen = lazy(() => import('./screens/AboutScreen'));
-const TermsScreen = lazy(() => import('./screens/TermsScreen'));
-const LandingPage = lazy(() => import('./screens/LandingPage'));
-const ContactScreen = lazy(() => import('./screens/ContactScreen'));
-const TeacherDashboard = lazy(() => import('./screens/TeacherDashboard'));
-const ParentDashboard = lazy(() => import('./screens/ParentDashboard').then(module => ({ default: module.ParentDashboard })));
-const StudentPerformanceView = lazy(() => import('./screens/StudentPerformanceView'));
-const AchievementToast = lazy(() => import('./components/AchievementToast'));
-const PointsToast = lazy(() => import('./components/PointsToast'));
-const ExamPrepScreen = lazy(() => import('./screens/ExamPrepScreen'));
-const CognitiveTwinScreen = lazy(() => import('./screens/CognitiveTwinScreen'));
+// FIX: The lazy import for components with named exports (like ChapterView) must be handled with `.then()`. This was causing type signature errors.
+const Header = createLazyComponent(() => import('./components/Header'), <header className="h-[73px] bg-surface border-b border-border"></header>);
+const Footer = createLazyComponent(() => import('./components/Footer'), null);
+const GradeSelector = createLazyComponent(() => import('./components/GradeSelector'));
+const SubjectSelector = createLazyComponent(() => import('./components/SubjectSelector'));
+const ChapterView = createLazyComponent(() => import('./components/ChapterView').then(module => ({ default: module.ChapterView })));
+const AuthScreen = createLazyComponent(() => import('./screens/AuthScreen'));
+const StudentDashboard = createLazyComponent(() => import('./screens/StudentDashboard'));
+const PersonalizedPathScreen = createLazyComponent(() => import('./screens/PersonalizedPathScreen'));
+const PrivacyPolicyScreen = createLazyComponent(() => import('./screens/PrivacyPolicyScreen'));
+const FAQScreen = createLazyComponent(() => import('./screens/FAQScreen'));
+const TutorSessionScreen = createLazyComponent(() => import('./screens/TutorSessionScreen').then(module => ({ default: module.TutorSessionScreen })));
+const CompetitionScreen = createLazyComponent(() => import('./screens/CompetitionScreen'));
+const CareerGuidanceScreen = createLazyComponent(() => import('./screens/CareerGuidanceScreen'));
+const InnovationLabScreen = createLazyComponent(() => import('./screens/InnovationLabScreen'));
+const CriticalThinkingScreen = createLazyComponent(() => import('./screens/CriticalThinkingScreen'));
+const GlobalPrepScreen = createLazyComponent(() => import('./screens/GlobalPrepScreen'));
+const LeadershipCircleScreen = createLazyComponent(() => import('./screens/LeadershipCircleScreen'));
+const AIChatbotScreen = createLazyComponent(() => import('./screens/AIChatbotScreen'));
+const ProjectHubScreen = createLazyComponent(() => import('./screens/ProjectHubScreen'));
+const PeerPediaScreen = createLazyComponent(() => import('./screens/PeerPediaScreen'));
+const TutorialScreen = createLazyComponent(() => import('./screens/TutorialScreen'));
+const AboutScreen = createLazyComponent(() => import('./screens/AboutScreen'));
+const TermsScreen = createLazyComponent(() => import('./screens/TermsScreen'));
+const LandingPage = createLazyComponent(() => import('./screens/LandingPage'));
+const ContactScreen = createLazyComponent(() => import('./screens/ContactScreen'));
+const TeacherDashboard = createLazyComponent(() => import('./screens/TeacherDashboard'));
+const ParentDashboard = createLazyComponent(() => import('./screens/ParentDashboard').then(module => ({ default: module.ParentDashboard })));
+const StudentPerformanceView = createLazyComponent(() => import('./screens/StudentPerformanceView'));
+const AchievementToast = createLazyComponent(() => import('./components/AchievementToast'), null);
+const PointsToast = createLazyComponent(() => import('./components/PointsToast'), null);
+const ExamPrepScreen = createLazyComponent(() => import('./screens/ExamPrepScreen'));
+const CognitiveTwinScreen = createLazyComponent(() => import('./screens/CognitiveTwinScreen'));
+const MathMentorScreen = createLazyComponent(() => import('./screens/MathMentorScreen'));
 
 
-type StudentView = 'dashboard' | 'path' | 'browse' | 'wellbeing' | 'tutor' | 'tutorial' | 'competitions' | 'career_guidance' | 'innovation_lab' | 'critical_thinking' | 'global_prep' | 'leadership_circle' | 'ai_chatbot' | 'project_hub' | 'peer_pedia' | 'exam_prep' | 'cognitive_twin';
+type StudentView = 'dashboard' | 'path' | 'browse' | 'wellbeing' | 'tutor' | 'tutorial' | 'competitions' | 'career_guidance' | 'innovation_lab' | 'critical_thinking' | 'global_prep' | 'leadership_circle' | 'ai_chatbot' | 'project_hub' | 'peer_pedia' | 'exam_prep' | 'cognitive_twin' | 'math_mentor';
 type AppView = 'student_flow' | 'privacy_policy' | 'faq' | 'about' | 'terms' | 'contact';
 
 const App: React.FC = () => {
@@ -73,6 +75,8 @@ const App: React.FC = () => {
   const [selectedGrade, setSelectedGrade] = useState<Grade | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
+  
+  // Chat state
   const [tutorChat, setTutorChat] = useState<Chat | null>(null);
   
   // Profile update state
@@ -82,6 +86,8 @@ const App: React.FC = () => {
   // Gamification UI State
   const [showAchievement, setShowAchievement] = useState<Achievement | null>(null);
   const [awardedPoints, setAwardedPoints] = useState<number | null>(null);
+
+  const abortControllerRef = useRef<AbortController>();
 
   // --- Sound Effect Integration ---
   useEffect(() => {
@@ -100,21 +106,32 @@ const App: React.FC = () => {
   }, [playSound]);
 
   const loadCurriculum = useCallback(async () => {
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setIsLoadingCurriculum(true);
     setError(null);
     try {
-        const data = await getCurriculum();
+        const data = await getCurriculum(controller.signal);
         setCurriculum(data);
-    } catch (error) {
-        console.error("Failed to load curriculum:", error);
-        setError("We couldn't load the learning curriculum. Please check your internet connection and try again.");
+    } catch (error: any) {
+        if (error.name !== 'AbortError') {
+            console.error("Failed to load curriculum:", error);
+            setError("We couldn't load the learning curriculum. Please check your internet connection and try again.");
+        }
     } finally {
-        setIsLoadingCurriculum(false);
+        if (!controller.signal.aborted) {
+            setIsLoadingCurriculum(false);
+        }
     }
   }, []);
 
   useEffect(() => {
     loadCurriculum();
+    return () => {
+        abortControllerRef.current?.abort();
+    }
   }, [loadCurriculum]);
   
   const handleBackToDashboard = useCallback(() => {
@@ -180,11 +197,11 @@ const App: React.FC = () => {
   }, [selectedSubject]);
 
   const handleStartTutorSession = useCallback((concepts: Concept[]) => {
-    if (!selectedGrade || !selectedSubject || !selectedChapter || currentRole !== 'student' || !currentUser) return;
-    const chatSession = createTutorChat(selectedGrade.level, selectedSubject.name, selectedChapter.title, language, concepts, currentUser as Student);
-    setTutorChat(chatSession);
+    if (!selectedGrade || !selectedSubject || !selectedChapter || !currentUser || currentRole !== 'student') return;
+    const newChat = createTutorChat(selectedGrade.level, selectedSubject.name, selectedChapter.title, concepts, currentUser as Student, language);
+    setTutorChat(newChat);
     setStudentView('tutor');
-  }, [selectedGrade, selectedSubject, selectedChapter, language, currentRole, currentUser]);
+  }, [selectedGrade, selectedSubject, selectedChapter, currentUser, currentRole, language]);
 
   const handleEndTutorSession = useCallback(() => { setTutorChat(null); setStudentView('browse'); }, []);
   const handleFinishTutorial = useCallback(() => { try { localStorage.setItem('alfanumrik-tutorial-seen', 'true'); } catch (e) { console.error("Failed to save tutorial status:", e); } setStudentView('dashboard'); }, []);
@@ -235,8 +252,8 @@ const App: React.FC = () => {
     if (action.details.subject && action.details.chapter && currentRole === 'student') {
         const student = currentUser as Student;
         const grade = curriculum.find(g => g.level === student.grade);
-        const subject = grade?.subjects.find(s => s.name === action.details.subject);
-        const chapter = subject?.chapters.find(c => c.title === action.details.chapter);
+        const subject = grade?.subjects?.find(s => s.name === action.details.subject);
+        const chapter = subject?.chapters?.find(c => c.title === action.details.chapter);
         
         if (grade && subject && chapter) {
             setSelectedGrade(grade);
@@ -294,7 +311,7 @@ const App: React.FC = () => {
         case 'dashboard': return <StudentDashboard {...commonDashboardProps} />;
         case 'path': return <PersonalizedPathScreen student={student} onBack={handleBackToDashboard} onMissionComplete={handleMissionComplete} />;
         case 'browse': return renderStudentBrowseFlow();
-        case 'tutor': return <TutorSessionScreen student={student} chat={tutorChat!} onBack={handleEndTutorSession} />;
+        case 'tutor': return tutorChat ? <TutorSessionScreen student={student} chat={tutorChat} onBack={handleEndTutorSession} /> : null;
         case 'ai_chatbot': return <AIChatbotScreen student={student} onBack={handleBackToDashboard} />;
         case 'innovation_lab': return <InnovationLabScreen onBack={handleBackToDashboard} />;
         case 'critical_thinking': return <CriticalThinkingScreen onBack={handleBackToDashboard} />;
@@ -306,6 +323,7 @@ const App: React.FC = () => {
         case 'career_guidance': return <CareerGuidanceScreen student={student} onBack={handleBackToDashboard} />;
         case 'exam_prep': return <ExamPrepScreen student={student} onBack={handleBackToDashboard} />;
         case 'cognitive_twin': return <CognitiveTwinScreen student={student} onBack={handleBackToDashboard} onStartCalibration={() => handleStartStudentView('critical_thinking')} />;
+        case 'math_mentor': return <MathMentorScreen onBack={handleBackToDashboard} />;
         case 'wellbeing': {
             const wellbeingChapter: Chapter = { title: 'The Great Transformation: Navigating Your Journey from Teen to Adult', topics: [], tags: [] };
             const wellbeingSubject: Subject = { name: 'Personal Growth & Well-being', icon: 'SparklesIcon', chapters: [wellbeingChapter] };
@@ -363,30 +381,24 @@ const App: React.FC = () => {
   return (
     <div className={`flex flex-col min-h-screen bg-bg-primary ${!isAuthenticated ? 'landing-page' : ''}`}>
       {isAuthenticated && currentUser && (
-        <Suspense fallback={<header className="h-[73px] bg-surface border-b border-border"></header>}>
-            <Header 
-              onGoHome={handleGoHome} showHomeButton={true} curriculum={curriculum} onSearchSelect={handleSearchSelect}
-              isLoggedIn={isAuthenticated} user={currentUser} userRole={currentRole}
-              onUpdateProfile={updateUserProfile} profileUpdateLoading={profileUpdateLoading} profileUpdateError={profileUpdateError}
-              onLogout={handleLogout}
-            />
-        </Suspense>
+        <Header 
+          onGoHome={handleGoHome} showHomeButton={true} curriculum={curriculum} onSearchSelect={handleSearchSelect}
+          isLoggedIn={isAuthenticated} user={currentUser} userRole={currentRole}
+          onUpdateProfile={updateUserProfile} profileUpdateLoading={profileUpdateLoading} profileUpdateError={profileUpdateError}
+          onLogout={handleLogout}
+        />
       )}
       <main className={`${isAuthenticated ? 'container mx-auto p-4 md:p-8' : ''} flex-grow`}>
-        <Suspense fallback={<div className="flex justify-center items-center h-64"><LoadingSpinner /></div>}>
-            {renderContent()}
-        </Suspense>
+        {renderContent()}
       </main>
       {!showAuthScreen && (
-        <Suspense fallback={null}>
-            <Footer onShowAbout={() => setAppView('about')} onShowPrivacyPolicy={() => setAppView('privacy_policy')} onShowTerms={() => setAppView('terms')} onShowFaq={() => setAppView('faq')} />
-        </Suspense>
+        <Footer onShowAbout={() => setAppView('about')} onShowPrivacyPolicy={() => setAppView('privacy_policy')} onShowTerms={() => setAppView('terms')} onShowFaq={() => setAppView('faq')} />
       )}
       {showAchievement && (
-        <Suspense fallback={null}><AchievementToast achievement={showAchievement} onClose={() => setShowAchievement(null)} /></Suspense>
+        <AchievementToast achievement={showAchievement} onClose={() => setShowAchievement(null)} />
       )}
        {awardedPoints !== null && (
-        <Suspense fallback={null}><PointsToast points={awardedPoints} onClose={() => setAwardedPoints(null)} /></Suspense>
+        <PointsToast points={awardedPoints} onClose={() => setAwardedPoints(null)} />
       )}
     </div>
   );

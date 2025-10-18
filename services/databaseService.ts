@@ -1,7 +1,7 @@
 import { StudentQuestion, PerformanceRecord, AIFeedback, Achievement, StudyGoal } from '../types';
 
 const DB_NAME = 'AlfanumrikDB';
-const DB_VERSION = 3; // Incremented version to add user stores
+const DB_VERSION = 4; // Incremented version to add new indexes
 let db: IDBDatabase;
 
 // List of "tables" in our database
@@ -22,6 +22,15 @@ const STORES = [
     'teachers',
     'parents'
 ];
+
+/**
+ * Throws an AbortError if the signal is aborted.
+ */
+const checkAborted = (signal?: AbortSignal) => {
+    if (signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError');
+    }
+};
 
 /**
  * Opens and initializes the IndexedDB database.
@@ -47,6 +56,9 @@ const openDb = (): Promise<IDBDatabase> => {
 
         request.onupgradeneeded = (event) => {
             const tempDb = (event.target as IDBOpenDBRequest).result;
+            const transaction = (event.target as IDBOpenDBRequest).transaction;
+
+            // Handle creation of stores if they don't exist
             STORES.forEach(storeName => {
                 if (!tempDb.objectStoreNames.contains(storeName)) {
                     // Define key paths and indexes for specific stores
@@ -75,12 +87,10 @@ const openDb = (): Promise<IDBDatabase> => {
                             userStore.createIndex('email', 'email', { unique: true });
                             break;
                         case 'teachers':
-                             // FIX: Added email index for consistency and to prevent duplicate entries.
                              const teacherStore = tempDb.createObjectStore('teachers', { keyPath: 'id' });
                              teacherStore.createIndex('email', 'email', { unique: true });
                              break;
                         case 'parents':
-                             // FIX: Added email index for consistency and to prevent duplicate entries.
                              const parentStore = tempDb.createObjectStore('parents', { keyPath: 'id' });
                              parentStore.createIndex('email', 'email', { unique: true });
                              break;
@@ -91,6 +101,29 @@ const openDb = (): Promise<IDBDatabase> => {
                     }
                 }
             });
+            
+            // Handle index upgrades for version 4
+            if (event.oldVersion < 4 && transaction) {
+                try {
+                    const performanceStore = transaction.objectStore('performance');
+                    if (!performanceStore.indexNames.contains('student_subject_date')) {
+                        performanceStore.createIndex('student_subject_date', ['studentId', 'subject', 'completedDate']);
+                    }
+                    if (!performanceStore.indexNames.contains('score_date')) {
+                        performanceStore.createIndex('score_date', ['score', 'completedDate']);
+                    }
+
+                    const questionsStore = transaction.objectStore('questions');
+                    if (!questionsStore.indexNames.contains('student_concept')) {
+                        questionsStore.createIndex('student_concept', ['studentId', 'concept']);
+                    }
+                    if (!questionsStore.indexNames.contains('subject_chapter')) {
+                        questionsStore.createIndex('subject_chapter', ['subject', 'chapter']);
+                    }
+                } catch (e) {
+                    console.error("Error creating indexes for v4:", e);
+                }
+            }
         };
     });
 };
@@ -110,32 +143,41 @@ type ObjectStoreName = typeof STORES[number];
 /**
  * Gets a document from a table by its key.
  */
-export const getDoc = async <T>(table: ObjectStoreName, key: IDBValidKey): Promise<T | null> => {
+export const getDoc = async <T>(table: ObjectStoreName, key: IDBValidKey, signal?: AbortSignal): Promise<T | null> => {
+    checkAborted(signal);
     const db = await openDb();
+    checkAborted(signal);
     const tx = db.transaction(table, 'readonly');
     const store = tx.objectStore(table);
     const result = await promisifyRequest<T>(store.get(key));
+    checkAborted(signal);
     return result ?? null;
 };
 
 /**
  * Sets (creates or overwrites) a document in a table.
  */
-export const setDoc = async <T>(table: ObjectStoreName, key: IDBValidKey, data: T): Promise<void> => {
+export const setDoc = async <T>(table: ObjectStoreName, key: IDBValidKey, data: T, signal?: AbortSignal): Promise<void> => {
+    checkAborted(signal);
     const db = await openDb();
+    checkAborted(signal);
     const tx = db.transaction(table, 'readwrite');
     const store = tx.objectStore(table);
     await promisifyRequest(store.put(data, key));
+    checkAborted(signal);
 };
 
 /**
  * Adds a document to a collection (table).
  */
-export const addDocToCollection = async (table: ObjectStoreName, doc: any): Promise<void> => {
+export const addDocToCollection = async (table: ObjectStoreName, doc: any, signal?: AbortSignal): Promise<void> => {
+    checkAborted(signal);
     const db = await openDb();
+    checkAborted(signal);
     const tx = db.transaction(table, 'readwrite');
     const store = tx.objectStore(table);
     await promisifyRequest(store.add(doc));
+    checkAborted(signal);
 };
 
 /**
@@ -144,63 +186,111 @@ export const addDocToCollection = async (table: ObjectStoreName, doc: any): Prom
 export const queryCollectionByIndex = async <T>(
     table: ObjectStoreName, 
     indexName: string, 
-    queryValue: IDBValidKey
+    queryValue: IDBValidKey,
+    signal?: AbortSignal
 ): Promise<T[]> => {
+    checkAborted(signal);
     const db = await openDb();
+    checkAborted(signal);
     const tx = db.transaction(table, 'readonly');
     const store = tx.objectStore(table);
     const index = store.index(indexName);
     const result = await promisifyRequest<T[]>(index.getAll(queryValue));
+    checkAborted(signal);
     return result ?? [];
 };
 
 /**
  * Updates a document in a collection by its key.
  */
-export const updateDocInCollection = async (table: 'questions' | 'studyGoals' | 'users' | 'teachers' | 'parents', key: IDBValidKey, updatedDoc: any): Promise<void> => {
+export const updateDocInCollection = async (table: 'questions' | 'studyGoals' | 'users' | 'teachers' | 'parents', key: IDBValidKey, updatedDoc: any, signal?: AbortSignal): Promise<void> => {
+    checkAborted(signal);
     const db = await openDb();
+    checkAborted(signal);
     const tx = db.transaction(table, 'readwrite');
     const store = tx.objectStore(table);
     await promisifyRequest(store.put(updatedDoc));
+    checkAborted(signal);
 };
 
 /**
  * Deletes a document from a collection by its key.
  */
-export const deleteDocInCollection = async (table: ObjectStoreName, key: IDBValidKey): Promise<void> => {
+export const deleteDocInCollection = async (table: ObjectStoreName, key: IDBValidKey, signal?: AbortSignal): Promise<void> => {
+    checkAborted(signal);
     const db = await openDb();
+    checkAborted(signal);
     const tx = db.transaction(table, 'readwrite');
     const store = tx.objectStore(table);
     await promisifyRequest(store.delete(key));
+    checkAborted(signal);
 };
 
 /**
  * Gets all documents from a table.
  */
-export const getAllDocs = async <T>(table: ObjectStoreName): Promise<T[]> => {
+export const getAllDocs = async <T>(table: ObjectStoreName, signal?: AbortSignal): Promise<T[]> => {
+    checkAborted(signal);
     const db = await openDb();
+    checkAborted(signal);
     const tx = db.transaction(table, 'readonly');
     const store = tx.objectStore(table);
     const result = await promisifyRequest<T[]>(store.getAll());
+    checkAborted(signal);
     return result ?? [];
 };
 
 /**
  * Clears all documents from an object store.
  */
-export const clearStore = async (table: ObjectStoreName): Promise<void> => {
+export const clearStore = async (table: ObjectStoreName, signal?: AbortSignal): Promise<void> => {
+    checkAborted(signal);
     const db = await openDb();
+    checkAborted(signal);
     const tx = db.transaction(table, 'readwrite');
     const store = tx.objectStore(table);
     await promisifyRequest(store.clear());
+    checkAborted(signal);
 };
 
 /**
  * Counts the number of documents in a store.
  */
-export const countDocs = async (table: ObjectStoreName): Promise<number> => {
+export const countDocs = async (table: ObjectStoreName, signal?: AbortSignal): Promise<number> => {
+    checkAborted(signal);
     const db = await openDb();
+    checkAborted(signal);
     const tx = db.transaction(table, 'readonly');
     const store = tx.objectStore(table);
-    return await promisifyRequest(store.count());
+    const result = await promisifyRequest(store.count());
+    checkAborted(signal);
+    return result;
+};
+
+export const getPerformanceBySubject = async (
+  studentId: string, 
+  subject: string, 
+  limit = 10
+): Promise<PerformanceRecord[]> => {
+  const db = await openDb();
+  const tx = db.transaction('performance', 'readonly');
+  const store = tx.objectStore('performance');
+  const index = store.index('student_subject_date');
+  
+  // Use cursor for better memory efficiency
+  const results: PerformanceRecord[] = [];
+  const request = index.openCursor(IDBKeyRange.bound([studentId, subject], [studentId, subject, '\uffff']));
+  
+  return new Promise((resolve, reject) => {
+    request.onsuccess = (event) => {
+      const cursor = (event.target as IDBRequest).result;
+      if (cursor && results.length < limit) {
+        results.push(cursor.value);
+        cursor.continue();
+      } else {
+        resolve(results);
+      }
+    };
+    request.onerror = () => reject(request.error);
+  });
 };

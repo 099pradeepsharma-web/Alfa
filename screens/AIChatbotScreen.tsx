@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Student, ChatMessage } from '../types';
-import { Chat } from '@google/genai';
+import type { Chat } from '@google/genai';
 import { useLanguage } from '../contexts/Language-context';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useTTS } from '../hooks/useTTS';
@@ -19,62 +19,74 @@ const AIChatbotScreen: React.FC<AIChatbotScreenProps> = ({ student, onBack }) =>
     const [chat, setChat] = useState<Chat | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState('');
-    const [isThinking, setIsThinking] = useState(true);
+    const [isThinking, setIsThinking] = useState(false);
     const chatHistoryRef = useRef<HTMLDivElement>(null);
 
     const { isSpeaking: isFittoSpeaking, isPaused, currentlyPlayingId, play: playFittoResponse, pause, resume, stop: stopFittoResponse } = useTTS();
 
-    // Initialize chat on mount
     useEffect(() => {
-        if (student) {
-            const chatSession = createGeneralChatbot(student, language);
-            setChat(chatSession);
-        }
-    }, [student, language]);
+        const newChat = createGeneralChatbot(student, language);
+        setChat(newChat);
 
-    const handleSendMessage = useCallback(async (text: string) => {
+        const fetchInitialMessage = async () => {
+            setIsThinking(true);
+            const modelMessageId = `model-greeting-${Date.now()}`;
+            setMessages([{ id: modelMessageId, role: 'model', text: '', state: 'thinking' }]);
+
+            try {
+                // FIX: Pass an object with the `message` property to `sendMessageStream`.
+                const result = await newChat.sendMessageStream({ message: "Hello, please give me a fun and engaging welcome greeting." });
+                
+                let fullResponse = '';
+                for await (const chunk of result) {
+                    fullResponse += chunk.text;
+                    setMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, text: fullResponse } : m));
+                }
+                
+                setMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, state: undefined } : m));
+            } catch (err: any) {
+                console.error("Chatbot greeting failed:", err);
+                const errorMessage = { id: modelMessageId, role: 'model' as const, text: t('aiChatbotWelcome'), state: 'error' as const };
+                setMessages([errorMessage]);
+            } finally {
+                setIsThinking(false);
+            }
+        };
+
+        fetchInitialMessage();
+    }, [student, language, t]);
+
+    const handleSendMessage = async (text: string) => {
         const trimmedText = text.trim();
         if (!trimmedText || isThinking || !chat) return;
 
         setIsThinking(true);
         if (isFittoSpeaking) stopFittoResponse();
-
-        const userMessage: ChatMessage = { id: `user-${Date.now()}`, role: 'user', text: trimmedText };
-        setMessages(prev => [...prev, userMessage]);
         setInputValue('');
 
-        try {
-            const responseStream = await chat.sendMessageStream({ message: trimmedText });
-            let fullResponse = '';
-            const modelMessageId = `model-${Date.now()}`;
-            
-            setMessages(prev => [...prev, { id: modelMessageId, role: 'model', text: '', state: 'thinking' }]);
+        const userMessage: ChatMessage = { id: `user-${Date.now()}`, role: 'user', text: trimmedText };
+        const modelMessageId = `model-${Date.now()}`;
+        setMessages(prev => [...prev, userMessage, { id: modelMessageId, role: 'model', text: '', state: 'thinking' }]);
 
-            for await (const chunk of responseStream) {
-                const chunkText = chunk.text;
-                if (chunkText) {
-                    fullResponse += chunkText;
-                    setMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, text: fullResponse } : m));
-                }
+        try {
+            // FIX: Pass an object with the `message` property to `sendMessageStream`.
+            const result = await chat.sendMessageStream({ message: trimmedText });
+            
+            let fullResponse = '';
+            for await (const chunk of result) {
+                fullResponse += chunk.text;
+                setMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, text: fullResponse } : m));
             }
             
             setMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, state: undefined } : m));
         } catch (err: any) {
             console.error("Chatbot failed:", err);
-            const errorMessage = { id: `err-${Date.now()}`, role: 'model' as const, text: "I'm having trouble connecting right now. Please try again in a moment.", state: 'error' as const };
-            setMessages(prev => [...prev.filter(m => m.state !== 'thinking'), errorMessage]);
+            const errorMessage: ChatMessage = { id: modelMessageId, role: 'model', text: "I'm having trouble connecting right now. Please try again in a moment.", state: 'error' };
+            setMessages(prev => prev.map(m => m.id === modelMessageId ? errorMessage : m));
         } finally {
             setIsThinking(false);
         }
-    }, [chat, isThinking, isFittoSpeaking, stopFittoResponse]);
-    
-    // Initial greeting
-    useEffect(() => {
-        if (chat) {
-            setMessages([{ id: 'initial-greeting', role: 'model', text: t('aiChatbotWelcome') }]);
-            setIsThinking(false);
-        }
-    }, [chat, t]);
+    };
 
     const { isListening, transcript, startListening, stopListening, isSupported } = useSpeechRecognition({ onEnd: handleSendMessage });
 
@@ -91,7 +103,7 @@ const AIChatbotScreen: React.FC<AIChatbotScreenProps> = ({ student, onBack }) =>
     return (
         <div className="animate-fade-in flex flex-col h-[calc(100vh-120px)] max-w-3xl mx-auto">
             <div className="flex-shrink-0 dashboard-highlight-card p-4 rounded-b-none border-b border-border">
-                <button onClick={onBack} className="flex items-center text-primary hover:text-primary-dark font-semibold transition mb-2" style={{color: 'rgb(var(--c-primary))'}}>
+                <button onClick={onBack} className="flex items-center text-primary hover:text-primary-dark font-semibold transition mb-2">
                     <ArrowLeftIcon className="h-5 w-5 mr-2" />
                     {t('backToDashboard')}
                 </button>
@@ -144,7 +156,6 @@ const AIChatbotScreen: React.FC<AIChatbotScreenProps> = ({ student, onBack }) =>
                                     {!msg.state && msg.text && (
                                         <div className="flex-shrink-0">
                                             {(!isFittoSpeaking || !isCurrentAudio) ? (
-                                                // FIX: Convert msg.id to a string to match the expected type for the `play` function.
                                                 <button onClick={() => playFittoResponse(msg.text, msg.id.toString())} className="p-2 rounded-full bg-slate-600 hover:bg-slate-500 text-slate-200 transition" aria-label="Play audio response"><PlayCircleIcon className="h-5 w-5"/></button>
                                             ) : (
                                                 <div className="flex items-center gap-1">
@@ -194,7 +205,7 @@ const AIChatbotScreen: React.FC<AIChatbotScreenProps> = ({ student, onBack }) =>
                         disabled={isThinking || (!inputValue.trim() && !isListening)}
                         aria-label={t('submitQuestion')}
                     >
-                        {isThinking && messages.some(m => m.state === 'thinking') ? <LoadingSpinner /> : <PaperAirplaneIcon className="h-6 w-6" />}
+                        {isThinking ? <LoadingSpinner /> : <PaperAirplaneIcon className="h-6 w-6" />}
                     </button>
                 </form>
             </div>

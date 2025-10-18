@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLanguage } from '../contexts/Language-context';
+import type { Chat } from '@google/genai';
 import { ArrowLeftIcon, SparklesIcon, DocumentTextIcon, LightBulbIcon, ChatBubbleLeftRightIcon, AcademicCapIcon, BriefcaseIcon, CheckCircleIcon, TrophyIcon, PaperAirplaneIcon, MicrophoneIcon, StopCircleIcon, PlayCircleIcon, PauseCircleIcon, RocketLaunchIcon } from '@heroicons/react/24/solid';
 import { AptitudeQuestion, AptitudeTrait, CareerGuidance, Student, ChatMessage } from '../types';
 import * as geminiService from '../services/geminiService';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { Chat } from '@google/genai';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useTTS } from '../hooks/useTTS';
 import FittoAvatar, { FittoState } from '../components/FittoAvatar';
@@ -93,11 +93,14 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ student, on
     const [aptitudeResults, setAptitudeResults] = useState<{ scores: Record<string, { correct: number, total: number }>, summary: string } | null>(null);
     const [guidance, setGuidance] = useState<CareerGuidance | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    
+    // Chat state
     const [counselorChat, setCounselorChat] = useState<Chat | null>(null);
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [isThinking, setIsThinking] = useState(false);
     const [chatInput, setChatInput] = useState('');
     const chatHistoryRef = useRef<HTMLDivElement>(null);
+    
     const { isSpeaking, isPaused, currentlyPlayingId, play, pause, resume, stop } = useTTS();
 
      useEffect(() => {
@@ -105,7 +108,6 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ student, on
             chatHistoryRef.current.scrollTop = chatHistoryRef.current.scrollHeight;
         }
     }, [chatMessages]);
-
 
     const handleTestFinish = async (results: Record<string, { correct: number, total: number }>) => {
         setIsLoading(true);
@@ -124,39 +126,65 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ student, on
         setIsLoading(false);
     };
     
-    const handleStartCounseling = async () => {
+    const handleStartCounseling = useCallback(() => {
         if (!student) return;
+        const newChat = geminiService.createCareerCounselorChat(student, language);
+        setCounselorChat(newChat);
         setView('counseling');
-        const chat = geminiService.createCareerCounselorChat(student, language);
-        setCounselorChat(chat);
 
-        const welcomeMessage: ChatMessage = { id: 'counselor-welcome', role: 'model', text: t('counselorWelcome') };
-        setChatMessages([welcomeMessage]);
-    };
+        const fetchInitialMessage = async () => {
+            setIsThinking(true);
+            const modelMessageId = `counselor-welcome-${Date.now()}`;
+            setChatMessages([{ id: modelMessageId, role: 'model', text: '', state: 'thinking' }]);
+
+            try {
+                // FIX: Pass an object with the `message` property to `sendMessageStream`.
+                const result = await newChat.sendMessageStream({ message: "Hello, please provide a warm welcome as a career counselor." });
+                let fullResponse = '';
+                for await (const chunk of result) {
+                    fullResponse += chunk.text;
+                    setChatMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, text: fullResponse } : m));
+                }
+                setChatMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, state: undefined } : m));
+            } catch (e: any) {
+                const errorMessage = { id: modelMessageId, role: 'model' as const, text: t('counselorWelcome'), state: 'error' as const };
+                setChatMessages([errorMessage]);
+            } finally {
+                setIsThinking(false);
+            }
+        };
+        fetchInitialMessage();
+    }, [student, language, t]);
 
     const handleSendChatMessage = async (text: string) => {
         const trimmedText = text.trim();
         if (!trimmedText || isThinking || !counselorChat) return;
+
         setIsThinking(true);
         if (isSpeaking) stop();
-
-        const userMessage: ChatMessage = { id: `user-${Date.now()}`, role: 'user', text: trimmedText };
-        setChatMessages(prev => [...prev, userMessage]);
         setChatInput('');
 
-        const responseStream = await counselorChat.sendMessageStream({ message: trimmedText });
-        let fullResponse = '';
+        const userMessage: ChatMessage = { id: `user-${Date.now()}`, role: 'user', text: trimmedText };
         const modelMessageId = `model-${Date.now()}`;
-        setChatMessages(prev => [...prev, { id: modelMessageId, role: 'model', text: '', state: 'thinking' }]);
+        setChatMessages(prev => [...prev, userMessage, { id: modelMessageId, role: 'model', text: '', state: 'thinking' }]);
 
-        for await (const chunk of responseStream) {
-            fullResponse += chunk.text;
-            setChatMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, text: fullResponse } : m));
+        try {
+            // FIX: Pass an object with the `message` property to `sendMessageStream`.
+            const result = await counselorChat.sendMessageStream({ message: trimmedText });
+            let fullResponse = '';
+            for await (const chunk of result) {
+                fullResponse += chunk.text;
+                setChatMessages(p => p.map(m => m.id === modelMessageId ? { ...m, text: fullResponse, state: 'thinking' } : m));
+            }
+            setChatMessages(p => p.map(m => m.id === modelMessageId ? { ...m, state: undefined } : m));
+        } catch (e: any) {
+            const errorMessage: ChatMessage = { id: modelMessageId, role: 'model', text: "I'm having trouble connecting right now. Please try again in a moment.", state: 'error' };
+            setChatMessages(p => p.map(m => m.id === modelMessageId ? errorMessage : m));
+        } finally {
+            setIsThinking(false);
         }
-
-        setChatMessages(prev => prev.map(m => m.id === modelMessageId ? { ...m, state: undefined } : m));
-        setIsThinking(false);
     };
+
 
     if (!student) return null;
 
@@ -235,7 +263,6 @@ const CareerGuidanceScreen: React.FC<CareerGuidanceScreenProps> = ({ student, on
                             {!msg.state && msg.text && (
                                 <div className="flex-shrink-0">
                                     {(!isSpeaking || !isCurrentAudio) ? (
-                                        // FIX: Convert msg.id to a string to match the expected type for the `play` function.
                                         <button onClick={() => play(msg.text, msg.id.toString())} className="p-2 rounded-full bg-surface hover:bg-bg-primary text-text-secondary transition" aria-label="Play audio response"><PlayCircleIcon className="h-5 w-5"/></button>
                                     ) : (
                                         <div className="flex items-center gap-1">

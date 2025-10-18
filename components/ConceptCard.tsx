@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Concept, Student, Grade, Subject, Chapter, StudentQuestion, FittoResponse, LearningModule } from '../types';
 import { BeakerIcon, ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
@@ -311,24 +312,6 @@ const ConceptCard: React.FC<ConceptCardProps> = React.memo(({
             </div>
         )}
       </div>
-
-       {/* New "Deeper Learning" Section */}
-       <div className="mt-6 pt-6 border-t border-dashed border-border">
-            <h4 className="text-lg font-bold text-text-primary flex items-center mb-4">
-               <SparklesIcon className="h-6 w-6 mr-2 text-primary" />
-               Deeper Learning & Practice
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <SectionLoaderButton 
-                    sectionKey="categorizedProblems" 
-                    label={t('loadPracticeProblems')} 
-                    isLoaded={!!learningModule.categorizedProblems}
-                    isLoading={isLoadingSection('categorizedProblems')}
-                    onLoad={() => onLoadSection('categorizedProblems')}
-                />
-            </div>
-       </div>
-
 
        {/* Q&A Section */}
       <div className="mt-6 pt-4 border-t border-border">

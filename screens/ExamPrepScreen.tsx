@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLanguage } from '../contexts/Language-context';
 import { ArrowLeftIcon, AcademicCapIcon, DocumentTextIcon, ClockIcon, PaperAirplaneIcon, ChevronLeftIcon, ChevronRightIcon, SparklesIcon, DocumentCheckIcon, FlagIcon, CpuChipIcon } from '@heroicons/react/24/solid';
@@ -27,7 +28,7 @@ const EvaluationCard: React.FC<{ title: string; icon: React.ElementType; childre
             <Icon className="h-6 w-6" />
             {title}
         </h5>
-        <div className="prose max-w-none dark:prose-invert text-sm">{children}</div>
+        <div className="prose max-w-none prose-invert text-sm">{children}</div>
     </div>
 );
 

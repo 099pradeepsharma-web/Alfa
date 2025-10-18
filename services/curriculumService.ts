@@ -12,12 +12,12 @@ const CURRENT_CURRICULUM_VERSION = '1.0';
  * This improves performance on subsequent loads by avoiding re-parsing the large curriculum object.
  * @returns A Promise that resolves to the curriculum array.
  */
-export const getCurriculum = async (): Promise<Grade[]> => {
+export const getCurriculum = async (signal?: AbortSignal): Promise<Grade[]> => {
     try {
-        const cachedVersion = await db.getDoc<string>('cache', CURRICULUM_VERSION_KEY);
+        const cachedVersion = await db.getDoc<string>('cache', CURRICULUM_VERSION_KEY, signal);
         
         if (cachedVersion === CURRENT_CURRICULUM_VERSION) {
-            const cachedCurriculum = await db.getDoc<Grade[]>('cache', CURRICULUM_CACHE_KEY);
+            const cachedCurriculum = await db.getDoc<Grade[]>('cache', CURRICULUM_CACHE_KEY, signal);
             if (cachedCurriculum) {
                 console.log("Loading curriculum from cache.");
                 return cachedCurriculum;
@@ -26,12 +26,15 @@ export const getCurriculum = async (): Promise<Grade[]> => {
 
         // If cache is old, invalid, or doesn't exist, load from static and update cache.
         console.log("Loading curriculum from static source and caching.");
-        await db.setDoc<Grade[]>('cache', CURRICULUM_CACHE_KEY, staticCurriculum);
-        await db.setDoc<string>('cache', CURRICULUM_VERSION_KEY, CURRENT_CURRICULUM_VERSION);
+        await db.setDoc<Grade[]>('cache', CURRICULUM_CACHE_KEY, staticCurriculum, signal);
+        await db.setDoc<string>('cache', CURRICULUM_VERSION_KEY, CURRENT_CURRICULUM_VERSION, signal);
 
         return staticCurriculum;
 
     } catch (error) {
+        if ((error as DOMException).name === 'AbortError') {
+            throw error; // Re-throw abort errors to be caught by the caller
+        }
         console.error("Error managing curriculum cache, falling back to static version:", error);
         // Fallback to static import in case of any storage errors
         return staticCurriculum;

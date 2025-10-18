@@ -10,9 +10,10 @@ import * as db from './databaseService';
  * @param language - The language of the content to retrieve.
  * @returns A Promise that resolves to the LearningModule or null.
  */
-export const getLearningModule = async (key: string, language: string): Promise<LearningModule | null> => {
+// FIX: Add optional signal parameter to support cancellation.
+export const getLearningModule = async (key: string, language: string, signal?: AbortSignal): Promise<LearningModule | null> => {
   const langKey = `${key}-${language}`;
-  return db.getDoc<LearningModule>('modules', langKey);
+  return db.getDoc<LearningModule>('modules', langKey, signal);
 };
 
 /**
@@ -21,9 +22,10 @@ export const getLearningModule = async (key: string, language: string): Promise<
  * @param data - The LearningModule object to save.
  * @param language - The language of the content.
  */
-export const saveLearningModule = async (key: string, data: LearningModule, language: string): Promise<void> => {
+// FIX: Add optional signal parameter to support cancellation.
+export const saveLearningModule = async (key: string, data: LearningModule, language: string, signal?: AbortSignal): Promise<void> => {
   const langKey = `${key}-${language}`;
-  await db.setDoc<LearningModule>('modules', langKey, data);
+  await db.setDoc<LearningModule>('modules', langKey, data, signal);
 };
 
 /**
@@ -56,8 +58,8 @@ export const saveReport = async (studentId: string, userRole: 'teacher' | 'paren
  * @param key The key of the document.
  * @returns The document data or null.
  */
-export const getDoc = async <T>(storeName: 'progress' | 'cache' | 'modules' | 'reports' | 'diagrams' | 'videos' | 'conceptMaps', key: string): Promise<T | null> => {
-    return db.getDoc<T>(storeName, key);
+export const getDoc = async <T>(storeName: 'progress' | 'cache' | 'modules' | 'reports' | 'diagrams' | 'videos' | 'conceptMaps', key: string, signal?: AbortSignal): Promise<T | null> => {
+    return db.getDoc<T>(storeName, key, signal);
 };
 
 /**
@@ -66,8 +68,8 @@ export const getDoc = async <T>(storeName: 'progress' | 'cache' | 'modules' | 'r
  * @param key The key of the document.
  * @param data The data to save.
  */
-export const setDoc = async <T>(storeName: 'progress' | 'cache' | 'modules' | 'reports' | 'diagrams' | 'videos' | 'conceptMaps', key: string, data: T): Promise<void> => {
-    await db.setDoc<T>(storeName, key, data);
+export const setDoc = async <T>(storeName: 'progress' | 'cache' | 'modules' | 'reports' | 'diagrams' | 'videos' | 'conceptMaps', key: string, data: T, signal?: AbortSignal): Promise<void> => {
+    await db.setDoc<T>(storeName, key, data, signal);
 };
 
 

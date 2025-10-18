@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 // FIX: Added Student to imports to resolve type errors
 import { Grade, Subject, Chapter, NextStepRecommendation, Student } from '../types';
-import { ArrowLeftIcon, ChevronDownIcon, DocumentChartBarIcon, RocketLaunchIcon, BookOpenIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon, RocketLaunchIcon, BookOpenIcon } from '@heroicons/react/24/solid';
 import DiagnosticTest from '../components/DiagnosticTest';
 import { useLanguage } from '../contexts/Language-context';
 import { getIcon } from '../components/IconMap';
@@ -98,14 +98,10 @@ const SubjectSelector: React.FC<SubjectSelectorProps> = ({ grade, selectedSubjec
                   <button
                     onClick={() => onSubjectSelect(subject)}
                     aria-current={selectedSubject?.name === subject.name}
-                    className={`w-full text-left p-3 rounded-lg flex items-center space-x-3 transition-colors duration-200 realm-card ${
-                      selectedSubject?.name === subject.name
-                        ? 'bg-surface text-primary font-semibold border-primary'
-                        : 'hover:bg-surface text-text-secondary'
-                    }`}
+                    className={`w-full text-left p-3 rounded-lg flex items-center space-x-3 transition-colors duration-200 realm-card`}
                   >
                     <Icon className="h-6 w-6" />
-                    <span>{tCurriculum(subject.name)}</span>
+                    <span className="font-semibold">{tCurriculum(subject.name)}</span>
                   </button>
                 </li>
               )})}

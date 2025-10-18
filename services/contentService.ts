@@ -1,5 +1,3 @@
-
-
 import { LearningModule, Student, Chapter, Topic } from '../types';
 import * as geminiService from './geminiService';
 import * as pineconeService from './pineconeService';
@@ -11,6 +9,12 @@ const IN_MEMORY_STORE: { [key: string]: LearningModule } = {};
 
 const generateDbKey = (grade: string, subject: string, chapter: string, language: string) => 
     `module-${grade}-${subject}-${chapter}-${language}`;
+
+const checkAborted = (signal?: AbortSignal) => {
+    if (signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError');
+    }
+};
 
 /**
  * Production-ready content fetching service.
@@ -27,9 +31,11 @@ export const getChapterContent = async (
     subject: string, 
     chapter: Chapter, 
     student: Student, 
-    language: string
+    language: string,
+    signal?: AbortSignal
 ): Promise<{content: LearningModule, fromCache: boolean}> => {
     const dbKey = generateDbKey(grade, subject, chapter.title, language);
+    checkAborted(signal);
 
     // Layer 1: Check in-memory session cache
     if (IN_MEMORY_STORE[dbKey]) {
@@ -37,7 +43,8 @@ export const getChapterContent = async (
     }
 
     // Layer 2: Check persistent local storage cache
-    const cachedContent = await pineconeService.getLearningModule(dbKey, language);
+    const cachedContent = await pineconeService.getLearningModule(dbKey, language, signal);
+    checkAborted(signal);
     if (cachedContent) {
         IN_MEMORY_STORE[dbKey] = cachedContent; // Populate in-memory cache for subsequent requests in the same session
         return { content: cachedContent, fromCache: true };
@@ -45,9 +52,11 @@ export const getChapterContent = async (
 
     // Layer 3: Retrieve from RAG system (pre-generated content)
     const ragContent = retrieveFromRag(chapter.title, language);
+    checkAborted(signal);
     if (ragContent) {
         // Save to caches for future offline use
-        await pineconeService.saveLearningModule(dbKey, ragContent, language);
+        // FIX: Pass signal to saveLearningModule.
+        await pineconeService.saveLearningModule(dbKey, ragContent, language, signal);
         IN_MEMORY_STORE[dbKey] = ragContent;
         // This content is "cached" in the codebase, so it's fast and authentic.
         return { content: ragContent, fromCache: true };
@@ -56,12 +65,18 @@ export const getChapterContent = async (
 
     // Layer 4: Dynamic generation with fallback for production readiness
     try {
-        const generatedContent = await geminiService.getChapterContent(grade, subject, chapter, student.name, language);
+        // FIX: Pass signal to getChapterContent.
+        const generatedContent = await geminiService.getChapterContent(grade, subject, chapter, student.name, language, signal);
+        checkAborted(signal);
         // Save to both caches for future requests
-        await pineconeService.saveLearningModule(dbKey, generatedContent, language);
+        // FIX: Pass signal to saveLearningModule.
+        await pineconeService.saveLearningModule(dbKey, generatedContent, language, signal);
         IN_MEMORY_STORE[dbKey] = generatedContent;
         return { content: generatedContent, fromCache: false };
     } catch (error) {
+        if ((error as DOMException).name === 'AbortError') {
+            throw error;
+        }
         console.error(`Critical error: AI content generation failed for ${dbKey}.`, error);
         
         // Helper function to flatten nested topics
@@ -113,9 +128,11 @@ export const updateChapterContent = async (
     subject: string, 
     chapter: string, 
     language: string,
-    updatedModule: LearningModule
+    updatedModule: LearningModule,
+    signal?: AbortSignal
 ): Promise<void> => {
     const dbKey = generateDbKey(grade, subject, chapter, language);
     IN_MEMORY_STORE[dbKey] = updatedModule;
-    await pineconeService.saveLearningModule(dbKey, updatedModule, language);
+    // FIX: Pass signal to saveLearningModule.
+    await pineconeService.saveLearningModule(dbKey, updatedModule, language, signal);
 };
