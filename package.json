@@ -8,9 +8,12 @@
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
+    "start": "vite",
     "type-check": "tsc --noEmit",
-    "db:setup": "echo 'Run database/supabase-schema.sql in your Supabase SQL Editor'",
-    "sync:test": "echo 'Testing cloud sync functionality'"
+    "db:setup": "echo 'Run database/SETUP-SUPABASE.sql in your Supabase SQL Editor'",
+    "db:seed": "echo 'Use DemoDataSeeder component in admin panel to seed test data'",
+    "sync:test": "echo 'Use CloudStatus component to test cloud sync functionality'",
+    "health:check": "echo 'Check app health with CloudStatus component'"
   },
   "dependencies": {
     "@dicebear/collection": "^2.1.2",
@@ -49,7 +52,11 @@
     "india",
     "supabase",
     "react",
-    "typescript"
+    "typescript",
+    "cloud-sync",
+    "multi-device",
+    "ferpa-compliant",
+    "coppa-compliant"
   ],
   "author": "Pradeep Sharma <099pradeepsharma@gmail.com>",
   "license": "MIT",
@@ -61,5 +68,42 @@
   "bugs": {
     "url": "https://github.com/099pradeepsharma-web/Alfa/issues",
     "email": "099pradeepsharma@gmail.com"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "config": {
+    "supabase": {
+      "project_id": "dkljgiwtzonycyoecnzd",
+      "url": "https://dkljgiwtzonycyoecnzd.supabase.co",
+      "features": [
+        "authentication",
+        "database",
+        "realtime",
+        "row-level-security",
+        "connection-pooling"
+      ]
+    },
+    "deployment": {
+      "platforms": ["vercel", "netlify", "aws"],
+      "environment_required": [
+        "VITE_SUPABASE_URL",
+        "VITE_SUPABASE_ANON_KEY", 
+        "VITE_GEMINI_API_KEY"
+      ]
+    }
   }
 }
