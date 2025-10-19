@@ -20,54 +20,43 @@ export const initializeDatabase = async () => {
 };
 
 export const login = async (role: Role, email: string, password: string): Promise<{ user: CurrentUser; role: Role }> => {
-  // For demo purposes, return mock user data
-  // In production, implement actual Supabase auth
-  const mockUser: Student = {
-    id: '1',
-    name: 'Demo Student',
-    email,
-    grade: '8th Grade',
-    school: 'Demo School',
-    masteryLevel: 75,
-    streakDays: 5,
-    totalPoints: 1250,
-    achievements: [],
-    studyGoals: [],
-    performanceHistory: []
-  };
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  if (!data.user) throw new Error('No user returned from Supabase');
   
-  return { user: mockUser, role: 'student' };
+  const user = data.user;
+  const userRole: Role = (user.user_metadata?.role as Role) ?? 'student';
+
+  return { user: user as unknown as CurrentUser, role: userRole };
 };
 
 export const signup = async (userData: { name: string; grade: string; email: string; password: string }): Promise<{ user: CurrentUser; role: Role }> => {
-  const newUser: Student = {
-    id: Math.random().toString(36).substr(2, 9),
-    name: userData.name,
+  const { data, error } = await supabase.auth.signUp({
     email: userData.email,
-    grade: userData.grade,
-    school: 'Demo School',
-    masteryLevel: 0,
-    streakDays: 0,
-    totalPoints: 0,
-    achievements: [],
-    studyGoals: [],
-    performanceHistory: []
-  };
+    password: userData.password,
+    options: {
+      data: { name: userData.name, grade: userData.grade, role: 'student' }
+    }
+  });
+  if (error) throw error;
+  if (!data.user) throw new Error('No user returned from Supabase');
   
-  return { user: newUser, role: 'student' };
+  const user = data.user;
+  return { user: user as unknown as CurrentUser, role: 'student' };
 };
 
 export const logout = () => {
-  localStorage.removeItem('alfanumrik_session');
+  supabase.auth.signOut();
 };
 
 export const getSession = (): Session | null => {
-  const sessionData = localStorage.getItem('alfanumrik_session');
-  return sessionData ? JSON.parse(sessionData) : null;
+  const sessionData = supabase.auth.getSession();
+  if (!sessionData) return null;
+  return { user: sessionData.data.user as unknown as CurrentUser, role: (sessionData.data.user?.user_metadata?.role as Role) ?? 'student' };
 };
 
 export const saveSession = (session: Session) => {
-  localStorage.setItem('alfanumrik_session', JSON.stringify(session));
+  // Supabase automatically manages session persistence
 };
 
 export const updateStudent = async (updatedData: Student): Promise<Student> => {
