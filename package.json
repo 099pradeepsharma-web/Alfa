@@ -16,8 +16,8 @@
     "health:check": "echo 'Check app health with CloudStatus component'"
   },
   "dependencies": {
-    "@dicebear/collection": "^2.1.2",
-    "@dicebear/core": "^2.1.2",
+    "@dicebear/collection": "^9.2.4",
+    "@dicebear/core": "^9.2.4",
     "@google/genai": "^0.17.1",
     "@heroicons/react": "^2.1.5",
     "@supabase/supabase-js": "^2.45.4",
@@ -84,26 +84,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "config": {
-    "supabase": {
-      "project_id": "dkljgiwtzonycyoecnzd",
-      "url": "https://dkljgiwtzonycyoecnzd.supabase.co",
-      "features": [
-        "authentication",
-        "database",
-        "realtime",
-        "row-level-security",
-        "connection-pooling"
-      ]
-    },
-    "deployment": {
-      "platforms": ["vercel", "netlify", "aws"],
-      "environment_required": [
-        "VITE_SUPABASE_URL",
-        "VITE_SUPABASE_ANON_KEY", 
-        "VITE_GEMINI_API_KEY"
-      ]
-    }
   }
 }
