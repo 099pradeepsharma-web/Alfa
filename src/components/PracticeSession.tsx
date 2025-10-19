@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
 import { useSoundEffects } from '../hooks/useSoundEffects';
 
@@ -5,6 +6,9 @@ function PracticeSession({ studentId }) {
   const [sessionId, setSessionId] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [rewardPoints, setRewardPoints] = useState(0);
+  const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
+  const [showWrongAnimation, setShowWrongAnimation] = useState(false);
+  const [showRewardAnimation, setShowRewardAnimation] = useState(false);
   const { playCorrect, playWrong, playReward } = useSoundEffects();
 
   useEffect(() => {
@@ -49,10 +53,17 @@ function PracticeSession({ studentId }) {
 
     if (data.isCorrect) {
       playCorrect();
+      setShowCorrectAnimation(true);
       setRewardPoints((prev) => prev + 10);
-      playReward();
+      setShowRewardAnimation(true);
+      setTimeout(() => {
+        setShowCorrectAnimation(false);
+        setShowRewardAnimation(false);
+      }, 1500);
     } else {
       playWrong();
+      setShowWrongAnimation(true);
+      setTimeout(() => setShowWrongAnimation(false), 1000);
     }
 
     if (data.nextQuestion) {
@@ -63,21 +74,58 @@ function PracticeSession({ studentId }) {
     }
   }
 
-  if (!currentQuestion) {
-    return <div>Loading question...</div>;
-  }
-
   return (
-    <div>
-      <h2>{currentQuestion.question_text}</h2>
-      <ul>
-        {currentQuestion.options.map((option) => (
-          <li key={option.id}>
-            <button onClick={() => handleAnswer(option.id)}>{option.text}</button>
-          </li>
-        ))}
-      </ul>
-      <p>Reward Points: {rewardPoints}</p>
+    <div style={{ position: 'relative', padding: 20 }}>
+      {currentQuestion ? (
+        <>
+          <h2>{currentQuestion.question_text}</h2>
+          <ul>
+            {currentQuestion.options.map((option) => (
+              <li key={option.id}>
+                <button onClick={() => handleAnswer(option.id)}>{option.text}</button>
+              </li>
+            ))}
+          </ul>
+          <p>Reward Points: {rewardPoints}</p>
+        </>
+      ) : (
+        <div>No more questions. Well done!</div>
+      )}
+
+      <AnimatePresence>
+        {showCorrectAnimation && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1, rotate: 360 }}
+            exit={{ scale: 0 }}
+            style={{ position: 'absolute', top: 10, right: 10, color: 'green', fontSize: 48 }}
+          >
+            ✔️
+          </motion.div>
+        )}
+
+        {showWrongAnimation && (
+          <motion.div
+            initial={{ x: 0 }}
+            animate={{ x: [0, -10, 10, -10, 10, 0] }}
+            exit={{ opacity: 0 }}
+            style={{ position: 'absolute', top: 10, right: 10, color: 'red', fontSize: 48 }}
+          >
+            ❌
+          </motion.div>
+        )}
+
+        {showRewardAnimation && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            style={{ position: 'absolute', bottom: 20, left: '50%', color: 'gold', fontWeight: 'bold' }}
+          >
+            +10 Points!
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
