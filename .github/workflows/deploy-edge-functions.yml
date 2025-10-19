@@ -1,0 +1,34 @@
+name: Deploy Supabase Edge Functions
+
+on:
+  push:
+    branches:
+      - main
+      - design-enhancement-google-style
+    paths:
+      - 'supabase/functions/**'
+
+jobs:
+  deploy-edge-functions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+
+      - name: Deploy adaptive_mastery_compute
+        run: supabase functions deploy adaptive_mastery_compute --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      - name: Deploy adaptive_content_assign
+        run: supabase functions deploy adaptive_content_assign --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      - name: Deploy adaptive_notification_dispatch
+        run: supabase functions deploy adaptive_notification_dispatch --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      - name: Deploy adaptive_pipeline_scheduler
+        run: supabase functions deploy adaptive_pipeline_scheduler --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      - name: Publish all deployed functions
+        run: supabase functions serve --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
