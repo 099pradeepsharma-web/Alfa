@@ -17,6 +17,12 @@ export { default as LMSConnections } from './admin/LMSConnections';
 export { default as CustomizePortal } from './admin/CustomizePortal';
 export { default as ContentGeneratorConsole } from './admin/ContentGeneratorConsole';
 
+// Navigation Components
+export { default as AdminNav } from './nav/AdminNav';
+
+// Layout Components
+export { default as AdminHeader } from './layout/AdminHeader';
+
 // Re-export existing components (add as needed)
 // export { default as Dashboard } from './Dashboard';
 // export { default as StudentProfile } from './StudentProfile';
