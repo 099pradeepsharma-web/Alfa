@@ -1,7 +1,8 @@
-// Browser Supabase client for Next.js App Router
-// Uses @supabase/ssr for proper cookie handling on the client
+// Browser Supabase client with typed Database generics
+// Updated to include SHA from previous version
 
 import { createBrowserClient } from '@supabase/ssr';
+import type { Database } from '../../types/database.types';
 
 export function getBrowserSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
@@ -11,7 +12,7 @@ export function getBrowserSupabase() {
     throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');
   }
 
-  return createBrowserClient(url, anon);
+  return createBrowserClient<Database>(url, anon);
 }
 
 export default getBrowserSupabase;
